@@ -17,6 +17,7 @@ using AutoRest.Java.Model;
 using AutoRest.Java.vanilla.Templates;
 using System;
 using System.Text.RegularExpressions;
+using System.Diagnostics;
 
 namespace AutoRest.Java.Azure.Fluent
 {
@@ -45,6 +46,14 @@ namespace AutoRest.Java.Azure.Fluent
                 throw new InvalidCastException("CodeModel is not a Azure Java Fluent CodeModel");
             }
 
+            FluentMethodGroups innerMGroupToFluentMGroup = FluentMethodGroups.InnerMethodGroupToFluentMethodGroups(codeModel);
+
+            foreach (FluentMethodGroup fmg in innerMGroupToFluentMGroup.SelectMany( m => m.Value))
+            {
+                var fluentMethodGroupInterfaceTemplate = new FluentMethodGroupInterfaceTemplate { Model = fmg };
+                await Write(fluentMethodGroupInterfaceTemplate, $"{packagePath}/fgened/{fmg.JavaInterfaceName.ToPascalCase()}{ImplementationFileExtension}");
+            }
+
             // Service client
             var serviceClientTemplate = new AzureServiceClientTemplate { Model = codeModel };
             await Write(serviceClientTemplate, $"{packagePath}/implementation/{codeModel.Name.ToPascalCase()}Impl{ImplementationFileExtension}");
@@ -56,6 +65,7 @@ namespace AutoRest.Java.Azure.Fluent
                 var operationsTemplate = new AzureMethodGroupTemplate { Model = methodGroup };
                 await Write(operationsTemplate, $"{packagePath}/implementation/{methodGroup.TypeName.ToPascalCase()}Inner{ImplementationFileExtension}");
             }
+
 
             //Models
             foreach (CompositeTypeJvaf modelType in cm.ModelTypes.Concat(codeModel.HeaderTypes))

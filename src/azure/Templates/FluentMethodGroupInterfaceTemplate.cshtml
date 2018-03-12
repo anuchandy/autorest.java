@@ -1,0 +1,109 @@
+﻿@using System
+@using AutoRest.Java
+@using AutoRest.Java.vanilla.Templates
+@using AutoRest.Java.azure.Templates
+@using System.Linq
+@using AutoRest.Core.Utilities
+@using AutoRest.Java.Model
+@using AutoRest.Java.Azure.Model
+@inherits AutoRest.Core.Template<AutoRest.Java.Azure.Fluent.Model.FluentMethodGroup>
+
+@EmptyLine
+@foreach (var importClass in Model.Imports)
+{
+@:import @importClass;
+}
+@EmptyLine
+
+public interface @(Model.JavaInterfaceName)@(Model.ExtendsFrom) {
+
+@foreach (var nestedFluentMethodGroup in Model.ChildFluentMethodGroups)
+{
+@EmptyLine
+    <text>
+    /**
+     * Entry point to manage @(Model.LocalSingularName) @(nestedFluentMethodGroup.LocalName).
+     */
+    </text>
+    @:@(nestedFluentMethodGroup.JavaInterfaceName) @(nestedFluentMethodGroup.LocalName.ToPascalCase())();
+}
+
+@if (@Model.ResourceListingDescription.SupportsListByImmediateParent)
+{
+    @EmptyLine
+    var innerMethod = Model.ResourceListingDescription.InnerListByImmediateParentMethod;
+
+    <text>
+    /**
+    @if (!string.IsNullOrEmpty(innerMethod.Summary))
+    {
+@:* @innerMethod.Summary.EscapeXmlComment().Period()
+    }
+    @if (!string.IsNullOrEmpty(innerMethod.Description))
+    {
+@:* @innerMethod.Description.EscapeXmlComment().Period()
+    }
+    *
+    @foreach (var param in innerMethod.LocalParameters.Where(p => !p.IsConstant && p.IsRequired))
+    {
+    @:* @@param @param.Name @(param.Documentation.Else("the " + param.ModelType.Name + " value").EscapeXmlComment().Trim())
+    }
+    * @@throws IllegalArgumentException thrown if parameters fail the validation
+    * @@return the observable for the request
+    */
+    </text>
+    @:Observable<string> ListBy@(Model.ParentFluentMethodGroup.LocalSingularName)Async(@innerMethod.MethodRequiredParameterDeclaration);
+}
+@if (@Model.ResourceGetDescription.SupportsGetByImmediateParent)
+{
+    @EmptyLine
+    var innerMethod = Model.ResourceGetDescription.InnerGetByImmediateParentMethod;
+
+    <text>
+    /**
+    @if (!string.IsNullOrEmpty(innerMethod.Summary))
+    {
+@:* @innerMethod.Summary.EscapeXmlComment().Period()
+    }
+    @if (!string.IsNullOrEmpty(innerMethod.Description))
+    {
+@:* @innerMethod.Description.EscapeXmlComment().Period()
+    }
+    *
+    @foreach (var param in innerMethod.LocalParameters.Where(p => !p.IsConstant && p.IsRequired))
+    {
+    @:* @@param @param.Name @(param.Documentation.Else("the " + param.ModelType.Name + " value").EscapeXmlComment().Trim())
+    }
+    * @@throws IllegalArgumentException thrown if parameters fail the validation
+    * @@return the observable for the request
+    */
+    </text>
+    @:Observable<string> GetBy@(Model.ParentFluentMethodGroup.LocalSingularName)Async(@innerMethod.MethodRequiredParameterDeclaration);
+}
+@if (@Model.ResourceDeleteDescription.SupportsDeleteByImmediateParent)
+{
+    @EmptyLine
+    var innerMethod = Model.ResourceDeleteDescription.InnerDeleteByImmediateParentMethod;
+
+    <text>
+    /**
+    @if (!string.IsNullOrEmpty(innerMethod.Summary))
+    {
+@:* @innerMethod.Summary.EscapeXmlComment().Period()
+    }
+    @if (!string.IsNullOrEmpty(innerMethod.Description))
+    {
+@:* @innerMethod.Description.EscapeXmlComment().Period()
+    }
+    *
+    @foreach (var param in innerMethod.LocalParameters.Where(p => !p.IsConstant && p.IsRequired))
+    {
+    @:* @@param @param.Name @(param.Documentation.Else("the " + param.ModelType.Name + " value").EscapeXmlComment().Trim())
+    }
+    * @@throws IllegalArgumentException thrown if parameters fail the validation
+    * @@return the observable for the request
+    */
+    </text>
+    @:Completable DeleteBy@(Model.ParentFluentMethodGroup.LocalSingularName)Async(@innerMethod.MethodRequiredParameterDeclaration);
+}
+}
