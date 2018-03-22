@@ -51,7 +51,13 @@ namespace AutoRest.Java.Azure.Fluent
             foreach (FluentMethodGroup fmg in innerMGroupToFluentMGroup.SelectMany( m => m.Value))
             {
                 var fluentMethodGroupInterfaceTemplate = new FluentMethodGroupInterfaceTemplate { Model = fmg };
-                await Write(fluentMethodGroupInterfaceTemplate, $"{packagePath}/fgened/{fmg.JavaInterfaceName.ToPascalCase()}{ImplementationFileExtension}");
+                await Write(fluentMethodGroupInterfaceTemplate, $"{packagePath}/fluent/{fmg.JavaInterfaceName.ToPascalCase()}{ImplementationFileExtension}");
+            }
+
+            foreach (GroupableFluentModel fluentModel in innerMGroupToFluentMGroup.GroupableFluentModels)
+            {
+                var fluentMethodGroupInterfaceTemplate = new FluentGroupableModelInterfaceTemplate { Model = fluentModel };
+                await Write(fluentMethodGroupInterfaceTemplate, $"{packagePath}/fluent/{fluentModel.JavaInterfaceName.ToPascalCase()}{ImplementationFileExtension}");
             }
 
             // Service client

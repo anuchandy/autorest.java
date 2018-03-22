@@ -13,7 +13,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
         private readonly FluentMethodGroup fluentMethodGroup;
         private readonly ResourceCreateDescription createDescription;
         private bool? supportsUpdating;
-        private MethodJvaf innerUpdateMethod;
+        private FluentMethod updateMethod;
 
         public ResourceUpdateDescription(ResourceCreateDescription createDescription, 
             FluentMethodGroup fluentMethodGroup) 
@@ -38,19 +38,19 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        public MethodJvaf InnerUpdateMethod
+        public FluentMethod UpdateMethod
         {
             get
             {
                 if (this.createDescription.SupportsCreating)
                 {
-                    return this.createDescription.InnerCreateMethod;
+                    return this.createDescription.CreateMethod;
                 }
                 else if (this.supportsUpdating == null)
                 {
                     this.process();
                 }
-                return this.innerUpdateMethod;
+                return this.updateMethod;
             }
         }
 
@@ -77,7 +77,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                             if (matched)
                             {
                                 this.supportsUpdating = true;
-                                this.innerUpdateMethod = innerMethod;
+                                this.updateMethod = new FluentMethod(true, innerMethod, this.fluentMethodGroup);
                                 break;
                             }
                         }

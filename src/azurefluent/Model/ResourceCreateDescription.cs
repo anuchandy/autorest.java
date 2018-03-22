@@ -20,7 +20,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
     {
         private readonly FluentMethodGroup fluentMethodGroup;
         private bool isProcessed;
-        private MethodJvaf innerCreateMethod;
+        private FluentMethod createMethod;
         private CreateType createType = CreateType.None;
 
         public ResourceCreateDescription(FluentMethodGroup fluentMethodGroup) 
@@ -52,7 +52,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        public MethodJvaf InnerCreateMethod
+        public FluentMethod CreateMethod
         {
             get
             {
@@ -60,7 +60,20 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 {
                     this.process();
                 }
-                return this.innerCreateMethod;
+                return this.createMethod;
+            }
+        }
+
+        public HashSet<string> Imports
+        {
+            get
+            {
+                HashSet<string> imports = new HashSet<string>();
+                if (this.SupportsCreating)
+                {
+                    imports.Add("com.microsoft.azure.management.resources.fluentcore.collection");
+                }
+                return imports;
             }
         }
 
@@ -110,7 +123,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
 
                                 if (this.createType != CreateType.None)
                                 {
-                                    this.innerCreateMethod = innerMethod;
+                                    this.createMethod = new FluentMethod(true, innerMethod, this.fluentMethodGroup);
                                     break;
                                 }
                             }

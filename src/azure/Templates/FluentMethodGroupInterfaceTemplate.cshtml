@@ -8,7 +8,15 @@
 @using AutoRest.Java.Azure.Model
 @inherits AutoRest.Core.Template<AutoRest.Java.Azure.Fluent.Model.FluentMethodGroup>
 
+/**
+@Header(" * ").TrimMultilineHeader()
+ */
 @EmptyLine
+
+package @(Settings.Namespace.ToLower()).fluent;
+
+@EmptyLine
+
 @foreach (var importClass in Model.Imports)
 {
 @:import @importClass;
@@ -31,7 +39,8 @@ public interface @(Model.JavaInterfaceName)@(Model.ExtendsFrom) {
 @if (@Model.ResourceListingDescription.SupportsListByImmediateParent)
 {
     @EmptyLine
-    var innerMethod = Model.ResourceListingDescription.InnerListByImmediateParentMethod;
+    var returnModel = Model.ResourceListingDescription.ListByImmediateParentMethod.ReturnModel;
+    var innerMethod = Model.ResourceListingDescription.ListByImmediateParentMethod.InnerMethod;
 
     <text>
     /**
@@ -52,12 +61,13 @@ public interface @(Model.JavaInterfaceName)@(Model.ExtendsFrom) {
     * @@return the observable for the request
     */
     </text>
-    @:Observable<string> ListBy@(Model.ParentFluentMethodGroup.LocalSingularName)Async(@innerMethod.MethodRequiredParameterDeclaration);
+    @:Observable<@(returnModel.JavaInterfaceName)> ListBy@(Model.ParentFluentMethodGroup.LocalSingularName)Async(@innerMethod.MethodRequiredParameterDeclaration);
 }
 @if (@Model.ResourceGetDescription.SupportsGetByImmediateParent)
 {
     @EmptyLine
-    var innerMethod = Model.ResourceGetDescription.InnerGetByImmediateParentMethod;
+    var returnModel = Model.ResourceGetDescription.GetByImmediateParentMethod.ReturnModel;
+    var innerMethod = Model.ResourceGetDescription.GetByImmediateParentMethod.InnerMethod;
 
     <text>
     /**
@@ -78,12 +88,12 @@ public interface @(Model.JavaInterfaceName)@(Model.ExtendsFrom) {
     * @@return the observable for the request
     */
     </text>
-    @:Observable<string> GetBy@(Model.ParentFluentMethodGroup.LocalSingularName)Async(@innerMethod.MethodRequiredParameterDeclaration);
+    @:Observable<@(returnModel.JavaInterfaceName)> GetBy@(Model.ParentFluentMethodGroup.LocalSingularName)Async(@innerMethod.MethodRequiredParameterDeclaration);
 }
 @if (@Model.ResourceDeleteDescription.SupportsDeleteByImmediateParent)
 {
     @EmptyLine
-    var innerMethod = Model.ResourceDeleteDescription.InnerDeleteByImmediateParentMethod;
+    var innerMethod = Model.ResourceDeleteDescription.DeleteByImmediateParentMethod.InnerMethod;
 
     <text>
     /**
@@ -105,5 +115,36 @@ public interface @(Model.JavaInterfaceName)@(Model.ExtendsFrom) {
     */
     </text>
     @:Completable DeleteBy@(Model.ParentFluentMethodGroup.LocalSingularName)Async(@innerMethod.MethodRequiredParameterDeclaration);
+}
+@foreach (var method in Model.OtherMethods)
+{
+    <text>
+    /**
+    @if (!string.IsNullOrEmpty(method.InnerMethod.Summary))
+    {
+@:* @method.InnerMethod.Summary.EscapeXmlComment().Period()
+    }
+    @if (!string.IsNullOrEmpty(method.InnerMethod.Description))
+    {
+@:* @method.InnerMethod.Description.EscapeXmlComment().Period()
+    }
+    *
+    @foreach (var param in method.InnerMethod.LocalParameters.Where(p => !p.IsConstant && p.IsRequired))
+    {
+    @:* @@param @param.Name @(param.Documentation.Else("the " + param.ModelType.Name + " value").EscapeXmlComment().Trim())
+    }
+    * @@throws IllegalArgumentException thrown if parameters fail the validation
+    * @@return the observable for the request
+    */
+    </text>
+    @if (method.InnerMethod.HttpMethod == AutoRest.Core.Model.HttpMethod.Post)
+    {
+@:Completable @(method.Name)Async(@method.InnerMethod.MethodRequiredParameterDeclaration);
+    }
+    else
+    {
+@:Observable<@method.ReturnModel.JavaInterfaceName> @(method.Name)Async(@method.InnerMethod.MethodRequiredParameterDeclaration);
+    }
+    @EmptyLine
 }
 }

@@ -54,5 +54,19 @@ namespace AutoRest.Java.azurefluent.Model
                 }
             }
         }
+
+
+        public static bool AddIfNotExists<T, U>(this Dictionary<T, U> dict, T key, U value)
+        {
+            if (!dict.ContainsKey(key))
+            {
+                dict.Add(key, value);
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
     }
 }

@@ -15,6 +15,11 @@ namespace AutoRest.Java.Azure.Fluent.Model
 {
     public class FluentMethodGroups : Dictionary<string, List<FluentMethodGroup>>
     {
+        public IEnumerable<GroupableFluentModel> GroupableFluentModels
+        {
+            get; private set;
+        }
+
         public static FluentMethodGroups InnerMethodGroupToFluentMethodGroups(CodeModelJvaf codeModel)
         {
             FluentMethodGroups innerMethodGroupToFluentMethodGroups = new FluentMethodGroups();
@@ -76,7 +81,10 @@ namespace AutoRest.Java.Azure.Fluent.Model
             innerMethodGroupToFluentMethodGroups.ResolveDelayedFluentMethodGroups(codeModel);
             innerMethodGroupToFluentMethodGroups.LinkFluentMethodGroups();
             innerMethodGroupToFluentMethodGroups.InjectPlaceHolderFluentMethodGroups();
-            innerMethodGroupToFluentMethodGroups.EnsureUniqueJvaInterfaceName();
+            innerMethodGroupToFluentMethodGroups.EnsureUniqueJvaMethodGroupInterfaceName();
+            innerMethodGroupToFluentMethodGroups.DeriveStandardFluentModelForMethodGroups();
+            innerMethodGroupToFluentMethodGroups.EnsureUniqueJvaModelInterfaceName();
+            innerMethodGroupToFluentMethodGroups.SpecializeFluentModels();
 
             return innerMethodGroupToFluentMethodGroups;
         }
@@ -85,7 +93,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
         {
            IEnumerable<FluentMethodGroup> orphanMethodGroups = this.Select(kv => kv.Value)
                 .SelectMany(fmg => fmg)
-                .Where(fmg => fmg.Level > 0)
+                .Where(fmg => fmg.Level > 0)    // Level 0 don't have parents (they will hang under manager)
                 .Where(fmg => fmg.ParentFluentMethodGroup == null)
                 .OrderByDescending(fmg => fmg.Level);
 
@@ -182,7 +190,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        private void EnsureUniqueJvaInterfaceName() 
+        private void EnsureUniqueJvaMethodGroupInterfaceName() 
         {
             Dictionary<String, List<FluentMethodGroup>> dict = new Dictionary<string, List<FluentMethodGroup>>();
             this.Select(kv => kv.Value)
@@ -226,6 +234,169 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
+        private void DeriveStandardFluentModelForMethodGroups()
+        {
+            // Derive standard fluent model for all method groups
+            //
+            this.Select(kv => kv.Value)
+                .SelectMany(fmg => fmg)
+                .ForEach(fmg =>
+                {
+                    fmg.DeriveStandrdFluentModelForMethodGroup();
+                });
+        }
+
+        private void EnsureUniqueJvaModelInterfaceName()
+        {
+            // -- Multiple fluent method group each with different inner method group
+            //=======================================================================
+
+
+            // Each FluentMethodGroup work with only the InnerMethodGroup it was derived from.
+            // "FluentMethodGroup : HasInner<InnerMethodGroup>
+            // If there two FluentMethodGroup wrapping different InnerMethodGroups
+            //
+            // 1. FluentMethodGroup1 : HasInner<InnerMethodGroup1>
+            // 2. FluentMethodGroup2 : HasInner<InnerMethodGroup2>
+            //
+            // and if these two FMG has the same StandardFluentModel name then we need abandon 
+            // that SFM name and derive two different new StandardFluentModel names, one for each FMG.
+            // 
+            // Let's say SFM represents a child resource with different parent then when creating this child resource
+            // the def flow need to take different parent & SFM needs to have accessor for the parent which needs
+            // to be named explcitly.Hence we need different SFM here.
+            //
+
+            var standardModelsToCheckForConflict = this.Select(kv => kv.Value)
+                 .SelectMany(fmg => fmg)
+                 .Where(fmg => fmg.StandardFluentModel != null)
+                 .Select(fmg => {
+                     return new
+                     {
+                         fluentMethodGroup = fmg,
+                         standardFluentModel = fmg.StandardFluentModel
+                     };
+                 });
+
+            // SFM => [FluentMethodGroup] where FMG just wrapper for innerMG
+            //
+            Dictionary<string, List<FluentMethodGroup>> dict = new Dictionary<string, List<FluentMethodGroup>>();
+
+            while (true)
+            {
+                standardModelsToCheckForConflict
+                    .Select(smtc => smtc.fluentMethodGroup)
+                    .ForEach(currentFmg => {
+                        string modelJvaInterfaceName = currentFmg.StandardFluentModel.JavaInterfaceName;
+                        if (!dict.ContainsKey(modelJvaInterfaceName))
+                        {
+                            dict.Add(modelJvaInterfaceName, new List<FluentMethodGroup>());
+                        }
+
+                        string currentMgInnerName = currentFmg.InnerMethodGroup.Name;
+                        bool exists = dict[modelJvaInterfaceName].Any(fmg =>
+                        {
+                            string mgInnerName = fmg.InnerMethodGroup.Name;
+                            return mgInnerName.EqualsIgnoreCase(currentMgInnerName);
+                        });
+                        if (!exists)
+                        {
+                            dict[modelJvaInterfaceName].Add(currentFmg);
+                        }
+                    });
+
+                // Note: a specific StandardFluentModel wraps a single inner model (one to one mapping)
+
+                // If there are multiple different innerMG for specific StandardFluentModel then disambiguate it.
+                // By disambiguate it means there will be multiple StandardFluentModel diff names wrapping the 
+                // same inner model
+                // 
+                var conflicts = dict.Where(kv => kv.Value.Count() > 1);
+                if (conflicts.Any())
+                {
+                    conflicts
+                        .SelectMany(kv => kv.Value)
+                        .ForEach(fmg =>
+                        {
+                            string modelJvaInterfaceCurrentName = fmg.StandardFluentModel.JavaInterfaceName;
+                            string modelJvaInterfaceNewName = $"{fmg.ParentFluentMethodGroup.LocalSingularName}{fmg.StandardFluentModel.JavaInterfaceName}";
+                            fmg.StandardFluentModel.SetJavaInterfaceName(modelJvaInterfaceNewName);
+                        });
+                }
+                else
+                {
+                    break;
+                }
+                dict.Clear();
+            }
+
+
+            // -- Multiple fluent method group sharing the same inner method group
+            //=======================================================================
+
+            // disambiguation is required only if the model is creatable, updatable.
+            //
+
+            // SFM.Name_InnerMethodGroup.Name => [FMG]
+            //
+            dict.Clear();
+
+            while (true)
+            {
+                standardModelsToCheckForConflict
+                .Select(smtc => smtc.fluentMethodGroup)
+                .ForEach(currentFmg =>
+                {
+                    string key = $"{currentFmg.InnerMethodGroup.Name}:{currentFmg.StandardFluentModel.JavaInterfaceName}";
+                    if (!dict.ContainsKey(key))
+                    {
+                        dict.Add(key, new List<FluentMethodGroup>());
+                    }
+
+                    string currentMgInnerName = currentFmg.InnerMethodGroup.Name;
+                    bool exists = dict[key].Any(fmg => fmg.JavaInterfaceName.EqualsIgnoreCase(currentFmg.JavaInterfaceName));
+                    if (!exists)
+                    {
+                        dict[key].Add(currentFmg);
+                    }
+                });
+
+                var conflicts = dict.Where(kv => kv.Value.Count() > 1)
+                                    .Where(kv => kv.Value.Any(v => v.ResourceCreateDescription.SupportsCreating || v.ResourceUpdateDescription.SupportsUpdating));
+
+                if (conflicts.Any())
+                {
+                    conflicts
+                        .SelectMany(kv => kv.Value)
+                        .ForEach(fmg =>
+                        {
+                            string modelJvaInterfaceCurrentName = fmg.StandardFluentModel.JavaInterfaceName;
+                            string modelJvaInterfaceNewName = $"{fmg.ParentFluentMethodGroup.LocalSingularName}{fmg.StandardFluentModel.JavaInterfaceName}";
+                            fmg.StandardFluentModel.SetJavaInterfaceName(modelJvaInterfaceNewName);
+                        });
+                }
+                else
+                {
+                    break;
+                }
+                dict.Clear();
+            }
+        }
+
+        private void SpecializeFluentModels()
+        {
+            // Promotes the general fluent models to top-level-groupable vs top-level-non-groupable nested child vs other.
+            //
+            // Sepeialize the GROUPABLEMODEL
+            //
+            this.GroupableFluentModels = this.Select(kv => kv.Value)
+                 .SelectMany(fmg => fmg)
+                 .Where(fmg => fmg.StandardFluentModel != null)
+                 .Where(fmg => fmg.IsGroupableTopLevel)
+                 .Select(fmg => new GroupableFluentModel(fmg.StandardFluentModel, fmg))
+                 .Distinct(GroupableFluentModel.EqualityComparer());
+        }
+
         private static List<String> GetPartsAfterProvider(String url) 
         {
             if (url == null)
@@ -254,5 +425,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 }
             }
         }
+
+
     }
 }

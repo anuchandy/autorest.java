@@ -17,6 +17,8 @@ using System;
 using System.Text.RegularExpressions;
 using System.Diagnostics;
 using System.Text;
+using AutoRest.Java.Azure.Model;
+using AutoRest.Java.azurefluent.Model;
 
 namespace AutoRest.Java.Azure.Fluent.Model
 {
@@ -28,7 +30,13 @@ namespace AutoRest.Java.Azure.Fluent.Model
         private ResourceListingDescription resourceListingDescription;
         private ResourceGetDescription resourceGetDescription;
         private ResourceDeleteDescription resourceDeleteDescription;
-        private List<MethodJvaf> otherInnerMethods;
+        private List<FluentMethod> otherMethods;
+        private FluentModel standardFluentModel;
+        private Dictionary<string, CompositeTypeJvaf> innersRequireWrapping;
+
+
+        private Dictionary<string, FluentModel> fluentModels;
+        private bool derivedFluentModels;
 
         public FluentMethodGroup()
         {
@@ -40,17 +48,17 @@ namespace AutoRest.Java.Azure.Fluent.Model
 
         public int Level { get; set; }
 
-        public String JavaInterfaceName 
+        public String JavaInterfaceName
         {
             get; set;
         }
 
-        public String LocalName 
-        { 
-            get 
+        public String LocalName
+        {
+            get
             {
                 return this.localName;
-            } 
+            }
             set
             {
                 this.localName = $"{value.First().ToString().ToUpper()}{value.Substring(1)}";
@@ -76,7 +84,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
         {
             get
             {
-                return  LocalName.TrimEnd('s');
+                return LocalName.TrimEnd('s');
             }
         }
 
@@ -98,14 +106,14 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        public String ExtendsFrom
+        public string ExtendsFrom
         {
             get
             {
                 List<string> extends = new List<string>();
                 if (this.ResourceCreateDescription.SupportsCreating)
                 {
-                    extends.Add("SupportsCreating<object>");
+                    extends.Add($"SupportsCreating<{this.ResourceCreateDescription.CreateMethod.ReturnModel.JavaInterfaceName}>");
                 }
                 if (this.ResourceDeleteDescription.SupportsDeleteByResourceGroup)
                 {
@@ -113,16 +121,18 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 }
                 if (this.ResourceGetDescription.SupportsGetByResourceGroup)
                 {
-                    extends.Add("SupportsGettingByResourceGroup<object>");
+                    extends.Add($"SupportsGettingByResourceGroup<{this.ResourceGetDescription.GetByResourceGroupMethod.ReturnModel.JavaInterfaceName}>");
                 }
                 if (this.ResourceListingDescription.SupportsListByResourceGroup)
                 {
-                    extends.Add("SupportsListingByResourceGroup<object>");
+                    extends.Add($"SupportsListingByResourceGroup<{this.ResourceListingDescription.ListByResourceGroupMethod.ReturnModel.JavaInterfaceName}>");
                 }
                 if (this.ResourceListingDescription.SupportsListBySubscription)
                 {
-                    extends.Add("SupportsListing<object>");
+                    extends.Add($"SupportsListing<{this.ResourceListingDescription.ListBySubscriptionMethod.ReturnModel.JavaInterfaceName}>");
                 }
+
+                extends.Add($"HasInner<{this.InnerMethodGroup.MethodGroupImplType}>");
 
                 if (extends.Count() > 0)
                 {
@@ -140,93 +150,111 @@ namespace AutoRest.Java.Azure.Fluent.Model
             get
             {
                 HashSet<string> imports = new HashSet<string>();
-                if (this.ResourceCreateDescription.SupportsCreating)
+                imports.AddRange(this.ResourceCreateDescription.Imports);
+                imports.AddRange(this.ResourceDeleteDescription.Imports);
+                imports.AddRange(this.ResourceGetDescription.Imports);
+                imports.AddRange(this.ResourceListingDescription.Imports);
+
+                bool anyReturnCompletable = OtherMethods
+                    .Select(m => m.InnerMethod)
+                    .Any(m => m.HttpMethod == HttpMethod.Post || m.HttpMethod == HttpMethod.Delete);
+
+                if (anyReturnCompletable)
                 {
-                    imports.Add("com.microsoft.azure.management.resources.fluentcore.collection");
+                    imports.Add("rx.Completable");
                 }
-                if (this.ResourceDeleteDescription.SupportsDeleteByResourceGroup)
+
+                bool anyReturnObservable = OtherMethods
+                    .Select(m => m.InnerMethod)
+                    .Any(m => m.HttpMethod != HttpMethod.Post && m.HttpMethod == HttpMethod.Delete);
+
+                if (anyReturnObservable)
                 {
-                    imports.Add("com.microsoft.azure.management.resources.fluentcore.collection");
+                    imports.Add("rx.Observable");
                 }
-                if (this.ResourceGetDescription.SupportsGetByResourceGroup)
-                {
-                    imports.Add("com.microsoft.azure.management.resources.fluentcore.collection");
-                }
-                if (this.ResourceListingDescription.SupportsListByResourceGroup)
-                {
-                    imports.Add("com.microsoft.azure.management.resources.fluentcore.collection");
-                }
-                if (this.ResourceListingDescription.SupportsListBySubscription)
-                {
-                    imports.Add("com.microsoft.azure.management.resources.fluentcore.collection");
-                }
+
+                imports.Add("com.microsoft.azure.management.resources.fluentcore.model");   // HasInner
+                imports.Add($"{Settings.Instance.Namespace.ToLower()}.implementation");
+
                 return imports;
             }
         }
 
-        public IEnumerable<MethodJvaf> OtherInnerMethods
+        public IEnumerable<FluentMethod> OtherMethods
         {
             get
             {
-                if (otherInnerMethods != null)
+                if (otherMethods != null)
                 {
-                    return this.otherInnerMethods;
+                    return this.otherMethods;
                 }
                 else
                 {
-                    HashSet<string> knownMethods = new HashSet<string>();
+                    HashSet<string> knownMethodNames = new HashSet<string>();
                     if (ResourceCreateDescription.SupportsCreating)
                     {
-                        knownMethods.Add(ResourceCreateDescription.InnerCreateMethod.Name.ToLowerInvariant());
+                        knownMethodNames.Add(ResourceCreateDescription.CreateMethod.Name.ToLowerInvariant());
                     }
 
                     if (ResourceUpdateDescription.SupportsUpdating)
                     {
-                        knownMethods.Add(ResourceUpdateDescription.InnerUpdateMethod.Name.ToLowerInvariant());
+                        knownMethodNames.Add(ResourceUpdateDescription.UpdateMethod.Name.ToLowerInvariant());
                     }
 
-                    if(ResourceListingDescription.SupportsListByImmediateParent)
+                    if (ResourceListingDescription.SupportsListByImmediateParent)
                     {
-                        knownMethods.Add(ResourceListingDescription.InnerListByImmediateParentMethod.Name.ToLowerInvariant());
+                        knownMethodNames.Add(ResourceListingDescription.ListByImmediateParentMethod.Name.ToLowerInvariant());
                     }
 
                     if (ResourceListingDescription.SupportsListByResourceGroup)
                     {
-                        knownMethods.Add(ResourceListingDescription.InnerListByResourceGroupMethod.Name.ToLowerInvariant());
+                        knownMethodNames.Add(ResourceListingDescription.ListByResourceGroupMethod.Name.ToLowerInvariant());
                     }
 
                     if (ResourceListingDescription.SupportsListBySubscription)
                     {
-                        knownMethods.Add(ResourceListingDescription.InnerListBySubscriptionMethod.Name.ToLowerInvariant());
+                        knownMethodNames.Add(ResourceListingDescription.ListBySubscriptionMethod.Name.ToLowerInvariant());
                     }
 
                     if (ResourceGetDescription.SupportsGetByImmediateParent)
                     {
-                        knownMethods.Add(ResourceGetDescription.InnerGetByImmediateParentMethod.Name.ToLowerInvariant());
+                        knownMethodNames.Add(ResourceGetDescription.GetByImmediateParentMethod.Name.ToLowerInvariant());
                     }
 
                     if (ResourceGetDescription.SupportsGetByResourceGroup)
                     {
-                        knownMethods.Add(ResourceGetDescription.InnerGetByResourceGroupMethod.Name.ToLowerInvariant());
+                        knownMethodNames.Add(ResourceGetDescription.GetByResourceGroupMethod.Name.ToLowerInvariant());
                     }
 
                     if (ResourceDeleteDescription.SupportsDeleteByImmediateParent)
                     {
-                        knownMethods.Add(ResourceDeleteDescription.InnerDeleteByImmediateParentMethod.Name.ToLowerInvariant());
+                        knownMethodNames.Add(ResourceDeleteDescription.DeleteByImmediateParentMethod.Name.ToLowerInvariant());
                     }
 
                     if (ResourceDeleteDescription.SupportsDeleteByResourceGroup)
                     {
-                        knownMethods.Add(ResourceDeleteDescription.InnerDeleteByResourceGroupMethod.Name.ToLowerInvariant());
+                        knownMethodNames.Add(ResourceDeleteDescription.DeleteByResourceGroupMethod.Name.ToLowerInvariant());
                     }
 
-                    this.otherInnerMethods = this.InnerMethods
-                        .Where(im => !knownMethods.Contains(im.Name.ToLowerInvariant()))
-                        .Select(im => im)
+                    this.otherMethods = this.InnerMethods
+                        .Where(im => !knownMethodNames.Contains(im.Name.ToLowerInvariant()))
+                        .Select(im => new FluentMethod(false, im, this))
                         .ToList();
 
-                    return this.otherInnerMethods;
+                    return this.otherMethods;
                 }
+            }
+        }
+
+        public Dictionary<string, FluentModel> FluentModels
+        {
+            get
+            {
+                if (this.fluentModels == null)
+                {
+                    this.fluentModels = new Dictionary<string, FluentModel>();
+                }
+                return this.fluentModels;
             }
         }
 
@@ -237,24 +265,24 @@ namespace AutoRest.Java.Azure.Fluent.Model
 
         public ResourceCreateDescription ResourceCreateDescription
         {
-            get 
+            get
             {
                 if (resourceCreateDescription == null)
                 {
                     this.resourceCreateDescription = new ResourceCreateDescription(this);
-                } 
+                }
                 return this.resourceCreateDescription;
             }
         }
 
         public ResourceUpdateDescription ResourceUpdateDescription
         {
-            get 
+            get
             {
                 if (resourceUpdateDescription == null)
                 {
                     this.resourceUpdateDescription = new ResourceUpdateDescription(this.ResourceCreateDescription, this);
-                } 
+                }
                 return this.resourceUpdateDescription;
             }
         }
@@ -292,6 +320,134 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     this.resourceDeleteDescription = new ResourceDeleteDescription(this);
                 }
                 return this.resourceDeleteDescription;
+            }
+        }
+
+        public FluentModel StandardFluentModel
+        {
+            get
+            {
+                if (!this.derivedFluentModels)
+                {
+                    throw new InvalidOperationException("DeriveFluentModelForMethodGroup requires to be invoked before InnersRequireWrapping");
+                }
+                return this.standardFluentModel;
+            }
+        }
+
+        public IEnumerable<FluentModel> OtherFluentModels
+        {
+            get
+            {
+                return this.OtherMethods
+                    .Select(om => om.ReturnModel);
+            }
+        }
+
+        public Dictionary<string, CompositeTypeJvaf> InnersRequireWrapping
+        {
+            get
+            {
+                if (!this.derivedFluentModels)
+                {
+                    throw new InvalidOperationException("DeriveFluentModelForMethodGroup requires to be invoked before InnersRequireWrapping");
+                }
+                return this.innersRequireWrapping;
+            }
+        }
+
+        internal void DeriveStandrdFluentModelForMethodGroup()
+        {
+            if (this.derivedFluentModels)
+            {
+                return;
+            }
+
+            this.derivedFluentModels = true;
+
+            // Find ONE fluent model used across "Standard methods"
+            //
+            // Derive an "inner model then a fluent model" that represents the
+            // return type of standard methods (SupportsCreating, SupportsListing)
+            // in this fluent model. We want all thoses standard methods to 
+            // return same fluent type though the inner methods can return 
+            // different inner model types.
+            //
+            CompositeTypeJvaf derivedInnerModel = null;
+            this.innersRequireWrapping = new Dictionary<string, CompositeTypeJvaf>();
+
+            if (ResourceGetDescription.SupportsGetByResourceGroup)
+            {
+                derivedInnerModel = ResourceGetDescription.GetByResourceGroupMethod.InnerReturnType;
+            }
+            else if (ResourceCreateDescription.SupportsCreating)
+            {
+                derivedInnerModel = ResourceCreateDescription.CreateMethod.InnerReturnType;
+            }
+            else if (ResourceListingDescription.SupportsListByResourceGroup)
+            {
+                derivedInnerModel = ResourceListingDescription.ListByResourceGroupMethod.InnerReturnType;
+            }
+            else if (ResourceListingDescription.SupportsListBySubscription)
+            {
+                derivedInnerModel = ResourceListingDescription.ListBySubscriptionMethod.InnerReturnType;
+            }
+            else if (ResourceGetDescription.SupportsGetByImmediateParent)
+            {
+                derivedInnerModel = ResourceGetDescription.GetByImmediateParentMethod.InnerReturnType;
+            }
+            else if (ResourceListingDescription.SupportsListByImmediateParent)
+            {
+                derivedInnerModel = ResourceListingDescription.ListByImmediateParentMethod.InnerReturnType;
+            }
+            else if (ResourceUpdateDescription.SupportsUpdating)
+            {
+                derivedInnerModel = ResourceUpdateDescription.UpdateMethod.InnerReturnType;
+            }
+
+            // For the "standard model" (FModel) in a FluentMethodGroup we need to gen "FModel wrapModel(ModelInner)"
+            // but if there are different ModelInner types mapping that needs to be mapped to the same FModel
+            // we will be generating one over load per inner -> FModel mapping
+            //
+            if (derivedInnerModel != null)
+            {
+                this.standardFluentModel = new FluentModel(derivedInnerModel);
+
+                if (ResourceGetDescription.SupportsGetByResourceGroup)
+                {
+                    var im = ResourceGetDescription.GetByResourceGroupMethod.InnerReturnType;
+                    this.innersRequireWrapping.AddIfNotExists(im.ClassName, im);
+                }
+                if (ResourceCreateDescription.SupportsCreating)
+                {
+                    var im = ResourceCreateDescription.CreateMethod.InnerReturnType;
+                    this.innersRequireWrapping.AddIfNotExists(im.ClassName, im);
+                }
+                if (ResourceListingDescription.SupportsListByResourceGroup)
+                {
+                    var im = ResourceListingDescription.ListByResourceGroupMethod.InnerReturnType;
+                    this.innersRequireWrapping.AddIfNotExists(im.ClassName, im);
+                }
+                if (ResourceListingDescription.SupportsListBySubscription)
+                {
+                    var im = ResourceListingDescription.ListBySubscriptionMethod.InnerReturnType;
+                    this.innersRequireWrapping.AddIfNotExists(im.ClassName, im);
+                }
+                if (ResourceGetDescription.SupportsGetByImmediateParent)
+                {
+                    var im = ResourceGetDescription.GetByImmediateParentMethod.InnerReturnType;
+                    this.innersRequireWrapping.AddIfNotExists(im.ClassName, im);
+                }
+                if (ResourceListingDescription.SupportsListByImmediateParent)
+                {
+                    var im = ResourceListingDescription.ListByImmediateParentMethod.InnerReturnType;
+                    this.innersRequireWrapping.AddIfNotExists(im.ClassName, im);
+                }
+                if (ResourceUpdateDescription.SupportsUpdating)
+                {
+                    var im = ResourceUpdateDescription.UpdateMethod.InnerReturnType;
+                    this.innersRequireWrapping.AddIfNotExists(im.ClassName, im);
+                }
             }
         }
 
@@ -342,7 +498,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
 
             if (parentFluentMethodGroupNames.Count() == 1)
             {
-                return new FluentMethodGroup() 
+                return new FluentMethodGroup()
                 {
                     LocalName = parentFluentMethodGroupNames[0],
                     Level = 0,
@@ -353,10 +509,10 @@ namespace AutoRest.Java.Azure.Fluent.Model
             {
                 if (httpMethod == HttpMethod.Post)
                 {
-                    if (!urlParts.Last().StartsWith("{") 
+                    if (!urlParts.Last().StartsWith("{")
                         && urlParts.Last().EqualsIgnoreCase(parentFluentMethodGroupNames.Last()))
                     {
-                        return new FluentMethodGroup() 
+                        return new FluentMethodGroup()
                         {
                             LocalName = parentFluentMethodGroupNames.SkipLast(1).Last(),
                             Level = parentFluentMethodGroupNames.Count() - 2,
@@ -389,10 +545,11 @@ namespace AutoRest.Java.Azure.Fluent.Model
                         Level = parentFluentMethodGroupNames.Count() - 1,
                         ParentMethodGroupNames = parentFluentMethodGroupNames.SkipLast(1).ToList()
                     };
-              }
+                }
             }
 
 
         }
+
     }
 }

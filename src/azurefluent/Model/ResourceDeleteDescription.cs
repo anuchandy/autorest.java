@@ -14,8 +14,8 @@ namespace AutoRest.Java.Azure.Fluent.Model
 
         private bool supportsDeleteByResourceGroup;
         private bool supportsDeleteByImmediateParent;
-        private MethodJvaf innerDeleteByResourceGroupMethod;
-        private MethodJvaf innerDeleteByImmediateParentMethod;
+        private FluentMethod deleteByResourceGroupMethod;
+        private FluentMethod deleteByImmediateParentMethod;
         public ResourceDeleteDescription(FluentMethodGroup fluentMethodGroup)
         {
             this.fluentMethodGroup = fluentMethodGroup;
@@ -45,7 +45,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        public MethodJvaf InnerDeleteByResourceGroupMethod
+        public FluentMethod DeleteByResourceGroupMethod
         {
             get
             {
@@ -53,11 +53,11 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 {
                     process();
                 }
-                return this.innerDeleteByResourceGroupMethod;
+                return this.deleteByResourceGroupMethod;
             }
         }
 
-        public MethodJvaf InnerDeleteByImmediateParentMethod
+        public FluentMethod DeleteByImmediateParentMethod
         {
             get
             {
@@ -65,9 +65,23 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 {
                     process();
                 }
-                return this.innerDeleteByImmediateParentMethod;
+                return this.deleteByImmediateParentMethod;
             }
         }
+
+        public HashSet<string> Imports
+        {
+            get
+            {
+                HashSet<string> imports = new HashSet<string>();
+                if (this.SupportsDeleteByResourceGroup || this.SupportsDeleteByImmediateParent)
+                {
+                    imports.Add("com.microsoft.azure.management.resources.fluentcore.collection");
+                }
+                return imports;
+            }
+        }
+
         private void process()
         {
             this.isProcessed = true;
@@ -101,7 +115,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                                             if (!this.supportsDeleteByResourceGroup)
                                             {
                                                 this.supportsDeleteByResourceGroup = true;
-                                                this.innerDeleteByResourceGroupMethod = innerMethod;
+                                                this.deleteByResourceGroupMethod = new FluentMethod(true, innerMethod, this.fluentMethodGroup);
                                             }
                                         }
                                     }
@@ -119,7 +133,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                                                 .EqualsIgnoreCase(parentMethodGroup.LocalName);
                                             if (this.supportsDeleteByImmediateParent)
                                             {
-                                                this.innerDeleteByImmediateParentMethod = innerMethod;
+                                                this.deleteByImmediateParentMethod = new FluentMethod(true, innerMethod, this.fluentMethodGroup);
                                             }
                                         }
                                     }

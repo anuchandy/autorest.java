@@ -14,9 +14,9 @@ namespace AutoRest.Java.Azure.Fluent.Model
         private bool supportsListByResourceGroup;
         private bool supportsListBySubscription;
         private bool supportsListByImmediateParent;
-        private MethodJvaf innerListByResourceGroupMethod;
-        private MethodJvaf innerListBySubscriptionMethod;
-        private MethodJvaf innerListByImmediateParentMethod;
+        private FluentMethod listByResourceGroupMethod;
+        private FluentMethod listBySubscriptionMethod;
+        private FluentMethod listByImmediateParentMethod;
 
         public ResourceListingDescription(FluentMethodGroup fluentMethodGroup) 
         {
@@ -59,7 +59,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        public MethodJvaf InnerListByResourceGroupMethod
+        public FluentMethod ListByResourceGroupMethod
         {
             get 
             {
@@ -67,11 +67,11 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 {
                     process();
                 }
-                return this.innerListByResourceGroupMethod;
+                return this.listByResourceGroupMethod;
             }
         }
 
-        public MethodJvaf InnerListBySubscriptionMethod
+        public FluentMethod ListBySubscriptionMethod
         {
             get 
             {
@@ -79,11 +79,11 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 {
                     process();
                 }
-                return this.innerListBySubscriptionMethod;
+                return this.listBySubscriptionMethod;
             }
         }
 
-        public MethodJvaf InnerListByImmediateParentMethod
+        public FluentMethod ListByImmediateParentMethod
         {
             get 
             {
@@ -91,7 +91,20 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 {
                     process();
                 }
-                return this.innerListByImmediateParentMethod;
+                return this.listByImmediateParentMethod;
+            }
+        }
+
+        public HashSet<string> Imports
+        {
+            get
+            {
+                HashSet<string> imports = new HashSet<string>();
+                if (this.SupportsListByResourceGroup || this.SupportsListBySubscription || this.SupportsListByImmediateParent)
+                {
+                    imports.Add("com.microsoft.azure.management.resources.fluentcore.collection");
+                }
+                return imports;
             }
         }
 
@@ -128,7 +141,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                                             if (!this.supportsListByResourceGroup)
                                             {
                                                 this.supportsListByResourceGroup = true;
-                                                this.innerListByResourceGroupMethod = innerMethod;
+                                                this.listByResourceGroupMethod = new FluentMethod(true, innerMethod, this.fluentMethodGroup);
                                             }
                                         }
                                         else
@@ -136,7 +149,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                                             if (!this.supportsListBySubscription)
                                             {
                                                 this.supportsListBySubscription = true;
-                                                this.innerListBySubscriptionMethod = innerMethod;
+                                                this.listBySubscriptionMethod = new FluentMethod(true, innerMethod, this.fluentMethodGroup);
                                             }
                                         }
                                     }
@@ -154,7 +167,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                                                 .EqualsIgnoreCase(parentMethodGroup.LocalName);
                                             if (this.supportsListByImmediateParent)
                                             {
-                                                this.innerListByImmediateParentMethod = innerMethod;
+                                                this.listByImmediateParentMethod = new FluentMethod(true, innerMethod, this.fluentMethodGroup);
                                             }
                                         }
                                     }

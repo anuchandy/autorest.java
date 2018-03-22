@@ -14,8 +14,9 @@ namespace AutoRest.Java.Azure.Fluent.Model
 
         private bool supportsGetByResourceGroup;
         private bool supportsGetByImmediateParent;
-        private MethodJvaf innerGetByResourceGroupMethod;
-        private MethodJvaf innerGetByImmediateParentMethod;
+        private FluentMethod getByResourceGroupMethod;
+        private FluentMethod getByImmediateParentMethod;
+
         public ResourceGetDescription(FluentMethodGroup fluentMethodGroup)
         {
             this.fluentMethodGroup = fluentMethodGroup;
@@ -45,7 +46,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        public MethodJvaf InnerGetByResourceGroupMethod
+        public FluentMethod GetByResourceGroupMethod
         {
             get
             {
@@ -53,11 +54,11 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 {
                     process();
                 }
-                return this.innerGetByResourceGroupMethod;
+                return this.getByResourceGroupMethod;
             }
         }
 
-        public MethodJvaf InnerGetByImmediateParentMethod
+        public FluentMethod GetByImmediateParentMethod
         {
             get
             {
@@ -65,9 +66,23 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 {
                     process();
                 }
-                return this.innerGetByImmediateParentMethod;
+                return this.getByImmediateParentMethod;
             }
         }
+
+        public HashSet<string> Imports
+        {
+            get
+            {
+                HashSet<string> imports = new HashSet<string>();
+                if (this.SupportsGetByResourceGroup || this.SupportsGetByImmediateParent)
+                {
+                    imports.Add("com.microsoft.azure.management.resources.fluentcore.collection");
+                }
+                return imports;
+            }
+        }
+
         private void process()
         {
             this.isProcessed = true;
@@ -101,7 +116,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                                             if (!this.supportsGetByResourceGroup)
                                             {
                                                 this.supportsGetByResourceGroup = true;
-                                                this.innerGetByResourceGroupMethod = innerMethod;
+                                                this.getByResourceGroupMethod = new FluentMethod(true, innerMethod, this.fluentMethodGroup);
                                             }
                                         }
                                     }
@@ -119,7 +134,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                                                 .EqualsIgnoreCase(parentMethodGroup.LocalName);
                                             if (this.supportsGetByImmediateParent)
                                             {
-                                                this.innerGetByImmediateParentMethod = innerMethod;
+                                                this.getByImmediateParentMethod = new FluentMethod(true, innerMethod, this.fluentMethodGroup);
                                             }
                                         }
                                     }
