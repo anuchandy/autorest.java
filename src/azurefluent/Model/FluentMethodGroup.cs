@@ -154,6 +154,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 imports.AddRange(this.ResourceDeleteDescription.Imports);
                 imports.AddRange(this.ResourceGetDescription.Imports);
                 imports.AddRange(this.ResourceListingDescription.Imports);
+                imports.Add($"{Settings.Instance.Namespace.ToLower()}.implementation.{InnerMethodGroup.Name.ToPascalCase()}Inner");
 
                 bool anyReturnCompletable = OtherMethods
                     .Select(m => m.InnerMethod)
@@ -173,8 +174,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     imports.Add("rx.Observable");
                 }
 
-                imports.Add("com.microsoft.azure.management.resources.fluentcore.model");   // HasInner
-                imports.Add($"{Settings.Instance.Namespace.ToLower()}.implementation");
+                imports.Add("com.microsoft.azure.management.resources.fluentcore.model.HasInner");
 
                 return imports;
             }

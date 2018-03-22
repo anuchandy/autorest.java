@@ -58,6 +58,10 @@ namespace AutoRest.Java.Azure.Fluent
             {
                 var fluentMethodGroupInterfaceTemplate = new FluentGroupableModelInterfaceTemplate { Model = fluentModel };
                 await Write(fluentMethodGroupInterfaceTemplate, $"{packagePath}/fluent/{fluentModel.JavaInterfaceName.ToPascalCase()}{ImplementationFileExtension}");
+
+                var fluentMethodGroupImplTemplate = new FluentGroupableModelImplTemplate { Model = fluentModel.Impl };
+                await Write(fluentMethodGroupImplTemplate, $"{packagePath}/fluent/implementation/{fluentModel.Impl.JvaClassName.ToPascalCase()}{ImplementationFileExtension}");
+
             }
 
             // Service client

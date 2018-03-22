@@ -13,6 +13,8 @@ namespace AutoRest.Java.Azure.Fluent.Model
 
         private readonly FluentMethodGroup fluentMethodGroup;
 
+        private GroupableFluentModelImpl impl;
+
         public GroupableFluentModel(FluentModel rawFluentModel, FluentMethodGroup fluentMethodGroup)
         {
             this.rawFluentModel = rawFluentModel;
@@ -24,6 +26,18 @@ namespace AutoRest.Java.Azure.Fluent.Model
             get
             {
                 return this.rawFluentModel.JavaInterfaceName;
+            }
+        }
+
+        public GroupableFluentModelImpl Impl
+        {
+            get
+            {
+                if (impl == null)
+                {
+                    this.impl = new GroupableFluentModelImpl(this);
+                }
+                return this.impl;
             }
         }
 
@@ -234,25 +248,43 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     imports.Add("com.microsoft.azure.management.resources.fluentcore.arm.models.GroupableResource");
                     imports.Add("com.microsoft.azure.management.resources.fluentcore.arm.models.Resource"); // Resource.DefinitionWithTags<WithCreate>
                 }
+
+                string thisPackage = this.Package;
+                IEnumerable<Property> properties = this.SettableLocalPropertiesOnCreate
+                    .Union(this.SettableLocalPropertiesOnUpdate)
+                    .Union(this.LocalProperties);
+
+                foreach (PropertyJvaf property in properties)
+                {
+                    var propertyImports = property.Imports;
+                    // var propertyImports = property.Imports.Where(import => !import.EqualsIgnoreCase(thisPackage));
+                    //
+                    if (property.ModelTypeName.EndsWith("Inner"))
+                    {
+                        imports.Add($"{InnerModel.Package}.{property.ModelTypeName}");
+                    }
+                    imports.AddRange(propertyImports);
+                }
+                imports.Add($"{InnerModel.Package}.{InnerModel.Name}");
                 return imports;
             }
         }
 
-        public List<FluentDefintionStage> RequiredDefinitionStages
+        public List<FluentDefinitionOrUpdateStage> RequiredDefinitionStages
         {
             get
             {
-                List<FluentDefintionStage> stages = new List<FluentDefintionStage>();
+                List<FluentDefinitionOrUpdateStage> stages = new List<FluentDefinitionOrUpdateStage>();
                 if (!this.SupportsCreating)
                 {
                     return stages;
                 }
 
                 IEnumerable<Property> properties = this.SettableLocalPropertiesOnCreate;
-                FluentDefintionStage currentStage = null;
+                FluentDefinitionOrUpdateStage currentStage = null;
                 foreach (Property pro in properties.Where(p => p.IsRequired))
                 {
-                    FluentDefintionStageMethod method = new FluentDefintionStageMethod
+                    FluentDefinitionOrUpdateStageMethod method = new FluentDefinitionOrUpdateStageMethod
                     {
                         Name = $"with{pro.Name.ToPascalCase()}",
                         ParameterType = pro.ModelTypeName,
@@ -261,12 +293,12 @@ namespace AutoRest.Java.Azure.Fluent.Model
 
                     if (currentStage == null)
                     {
-                        currentStage = new FluentDefintionStage(this.JavaInterfaceName, $"With{pro.Name.ToPascalCase()}");
+                        currentStage = new FluentDefinitionOrUpdateStage(this.JavaInterfaceName, $"With{pro.Name.ToPascalCase()}");
                         currentStage.Methods.Add(method);
                     }
                     else
                     {
-                        FluentDefintionStage nextStage = new FluentDefintionStage(this.JavaInterfaceName, $"With{pro.Name.ToPascalCase()}");
+                        FluentDefinitionOrUpdateStage nextStage = new FluentDefinitionOrUpdateStage(this.JavaInterfaceName, $"With{pro.Name.ToPascalCase()}");
                         nextStage.Methods.Add(method);
 
                         currentStage.Methods.ForEach(m =>
@@ -280,7 +312,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
 
                 if (currentStage != null)
                 {
-                    FluentDefintionStage creatableStage = new FluentDefintionStage(this.JavaInterfaceName, "WithCreate");
+                    FluentDefinitionOrUpdateStage creatableStage = new FluentDefinitionOrUpdateStage(this.JavaInterfaceName, "WithCreate");
                     currentStage.Methods.ForEach(m =>
                     {
                         m.NextStage = creatableStage;
@@ -289,27 +321,27 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 return stages;
             }
         }
-        public List<FluentDefintionStage> OptionalDefinitionStages
+        public List<FluentDefinitionOrUpdateStage> OptionalDefinitionStages
         {
             get
             {
-                List<FluentDefintionStage> stages = new List<FluentDefintionStage>();
+                List<FluentDefinitionOrUpdateStage> stages = new List<FluentDefinitionOrUpdateStage>();
                 if (!this.SupportsCreating)
                 {
                     return stages;
                 }
-                FluentDefintionStage creatableStage = new FluentDefintionStage(this.JavaInterfaceName, "WithCreate");
+                FluentDefinitionOrUpdateStage creatableStage = new FluentDefinitionOrUpdateStage(this.JavaInterfaceName, "WithCreate");
 
                 IEnumerable<Property> properties = this.SettableLocalPropertiesOnCreate;
                 foreach (Property pro in properties.Where(p => !p.IsRequired))
                 {
-                    FluentDefintionStageMethod method = new FluentDefintionStageMethod
+                    FluentDefinitionOrUpdateStageMethod method = new FluentDefinitionOrUpdateStageMethod
                     {
                         Name = $"with{pro.Name.ToPascalCase()}",
                         ParameterType = pro.ModelTypeName,
                         ParameterName = pro.Name
                     };
-                    FluentDefintionStage stage = new FluentDefintionStage(this.JavaInterfaceName, $"With{pro.Name.ToPascalCase()}");
+                    FluentDefinitionOrUpdateStage stage = new FluentDefinitionOrUpdateStage(this.JavaInterfaceName, $"With{pro.Name.ToPascalCase()}");
                     stage.Methods.Add(method);
                     stage.Methods.ForEach(m =>
                     {
@@ -321,27 +353,27 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        public List<FluentUpdateStage> UpdateStages
+        public List<FluentDefinitionOrUpdateStage> UpdateStages
         {
             get
             {
-                List<FluentUpdateStage> stages = new List<FluentUpdateStage>();
+                List<FluentDefinitionOrUpdateStage> stages = new List<FluentDefinitionOrUpdateStage>();
                 if (!this.SupportsCreating)
                 {
                     return stages;
                 }
-                FluentUpdateStage updateGrouping = new FluentUpdateStage(this.JavaInterfaceName, "Update");
+                FluentDefinitionOrUpdateStage updateGrouping = new FluentDefinitionOrUpdateStage(this.JavaInterfaceName, "Update");
 
                 IEnumerable<Property> properties = this.SettableLocalPropertiesOnUpdate;
                 foreach (Property pro in properties.Where(p => !p.IsRequired))
                 {
-                    FluentUpdateStageMethod method = new FluentUpdateStageMethod
+                    FluentDefinitionOrUpdateStageMethod method = new FluentDefinitionOrUpdateStageMethod
                     {
                         Name = $"with{pro.Name.ToPascalCase()}",
                         ParameterType = pro.ModelTypeName,
                         ParameterName = pro.Name
                     };
-                    FluentUpdateStage stage = new FluentUpdateStage(this.JavaInterfaceName, $"With{pro.Name.ToPascalCase()}");
+                    FluentDefinitionOrUpdateStage stage = new FluentDefinitionOrUpdateStage(this.JavaInterfaceName, $"With{pro.Name.ToPascalCase()}");
                     stage.Methods.Add(method);
                     stage.Methods.ForEach(m =>
                     {
@@ -364,7 +396,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                         "DefinitionStages.Blank",
                         "DefinitionStages.WithGroup"
                     };
-                    foreach (FluentDefintionStage stage in this.RequiredDefinitionStages)
+                    foreach (FluentDefinitionOrUpdateStage stage in this.RequiredDefinitionStages)
                     {
                         extends.Add($"DefinitionStages.{stage.Name}");
                     }
@@ -394,10 +426,10 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 {
                     List<string> extends = new List<string>
                     {
-                        $"Cretatable<{this.JavaInterfaceName}>",
+                        $"Creatable<{this.JavaInterfaceName}>",
                         "Resource.DefinitionWithTags<WithCreate>"
                     };
-                    foreach (FluentDefintionStage stage in this.OptionalDefinitionStages)
+                    foreach (FluentDefinitionOrUpdateStage stage in this.OptionalDefinitionStages)
                     {
                         extends.Add($"DefinitionStages.{stage.Name}");
                     }
@@ -444,7 +476,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                         $"Appliable<{this.JavaInterfaceName}>",
                         "Resource.UpdateWithTags<Update>"
                     };
-                    foreach (FluentUpdateStage stage in this.UpdateStages)
+                    foreach (FluentDefinitionOrUpdateStage stage in this.UpdateStages)
                     {
                         extends.Add($"UpdateStages.{stage.Name}");
                     }
@@ -488,6 +520,21 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
+        public string Package
+        {
+            get
+            {
+                if (InnerModel.Package.EndsWith(".implementation"))
+                {
+                    return InnerModel.Package.Substring(InnerModel.Package.Length - 15);
+                }
+                else
+                {
+                    return InnerModel.Package;
+                }
+            }
+        }
+
         private static List<string> ARMTrackedResourceProperties
         {
             get
@@ -522,27 +569,27 @@ namespace AutoRest.Java.Azure.Fluent.Model
         }
     }
 
-    public class FluentDefintionStage
+    public class FluentDefinitionOrUpdateStage
     {
         public string Comment { get; private set; }
 
         public string Name { get; private set; }
 
-        public List<FluentDefintionStageMethod> Methods { get; set; }
+        public List<FluentDefinitionOrUpdateStageMethod> Methods { get; set; }
 
-        public FluentDefintionStage(string resourcName, string name)
+        public FluentDefinitionOrUpdateStage(string resourcName, string name)
         {
             this.Name = name;
-            this.Methods = new List<FluentDefintionStageMethod>();
-            this.Comment = $"The stage of the {resourcName} defintion allowing to specify {name.Substring("With".Length)}.";
+            this.Methods = new List<FluentDefinitionOrUpdateStageMethod>();
+            this.Comment = $"The stage of the {resourcName} {{0}} allowing to specify {name.Substring("With".Length)}.";
         }
     }
 
-    public class FluentDefintionStageMethod
+    public class FluentDefinitionOrUpdateStageMethod
     {
         public string Name { get; set; }
 
-        public FluentDefintionStage NextStage { get; set; }
+        public FluentDefinitionOrUpdateStage NextStage { get; set; }
 
         public string ParameterType { get; set; }
 
@@ -555,39 +602,24 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 return $"Specifies {this.ParameterName}.";
             }
         }
-    }
 
-    public class FluentUpdateStage
-    {
-        public string Comment { get; private set; }
-
-        public string Name { get; private set; }
-
-        public List<FluentUpdateStageMethod> Methods { get; set; }
-
-        public FluentUpdateStage(string resourcName, string name)
+        public static IEqualityComparer<FluentDefinitionOrUpdateStageMethod> EqualityComparer()
         {
-            this.Name = name;
-            this.Methods = new List<FluentUpdateStageMethod>();
-            this.Comment = $"The stage of the {resourcName} update allowing to specify {name.Substring("With".Length)}.";
+            return new FDUSComparerBasedOnSignature();
         }
-    }
 
-    public class FluentUpdateStageMethod
-    {
-        public string Name { get; set; }
-
-        public FluentUpdateStage NextStage { get; set; }
-
-        public string ParameterType { get; set; }
-
-        public string ParameterName { get; set; }
-
-        public string Comment
+        class FDUSComparerBasedOnSignature : IEqualityComparer<FluentDefinitionOrUpdateStageMethod>
         {
-            get
+            public bool Equals(FluentDefinitionOrUpdateStageMethod x, FluentDefinitionOrUpdateStageMethod y)
             {
-                return $"Specifies {this.ParameterName}.";
+                string s1 = $"{x.Name}_{x.ParameterType}";
+                string s2 = $"{y.Name}_{y.ParameterType}";
+                return s1.Equals(s2);
+            }
+
+            public int GetHashCode(FluentDefinitionOrUpdateStageMethod obj)
+            {
+                return $"{obj.Name}_{obj.ParameterType}".GetHashCode();
             }
         }
     }

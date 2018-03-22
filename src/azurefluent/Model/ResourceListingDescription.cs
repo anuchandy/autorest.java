@@ -100,9 +100,13 @@ namespace AutoRest.Java.Azure.Fluent.Model
             get
             {
                 HashSet<string> imports = new HashSet<string>();
-                if (this.SupportsListByResourceGroup || this.SupportsListBySubscription || this.SupportsListByImmediateParent)
+                if (this.SupportsListByResourceGroup)
                 {
-                    imports.Add("com.microsoft.azure.management.resources.fluentcore.collection");
+                    imports.Add("com.microsoft.azure.management.resources.fluentcore.arm.collection.SupportsListingByResourceGroup");
+                }
+                if (this.SupportsListBySubscription)
+                {
+                    imports.Add("com.microsoft.azure.management.resources.fluentcore.collection.SupportsListing");
                 }
                 return imports;
             }

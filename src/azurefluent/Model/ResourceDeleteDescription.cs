@@ -74,9 +74,9 @@ namespace AutoRest.Java.Azure.Fluent.Model
             get
             {
                 HashSet<string> imports = new HashSet<string>();
-                if (this.SupportsDeleteByResourceGroup || this.SupportsDeleteByImmediateParent)
+                if (this.SupportsDeleteByResourceGroup)
                 {
-                    imports.Add("com.microsoft.azure.management.resources.fluentcore.collection");
+                    imports.Add("com.microsoft.azure.management.resources.fluentcore.arm.collection.SupportsDeletingByResourceGroup");
                 }
                 return imports;
             }

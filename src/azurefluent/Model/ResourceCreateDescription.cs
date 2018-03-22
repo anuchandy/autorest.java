@@ -71,7 +71,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 HashSet<string> imports = new HashSet<string>();
                 if (this.SupportsCreating)
                 {
-                    imports.Add("com.microsoft.azure.management.resources.fluentcore.collection");
+                    imports.Add("com.microsoft.azure.management.resources.fluentcore.collection.SupportsCreating");
                 }
                 return imports;
             }

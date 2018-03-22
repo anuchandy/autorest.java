@@ -44,7 +44,26 @@ namespace AutoRest.Java.Azure.Fluent.Model
             {
                 if (this.createDescription.SupportsCreating)
                 {
-                    return this.createDescription.CreateMethod;
+                    if (this.createDescription.CreateMethod.Name.StartsWith("CreateOrUpdate", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // In fluent we prefer PUT if that can be used for both create & update
+                        //
+                        return this.createDescription.CreateMethod;
+                    }
+
+                    if (this.supportsUpdating == null)
+                    {
+                        this.process();
+                    }
+
+                    if (this.updateMethod == null)
+                    {
+                        return this.createDescription.CreateMethod;
+                    }
+                    else
+                    {
+                        return this.updateMethod;
+                    }
                 }
                 else if (this.supportsUpdating == null)
                 {

@@ -1,0 +1,73 @@
+﻿@using System
+@using AutoRest.Java
+@using AutoRest.Java.vanilla.Templates
+@using AutoRest.Java.azure.Templates
+@using System.Linq
+@using AutoRest.Core.Utilities
+@using AutoRest.Java.Model
+@using AutoRest.Java.Azure.Model
+@using  AutoRest.Java.Azure.Fluent.Model;
+@inherits AutoRest.Core.Template<AutoRest.Java.Azure.Fluent.Model.GroupableFluentModelImpl>
+/**
+@Header(" * ").TrimMultilineHeader()
+ */
+@EmptyLine
+
+package @(Settings.Namespace.ToLower()).fluent.implementation;
+
+@EmptyLine
+
+class @(Model.JvaClassName) {
+@foreach (string declareVariable in Model.DeclareCreateAndUpdateVariables)
+{
+@:    @declareVariable
+}
+
+    @(Model.JvaClassName)() {
+@foreach (string initvariable in Model.InitCreateAndUpdateVariables)
+{
+@:        @initvariable
+}
+    }
+
+@foreach (FluentDefinitionOrUpdateStageMethod createWither in Model.CreateOnlyWither)
+{
+@EmptyLine
+@:    public @(Model.JvaClassName) @(createWither.Name)() {
+@:        @(Model.CreateParameter).@(createWither.Name)();
+@:        return this;
+@:    }
+}
+
+@foreach (FluentDefinitionOrUpdateStageMethod updateWither in Model.UpdateOnlyWithers)
+{
+@EmptyLine
+@:    public @(Model.JvaClassName) @(updateWither.Name)() {
+@:        @(Model.UpdateParameter).@(updateWither.Name)();
+@:        return this;
+@:    }
+}
+
+@foreach (FluentDefinitionOrUpdateStageMethod cuWither in Model.CreateAndUpdateWithers)
+{
+@EmptyLine
+
+@:    public @(Model.JvaClassName) @(cuWither.Name)() {
+@:        @if (Model.IsCreateUpdateTypeSame)
+          {
+@:        @(Model.CreateParameter).@(cuWither.Name)();
+          }
+          else
+          {
+<text>
+        if (isInCreateModel()) {
+            @(Model.CreateParameter).@(cuWither.Name)();
+        } else {
+            @(Model.UpdateParameter).@(cuWither.Name)();
+        }
+</text>
+          }
+@:        return this;
+@:    }
+}
+}
