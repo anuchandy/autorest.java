@@ -123,7 +123,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        public bool IsCreateUpdateTypeSame
+        public bool IsCreateUpdateInnerTypeSame
         {
             get
             {
@@ -133,15 +133,46 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
+        public bool IsCreateUpdateInnerMethodSame
+        {
+            get
+            {
+                if (this.Interface.SupportsCreating)
+                {
+                    if (this.Interface.SupportsUpdating)
+                    {
+                        var createMethod = this.Interface.FluentMethodGroup.ResourceCreateDescription.CreateMethod;
+                        var updateMethod = this.Interface.FluentMethodGroup.ResourceUpdateDescription.UpdateMethod;
+                        return createMethod.Name.Equals(updateMethod.Name);
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException("Should be called only if SupportsUpdating is true");
+                    }
+                }
+                else if (this.Interface.SupportsUpdating)
+                {
+                    return false;
+                }
+                else
+                {
+                    throw new InvalidOperationException("Should be called only if SupportsUpdating is true");
+                }
+            }
+        }
+
         public HashSet<string> Imports
         {
             get
             {
                 HashSet<string> imports = new HashSet<string>();
                 imports.AddRange(this.Interface.PropertiesAndMethodImports);
-                imports.Add($"{this.Interface.Package}.{this.Interface.JavaInterfaceName}");
+                imports.Add("com.microsoft.azure.management.resources.fluentcore.arm.models.implementation.GroupableResourceImpl");
+                imports.Add($"{this.Interface.InnerModel.Package}.{this.Interface.InnerModel.Name}");
+                imports.Add($"{this.Interface.Package}.fluent.{this.Interface.JavaInterfaceName}");
                 imports.Add($"{this.Interface.CreatePayloadInnerModel.Package}.{this.Interface.CreatePayloadInnerModel.Name}");
                 imports.Add($"{this.Interface.UpdatePayloadInnerModel.Package}.{this.Interface.UpdatePayloadInnerModel.Name}");
+                imports.Add("rx.Observable");
                 return imports;
             }
         }
@@ -150,7 +181,10 @@ namespace AutoRest.Java.Azure.Fluent.Model
         {
             get
             {
-                return String.Empty;
+                return $" extends GroupableResourceImpl<{this.Interface.JavaInterfaceName}, " +
+                    $"{this.Interface.InnerModel.Name}, " +
+                    $"{this.JvaClassName}, " +
+                    $"Object>";
             }
         }
 

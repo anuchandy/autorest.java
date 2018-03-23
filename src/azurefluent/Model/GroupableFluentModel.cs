@@ -11,14 +11,17 @@ namespace AutoRest.Java.Azure.Fluent.Model
     {
         private readonly FluentModel rawFluentModel;
 
-        private readonly FluentMethodGroup fluentMethodGroup;
+        public FluentMethodGroup FluentMethodGroup
+        {
+            get; private set;
+        }
 
         private GroupableFluentModelImpl impl;
 
         public GroupableFluentModel(FluentModel rawFluentModel, FluentMethodGroup fluentMethodGroup)
         {
             this.rawFluentModel = rawFluentModel;
-            this.fluentMethodGroup = fluentMethodGroup;
+            this.FluentMethodGroup = fluentMethodGroup;
         }
 
         public string JavaInterfaceName
@@ -65,8 +68,8 @@ namespace AutoRest.Java.Azure.Fluent.Model
         {
             get
             {
-                return this.fluentMethodGroup.ResourceCreateDescription.SupportsCreating
-                    && this.fluentMethodGroup.ResourceCreateDescription.CreateType == CreateType.WithResourceGroupAsParent;
+                return this.FluentMethodGroup.ResourceCreateDescription.SupportsCreating
+                    && this.FluentMethodGroup.ResourceCreateDescription.CreateType == CreateType.WithResourceGroupAsParent;
             }
         }
 
@@ -74,7 +77,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
         {
             get
             {
-                return this.fluentMethodGroup.ResourceListingDescription.SupportsListByResourceGroup;
+                return this.FluentMethodGroup.ResourceListingDescription.SupportsListByResourceGroup;
             }
         }
 
@@ -82,7 +85,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
         {
             get
             {
-                return this.fluentMethodGroup.ResourceGetDescription.SupportsGetByResourceGroup;
+                return this.FluentMethodGroup.ResourceGetDescription.SupportsGetByResourceGroup;
             }
         }
 
@@ -90,7 +93,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
         {
             get
             {
-                return this.fluentMethodGroup.ResourceUpdateDescription.SupportsUpdating;
+                return this.FluentMethodGroup.ResourceUpdateDescription.SupportsUpdating;
             }
         }
 
@@ -108,7 +111,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
             {
                 if (this.SupportsCreating)
                 {
-                    FluentMethod createMethod = this.fluentMethodGroup.ResourceCreateDescription.CreateMethod;
+                    FluentMethod createMethod = this.FluentMethodGroup.ResourceCreateDescription.CreateMethod;
                     if (createMethod.InnerMethod.Body is ParameterJv parameter)
                     {
                         if (parameter.ClientType is CompositeTypeJvaf compositeType)
@@ -138,7 +141,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
             {
                 if (this.SupportsUpdating)
                 {
-                    FluentMethod updateMethod = this.fluentMethodGroup.ResourceUpdateDescription.UpdateMethod;
+                    FluentMethod updateMethod = this.FluentMethodGroup.ResourceUpdateDescription.UpdateMethod;
                     if (updateMethod.InnerMethod.Body is ParameterJv parameter)
                     {
                         if (parameter.ClientType is CompositeTypeJvaf compositeType)

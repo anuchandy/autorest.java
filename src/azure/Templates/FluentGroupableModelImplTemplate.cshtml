@@ -29,12 +29,22 @@ class @(Model.JvaClassName)@(Model.ExtendsFrom)@(Model.Implements) {
 @:    @declareVariable
 }
 
-    @(Model.JvaClassName)() {
+    @(Model.JvaClassName)(String name, @(Model.Interface.InnerModel.Name) inner, Object manager) {
+        super(name, inner, manager);
 @foreach (string initvariable in Model.InitCreateAndUpdateVariables)
 {
 @:        @initvariable
 }
     }
+
+@foreach (PropertyJv property in Model.Interface.LocalProperties)
+{
+@EmptyLine
+@:    @@Override
+@:    public @(((IModelTypeJv)property.ModelType).ResponseVariant.Name) @(property.Name.ToCamelCase())() {
+@:        return this.inner().@(property.Name.ToCamelCase())();
+@:    }
+}
 
 @foreach (FluentDefinitionOrUpdateStageMethod createWither in Model.CreateOnlyWither)
 {
@@ -68,8 +78,8 @@ class @(Model.JvaClassName)@(Model.ExtendsFrom)@(Model.Implements) {
     var methodSignature = $"{Model.JvaClassName} {cuWither.Name}({cuWither.ParameterType} {cuWither.ParameterName})";
 @:    @@Override
 @:    public @(methodSignature) {
-@:        @if (Model.IsCreateUpdateTypeSame)
-          {
+@:        @if (Model.IsCreateUpdateInnerTypeSame)
+{
 <text>
         @(Model.CreateParameter).@(cuWither.Name)(@(cuWither.ParameterName));
 </text>
@@ -77,7 +87,7 @@ class @(Model.JvaClassName)@(Model.ExtendsFrom)@(Model.Implements) {
           else
           {
 <text>
-        if (isInCreateModel()) {
+        if (isInCreateMode()) {
             @(Model.CreateParameter).@(cuWither.Name)(@(cuWither.ParameterName));
         } else {
             @(Model.UpdateParameter).@(cuWither.Name)(@(cuWither.ParameterName));
@@ -87,4 +97,24 @@ class @(Model.JvaClassName)@(Model.ExtendsFrom)@(Model.Implements) {
 @:        return this;
 @:    }
 }
+@EmptyLine
+    @@Override
+    public Observable<@(Model.Interface.JavaInterfaceName)> createResourceAsync() {
+        return null;
+    }
+    @if (Model.Interface.SupportsUpdating && !Model.IsCreateUpdateInnerMethodSame)
+    {
+<text>
+@EmptyLine
+    @@Override
+    public Observable<@(Model.Interface.JavaInterfaceName)> updateResourceAsync() {
+        return null;
+    }
+</text>
+    }
+@EmptyLine
+    @@Override
+    protected Observable<@(Model.Interface.InnerModel.Name)> getInnerAsync() {
+        return null;
+    }
 }
