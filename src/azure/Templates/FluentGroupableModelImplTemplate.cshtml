@@ -29,7 +29,7 @@ class @(Model.JvaClassName)@(Model.ExtendsFrom)@(Model.Implements) {
 @:    @declareVariable
 }
 
-    @(Model.JvaClassName)(String name, @(Model.Interface.InnerModel.Name) inner, Object manager) {
+    @(Model.JvaClassName)(String name, @(Model.InnerModelTypeName) inner, Object manager) {
         super(name, inner, manager);
 @foreach (string initvariable in Model.InitCreateAndUpdateVariables)
 {
@@ -100,21 +100,27 @@ class @(Model.JvaClassName)@(Model.ExtendsFrom)@(Model.Implements) {
 @EmptyLine
     @@Override
     public Observable<@(Model.Interface.JavaInterfaceName)> createResourceAsync() {
-        return null;
+        final @(Model.InnerMethodGroupTypeName) client = this.manager().inner().@(Model.Interface.FluentMethodGroup.InnerMethodGroup.Name)();
+        @if(Model.Interface.SupportsCreating) {
+@:        return @(Model.CreateInvocation);
+        } else {
+@:        return null;
+        }
     }
-    @if (Model.Interface.SupportsUpdating && !Model.IsCreateUpdateInnerMethodSame)
+    @if (Model.NeedUpdateResourceAsyncMethod)
     {
 <text>
 @EmptyLine
     @@Override
     public Observable<@(Model.Interface.JavaInterfaceName)> updateResourceAsync() {
-        return null;
+        final @(Model.Interface.FluentMethodGroup.InnerMethodGroup.MethodGroupImplType) client = this.manager().inner().@(Model.Interface.FluentMethodGroup.InnerMethodGroup.Name)();
+        return @(Model.UpdateInvocation);
     }
 </text>
     }
 @EmptyLine
     @@Override
-    protected Observable<@(Model.Interface.InnerModel.Name)> getInnerAsync() {
+    protected Observable<@(Model.InnerModelTypeName)> getInnerAsync() {
         return null;
     }
 }

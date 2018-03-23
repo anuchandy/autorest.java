@@ -7,15 +7,12 @@ using System.Linq;
 
 namespace AutoRest.Java.Azure.Fluent.Model
 {
+    /// <summary>
+    /// The interface-metadata model that can generate a groupable model interface.
+    /// </summary>
     public class GroupableFluentModel
     {
         private readonly FluentModel rawFluentModel;
-
-        public FluentMethodGroup FluentMethodGroup
-        {
-            get; private set;
-        }
-
         private GroupableFluentModelImpl impl;
 
         public GroupableFluentModel(FluentModel rawFluentModel, FluentMethodGroup fluentMethodGroup)
@@ -24,6 +21,17 @@ namespace AutoRest.Java.Azure.Fluent.Model
             this.FluentMethodGroup = fluentMethodGroup;
         }
 
+        /// <summary>
+        /// The fluent method group that this groupable model interface belongs to.
+        /// </summary>
+        public FluentMethodGroup FluentMethodGroup
+        {
+            get; private set;
+        }
+
+        /// <summary>
+        /// Name of the Java interface this interface-metadata model generates.
+        /// </summary>
         public string JavaInterfaceName
         {
             get
@@ -32,6 +40,10 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
+        /// <summary>
+        /// Returns the impl-metadata model that generates the Java implementation that
+        /// this groupable model interface implements.
+        /// </summary>
         public GroupableFluentModelImpl Impl
         {
             get
@@ -44,26 +56,9 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        public IEnumerable<Property> LocalProperties
-        {
-            get
-            {
-                List<string> armTrackedResourceProperties = new List<string>
-                {
-                    "id",
-                    "type",
-                    "name",
-                    "location",
-                    "tags"
-                };
-
-                CompositeTypeJvaf innerModel = this.InnerModel;
-                return innerModel.ComposedProperties
-                       .OrderBy(p => p.Name.ToLowerInvariant())
-                       .Where(p => !armTrackedResourceProperties.Contains(p.Name.ToString(), StringComparer.OrdinalIgnoreCase));
-            }
-        }
-
+        /// <summary>
+        /// Checks this groupable model interface represents an azure resource can be created under a resource group.
+        /// </summary>
         public bool SupportsCreating
         {
             get
@@ -73,6 +68,9 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
+        /// <summary>
+        /// Checks this groupable model interface represents an azure resource which supports listing in a resource group.
+        /// </summary>
         private bool SupportsListing
         {
             get
@@ -81,6 +79,9 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
+        /// <summary>
+        /// Checks this groupable model interface represents an azure resource which supports getting in a resource group.
+        /// </summary>
         private bool SupportsGetting
         {
             get
@@ -89,6 +90,9 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
+        /// <summary>
+        /// Checks this groupable model interface represents an azure resource can updated in the context of a resource group.
+        /// </summary>
         public bool SupportsUpdating
         {
             get
@@ -97,6 +101,9 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
+        /// <summary>
+        /// The metadata of inner model that the groupable model interface wraps.
+        /// </summary>
         public CompositeTypeJvaf InnerModel
         {
             get
@@ -105,6 +112,9 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
+        /// <summary>
+        /// The metadata of inner model used as palyload to create the azure resource that groupable interface wraps.
+        /// </summary>
         public CompositeTypeJvaf CreatePayloadInnerModel
         {
             get
@@ -135,6 +145,9 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
+        /// <summary>
+        /// The metadata of inner model used as palyload to update the azure resource that groupable interface wraps.
+        /// </summary>
         public CompositeTypeJvaf UpdatePayloadInnerModel
         {
             get
@@ -165,36 +178,9 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        public bool IsInnerModelAndCreatePayloadInnerModelSame
-        {
-            get
-            {
-                if (this.SupportsCreating)
-                {
-                    return this.InnerModel.Name.EqualsIgnoreCase(this.CreatePayloadInnerModel.Name);
-                }
-                else
-                {
-                    return true;
-                }
-            }
-        }
-
-        public bool IsInnerModelAndUpdatePayloadInnerModelSame
-        {
-            get
-            {
-                if (this.SupportsUpdating)
-                {
-                    return this.InnerModel.Name.EqualsIgnoreCase(this.UpdatePayloadInnerModel.Name);
-                }
-                else
-                {
-                    return true;
-                }
-            }
-        }
-
+        /// <summary>
+        /// The interfaces that the groupable model interface extends from.
+        /// </summary>
         public string ExtendsFrom
         {
             get
@@ -227,6 +213,9 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
+        /// <summary>
+        /// All the imports needs by the groupable resource interface.
+        /// </summary>
         public HashSet<string> Imports
         {
             get
@@ -261,6 +250,9 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
+        /// <summary>
+        /// The import needed by the properties and methods exposed in the groupable resource group.
+        /// </summary>
         public HashSet<string> PropertiesAndMethodImports
         {
             get
@@ -286,6 +278,9 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
+        /// <summary>
+        /// Returns the defintion stages containing the methods setting required properties.
+        /// </summary>
         public List<FluentDefinitionOrUpdateStage> RequiredDefinitionStages
         {
             get
@@ -337,6 +332,10 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 return stages;
             }
         }
+
+        /// <summary>
+        /// Returns the defintion stages containing the methods setting optional properties.
+        /// </summary>
         public List<FluentDefinitionOrUpdateStage> OptionalDefinitionStages
         {
             get
@@ -369,6 +368,9 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
+        /// <summary>
+        /// Returns the update stages containing the methods to set update time properties.
+        /// </summary>
         public List<FluentDefinitionOrUpdateStage> UpdateStages
         {
             get
@@ -401,6 +403,9 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
+        /// <summary>
+        /// The comma seperated interfaces that defintion interface extednds from.
+        /// </summary>
         public string DefinitionExtendsFrom
         {
             get
@@ -434,6 +439,9 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
+        /// <summary>
+        /// The comma seperated interfaces that WithCreate interface extednds from.
+        /// </summary>
         public string WithCreateExtendsFrom
         {
             get
@@ -458,6 +466,9 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
+        /// <summary>
+        /// Returns the name of the interface representing the next stage after resource group.
+        /// </summary>
         public string StageAfterResourceGroup
         {
             get
@@ -481,6 +492,9 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
+        /// <summary>
+        /// The comma seperated interfaces that update interface extednds from.
+        /// </summary>
         public string UpdateExtendsFrom
         {
             get
@@ -513,6 +527,23 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
+        /// <summary>
+        /// The properties exposed by the groupable model interface.
+        /// </summary>
+        public IEnumerable<Property> LocalProperties
+        {
+            get
+            {
+                CompositeTypeJvaf innerModel = this.InnerModel;
+                return innerModel.ComposedProperties
+                       .OrderBy(p => p.Name.ToLowerInvariant())
+                       .Where(p => !ARMTrackedResourceProperties.Contains(p.Name.ToString(), StringComparer.OrdinalIgnoreCase));
+            }
+        }
+
+        /// <summary>
+        /// The properties of the create inner payload that are settable.
+        /// </summary>
         private IEnumerable<Property> SettableLocalPropertiesOnCreate
         {
             get
@@ -525,6 +556,9 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
+        /// <summary>
+        /// The properties of the update inner payload that are settable.
+        /// </summary>
         private IEnumerable<Property> SettableLocalPropertiesOnUpdate
         {
             get
@@ -536,6 +570,9 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
+        /// <summary>
+        /// The java package this groupable model inteface belongs to.
+        /// </summary>
         public string Package
         {
             get

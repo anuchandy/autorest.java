@@ -33,6 +33,8 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 {
                     if (innerMethod.Name.ToLowerInvariant().StartsWith("begin"))
                     {
+                        // Skip LRO begin methods
+                        //
                         continue;
                     }
                     if (String.IsNullOrEmpty(innerMethod.FluentUrl()))
