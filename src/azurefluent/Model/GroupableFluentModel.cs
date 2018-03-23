@@ -228,9 +228,11 @@ namespace AutoRest.Java.Azure.Fluent.Model
         {
             get
             {
-                HashSet<string> imports = new HashSet<string>();
-                imports.Add("com.microsoft.azure.management.resources.fluentcore.model.HasInner");
-                imports.Add("com.microsoft.azure.management.resources.fluentcore.arm.models.HasResourceGroup");
+                HashSet<string> imports = new HashSet<string>
+                {
+                    "com.microsoft.azure.management.resources.fluentcore.model.HasInner",
+                    "com.microsoft.azure.management.resources.fluentcore.arm.models.HasResourceGroup"
+                };
                 if (this.SupportsGetting)
                 {
                     imports.Add("com.microsoft.azure.management.resources.fluentcore.model.Refreshable");
@@ -249,6 +251,18 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     imports.Add("com.microsoft.azure.management.resources.fluentcore.arm.models.Resource"); // Resource.DefinitionWithTags<WithCreate>
                 }
 
+                imports.AddRange(PropertiesAndMethodImports);
+
+                imports.Add($"{InnerModel.Package}.{InnerModel.Name}");
+                return imports;
+            }
+        }
+
+        public HashSet<string> PropertiesAndMethodImports
+        {
+            get
+            {
+                HashSet<string> imports = new HashSet<string>();
                 string thisPackage = this.Package;
                 IEnumerable<Property> properties = this.SettableLocalPropertiesOnCreate
                     .Union(this.SettableLocalPropertiesOnUpdate)
@@ -265,7 +279,6 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     }
                     imports.AddRange(propertyImports);
                 }
-                imports.Add($"{InnerModel.Package}.{InnerModel.Name}");
                 return imports;
             }
         }
@@ -526,7 +539,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
             {
                 if (InnerModel.Package.EndsWith(".implementation"))
                 {
-                    return InnerModel.Package.Substring(InnerModel.Package.Length - 15);
+                    return InnerModel.Package.Substring(0, InnerModel.Package.Length - 15);
                 }
                 else
                 {

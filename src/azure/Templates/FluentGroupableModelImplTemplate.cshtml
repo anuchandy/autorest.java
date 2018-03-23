@@ -17,7 +17,13 @@ package @(Settings.Namespace.ToLower()).fluent.implementation;
 
 @EmptyLine
 
-class @(Model.JvaClassName) {
+@foreach (var importClass in Model.Imports)
+{
+@:import @importClass;
+}
+@EmptyLine
+
+class @(Model.JvaClassName)@(Model.ExtendsFrom)@(Model.Implements) {
 @foreach (string declareVariable in Model.DeclareCreateAndUpdateVariables)
 {
 @:    @declareVariable
@@ -33,37 +39,48 @@ class @(Model.JvaClassName) {
 @foreach (FluentDefinitionOrUpdateStageMethod createWither in Model.CreateOnlyWither)
 {
 @EmptyLine
-@:    public @(Model.JvaClassName) @(createWither.Name)() {
-@:        @(Model.CreateParameter).@(createWither.Name)();
-@:        return this;
+    var methodSignature = $"{Model.JvaClassName} {createWither.Name}({createWither.ParameterType} {createWither.ParameterName})";
+@:    @@Override
+@:    public @(methodSignature) {
+<text>
+        @(Model.CreateParameter).@(createWither.Name)(@(createWither.ParameterName));
+        return this;
+</text>
 @:    }
 }
 
 @foreach (FluentDefinitionOrUpdateStageMethod updateWither in Model.UpdateOnlyWithers)
 {
 @EmptyLine
-@:    public @(Model.JvaClassName) @(updateWither.Name)() {
-@:        @(Model.UpdateParameter).@(updateWither.Name)();
-@:        return this;
+    var methodSignature = $"{Model.JvaClassName} {updateWither.Name}({updateWither.ParameterType} {updateWither.ParameterName})";
+@:    @@Override
+@:    public @(methodSignature) {
+<text>
+        @(Model.UpdateParameter).@(updateWither.Name)(@(updateWither.ParameterName));
+        return this;
+</text>
 @:    }
 }
 
 @foreach (FluentDefinitionOrUpdateStageMethod cuWither in Model.CreateAndUpdateWithers)
 {
 @EmptyLine
-
-@:    public @(Model.JvaClassName) @(cuWither.Name)() {
+    var methodSignature = $"{Model.JvaClassName} {cuWither.Name}({cuWither.ParameterType} {cuWither.ParameterName})";
+@:    @@Override
+@:    public @(methodSignature) {
 @:        @if (Model.IsCreateUpdateTypeSame)
           {
-@:        @(Model.CreateParameter).@(cuWither.Name)();
+<text>
+        @(Model.CreateParameter).@(cuWither.Name)(@(cuWither.ParameterName));
+</text>
           }
           else
           {
 <text>
         if (isInCreateModel()) {
-            @(Model.CreateParameter).@(cuWither.Name)();
+            @(Model.CreateParameter).@(cuWither.Name)(@(cuWither.ParameterName));
         } else {
-            @(Model.UpdateParameter).@(cuWither.Name)();
+            @(Model.UpdateParameter).@(cuWither.Name)(@(cuWither.ParameterName));
         }
 </text>
           }

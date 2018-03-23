@@ -133,6 +133,54 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
+        public HashSet<string> Imports
+        {
+            get
+            {
+                HashSet<string> imports = new HashSet<string>();
+                imports.AddRange(this.Interface.PropertiesAndMethodImports);
+                imports.Add($"{this.Interface.Package}.{this.Interface.JavaInterfaceName}");
+                imports.Add($"{this.Interface.CreatePayloadInnerModel.Package}.{this.Interface.CreatePayloadInnerModel.Name}");
+                imports.Add($"{this.Interface.UpdatePayloadInnerModel.Package}.{this.Interface.UpdatePayloadInnerModel.Name}");
+                return imports;
+            }
+        }
+
+        public string ExtendsFrom
+        {
+            get
+            {
+                return String.Empty;
+            }
+        }
+
+        public string Implements
+        {
+            get
+            {
+                List<string> implements = new List<string>
+                {
+                    this.Interface.JavaInterfaceName
+                };
+                if (this.Interface.SupportsCreating)
+                {
+                    implements.Add($"{this.Interface.JavaInterfaceName}.Definition");
+                }
+                if (this.Interface.SupportsUpdating)
+                {
+                    implements.Add($"{this.Interface.JavaInterfaceName}.Update");
+                }
+                if (implements.Count() > 0)
+                {
+                    return $" implements {String.Join(", ", implements)}";
+                }
+                else
+                {
+                    return String.Empty;
+                }
+            }
+        }
+
         public GroupableFluentModelImpl(GroupableFluentModel mInterface)
         {
             this.Interface = mInterface;
