@@ -48,10 +48,18 @@ namespace AutoRest.Java.Azure.Fluent.Model
                         {
                             this.innerReturnType = (CompositeTypeJvaf)mtype;
                         }
+                        else if (mtype is PrimaryTypeJv)
+                        {
+                            this.innerReturnType = null;
+                        }
                         else
                         {
                             throw new InvalidOperationException($"Expected CompositeTypeJvaf but found {mtype.ClassName}");
                         }
+                    }
+                    else if (mtype is PrimaryTypeJv)
+                    {
+                        this.innerReturnType = null;
                     }
                     else
                     {
@@ -74,7 +82,14 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     }
                     else
                     {
-                        this.returnModel = new FluentModel(this.InnerReturnType);
+                        if (this.InnerReturnType != null)
+                        {
+                            this.returnModel = new FluentModel(this.InnerReturnType);
+                        }
+                        else
+                        {
+                            this.returnModel = new PrimtiveFluentModel();
+                        }
                     }
                 }
                 return this.returnModel;
@@ -100,4 +115,15 @@ namespace AutoRest.Java.Azure.Fluent.Model
             this.MethodGroup = methodGroup;
         }
     }
+
+    /// <summary>
+    ///  This model is a hack to be removed when we've better design.
+    /// </summary>
+    public class PrimtiveFluentModel : FluentModel
+    {
+        public PrimtiveFluentModel() : base()
+        {
+        }
+    }
+
 }

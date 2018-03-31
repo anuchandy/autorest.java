@@ -27,7 +27,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
             {
                 if (!isProcessed)
                 {
-                    process();
+                    Process();
                 }
                 return this.supportsDeleteByResourceGroup;
             }
@@ -39,7 +39,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
             {
                 if (!isProcessed)
                 {
-                    process();
+                    Process();
                 }
                 return this.supportsDeleteByImmediateParent;
             }
@@ -51,7 +51,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
             {
                 if (!isProcessed)
                 {
-                    process();
+                    Process();
                 }
                 return this.deleteByResourceGroupMethod;
             }
@@ -63,7 +63,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
             {
                 if (!isProcessed)
                 {
-                    process();
+                    Process();
                 }
                 return this.deleteByImmediateParentMethod;
             }
@@ -82,7 +82,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        private void process()
+        private void Process()
         {
             this.isProcessed = true;
             foreach (MethodJvaf innerMethod in fluentMethodGroup.InnerMethods)

@@ -1,5 +1,6 @@
 ﻿using AutoRest.Core.Model;
 using AutoRest.Core.Utilities;
+using AutoRest.Java.Azure.Model;
 using AutoRest.Java.Model;
 using System;
 using System.Collections.Generic;
@@ -82,7 +83,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
         /// <summary>
         /// Checks this groupable model interface represents an azure resource which supports getting in a resource group.
         /// </summary>
-        private bool SupportsGetting
+        public bool SupportsGetting
         {
             get
             {
@@ -243,7 +244,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     imports.Add("com.microsoft.azure.management.resources.fluentcore.arm.models.Resource"); // Resource.DefinitionWithTags<WithCreate>
                 }
 
-                imports.AddRange(PropertiesAndMethodImports);
+                imports.AddRange(this.PropertiesAndMethodImports);
 
                 imports.Add($"{InnerModel.Package}.{InnerModel.Name}");
                 return imports;
@@ -265,13 +266,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
 
                 foreach (PropertyJvaf property in properties)
                 {
-                    var propertyImports = property.Imports;
-                    // var propertyImports = property.Imports.Where(import => !import.EqualsIgnoreCase(thisPackage));
-                    //
-                    if (property.ModelTypeName.EndsWith("Inner"))
-                    {
-                        imports.Add($"{InnerModel.Package}.{property.ModelTypeName}");
-                    }
+                    var propertyImports = PropertyImports(property, InnerModel.Package);
                     imports.AddRange(propertyImports);
                 }
                 return imports;
@@ -295,11 +290,13 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 FluentDefinitionOrUpdateStage currentStage = null;
                 foreach (Property pro in properties.Where(p => p.IsRequired))
                 {
-                    FluentDefinitionOrUpdateStageMethod method = new FluentDefinitionOrUpdateStageMethod
+                    string methodName = $"with{pro.Name.ToPascalCase()}";
+                    string parameterName = pro.Name;
+                    string methodParameterDecl = $"{pro.ModelTypeName} {pro.Name}";
+
+                    FluentDefinitionOrUpdateStageMethod method = new FluentDefinitionOrUpdateStageMethod(methodName, methodParameterDecl, pro.ModelTypeName)
                     {
-                        Name = $"with{pro.Name.ToPascalCase()}",
-                        ParameterType = pro.ModelTypeName,
-                        ParameterName = pro.Name
+                        CommentFor = parameterName
                     };
 
                     if (currentStage == null)
@@ -350,11 +347,13 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 IEnumerable<Property> properties = this.SettableLocalPropertiesOnCreate;
                 foreach (Property pro in properties.Where(p => !p.IsRequired))
                 {
-                    FluentDefinitionOrUpdateStageMethod method = new FluentDefinitionOrUpdateStageMethod
+                    string methodName = $"with{pro.Name.ToPascalCase()}";
+                    string parameterName = pro.Name;
+                    string methodParameterDecl = $"{pro.ModelTypeName} {pro.Name}";
+
+                    FluentDefinitionOrUpdateStageMethod method = new FluentDefinitionOrUpdateStageMethod(methodName, methodParameterDecl, pro.ModelTypeName)
                     {
-                        Name = $"with{pro.Name.ToPascalCase()}",
-                        ParameterType = pro.ModelTypeName,
-                        ParameterName = pro.Name
+                        CommentFor = parameterName,
                     };
                     FluentDefinitionOrUpdateStage stage = new FluentDefinitionOrUpdateStage(this.JavaInterfaceName, $"With{pro.Name.ToPascalCase()}");
                     stage.Methods.Add(method);
@@ -385,11 +384,13 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 IEnumerable<Property> properties = this.SettableLocalPropertiesOnUpdate;
                 foreach (Property pro in properties.Where(p => !p.IsRequired))
                 {
-                    FluentDefinitionOrUpdateStageMethod method = new FluentDefinitionOrUpdateStageMethod
+                    string methodName = $"with{pro.Name.ToPascalCase()}";
+                    string parameterName = pro.Name;
+                    string methodParameterDecl = $"{pro.ModelTypeName} {pro.Name}";
+
+                    FluentDefinitionOrUpdateStageMethod method = new FluentDefinitionOrUpdateStageMethod(methodName, methodParameterDecl, pro.ModelTypeName)
                     {
-                        Name = $"with{pro.Name.ToPascalCase()}",
-                        ParameterType = pro.ModelTypeName,
-                        ParameterName = pro.Name
+                        CommentFor = parameterName,
                     };
                     FluentDefinitionOrUpdateStage stage = new FluentDefinitionOrUpdateStage(this.JavaInterfaceName, $"With{pro.Name.ToPascalCase()}");
                     stage.Methods.Add(method);
@@ -605,11 +606,36 @@ namespace AutoRest.Java.Azure.Fluent.Model
 
         public static IEqualityComparer<GroupableFluentModel> EqualityComparer()
         {
-            return new FMComparerBasedOnJvaInterfaceName();
+            return new GFMComparerBasedOnJvaInterfaceName();
+        }
+
+        public static HashSet<string>  PropertyImports(PropertyJvaf property, string innerModelPackage)
+        {
+            HashSet<string> imports = new HashSet<string>();
+            var propertyImports = property.Imports;
+            // var propertyImports = property.Imports.Where(import => !import.EqualsIgnoreCase(thisPackage));
+            //
+            string modelTypeName = property.ModelTypeName;
+            if (property.ModelType is SequenceTypeJva)
+            {
+                var modelType = property.ModelType;
+                while (modelType is SequenceTypeJva)
+                {
+                    SequenceTypeJva sequenceType = (SequenceTypeJva)modelType;
+                    modelType = sequenceType.ElementType;
+                }
+                modelTypeName = modelType.ClassName;
+            }
+            if (modelTypeName.EndsWith("Inner"))
+            {
+                imports.Add($"{innerModelPackage}.{modelTypeName}");
+            }
+            imports.AddRange(propertyImports);
+            return imports;
         }
     }
 
-    class FMComparerBasedOnJvaInterfaceName : IEqualityComparer<GroupableFluentModel>
+    class GFMComparerBasedOnJvaInterfaceName : IEqualityComparer<GroupableFluentModel>
     {
         public bool Equals(GroupableFluentModel x, GroupableFluentModel y)
         {
@@ -619,61 +645,6 @@ namespace AutoRest.Java.Azure.Fluent.Model
         public int GetHashCode(GroupableFluentModel obj)
         {
             return obj.JavaInterfaceName.GetHashCode();
-        }
-    }
-
-    public class FluentDefinitionOrUpdateStage
-    {
-        public string Comment { get; private set; }
-
-        public string Name { get; private set; }
-
-        public List<FluentDefinitionOrUpdateStageMethod> Methods { get; set; }
-
-        public FluentDefinitionOrUpdateStage(string resourcName, string name)
-        {
-            this.Name = name;
-            this.Methods = new List<FluentDefinitionOrUpdateStageMethod>();
-            this.Comment = $"The stage of the {resourcName} {{0}} allowing to specify {name.Substring("With".Length)}.";
-        }
-    }
-
-    public class FluentDefinitionOrUpdateStageMethod
-    {
-        public string Name { get; set; }
-
-        public FluentDefinitionOrUpdateStage NextStage { get; set; }
-
-        public string ParameterType { get; set; }
-
-        public string ParameterName { get; set; }
-
-        public string Comment
-        {
-            get
-            {
-                return $"Specifies {this.ParameterName}.";
-            }
-        }
-
-        public static IEqualityComparer<FluentDefinitionOrUpdateStageMethod> EqualityComparer()
-        {
-            return new FDUSComparerBasedOnSignature();
-        }
-
-        class FDUSComparerBasedOnSignature : IEqualityComparer<FluentDefinitionOrUpdateStageMethod>
-        {
-            public bool Equals(FluentDefinitionOrUpdateStageMethod x, FluentDefinitionOrUpdateStageMethod y)
-            {
-                string s1 = $"{x.Name}_{x.ParameterType}";
-                string s2 = $"{y.Name}_{y.ParameterType}";
-                return s1.Equals(s2);
-            }
-
-            public int GetHashCode(FluentDefinitionOrUpdateStageMethod obj)
-            {
-                return $"{obj.Name}_{obj.ParameterType}".GetHashCode();
-            }
         }
     }
 }

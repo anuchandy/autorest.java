@@ -34,7 +34,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
             {
                 if (!this.isProcessed)
                 {
-                    this.process();
+                    this.Process();
                 }
                 return this.createType != CreateType.None;
             }
@@ -46,7 +46,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
             {
                 if (!this.isProcessed)
                 {
-                    this.process();
+                    this.Process();
                 }
                 return this.createType;
             }
@@ -58,7 +58,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
             {
                 if (!this.isProcessed)
                 {
-                    this.process();
+                    this.Process();
                 }
                 return this.createMethod;
             }
@@ -77,11 +77,16 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        private void process()
+        private void Process()
         {
             this.isProcessed = true;
             foreach (MethodJvaf innerMethod in fluentMethodGroup.InnerMethods)
             {
+                string innerMethodName = innerMethod.Name.ToLowerInvariant();
+                if (innerMethodName.Contains("update") && !innerMethodName.Contains("create"))
+                {
+                    continue;
+                }
                 if (innerMethod.HttpMethod == HttpMethod.Put)
                 {
                     String Url = innerMethod.FluentUrl();

@@ -137,7 +137,7 @@ public interface @(Model.JavaInterfaceName)@(Model.ExtendsFrom) {
     * @@return the observable for the request
     */
     </text>
-    @if (method.InnerMethod.HttpMethod == AutoRest.Core.Model.HttpMethod.Post)
+    @if (method.InnerMethod.HttpMethod == AutoRest.Core.Model.HttpMethod.Delete)
     {
 @:Completable @(method.Name)Async(@method.InnerMethod.MethodRequiredParameterDeclaration);
     }

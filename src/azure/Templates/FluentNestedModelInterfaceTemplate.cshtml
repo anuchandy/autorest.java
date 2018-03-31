@@ -6,7 +6,8 @@
 @using AutoRest.Core.Utilities
 @using AutoRest.Java.Model
 @using AutoRest.Java.Azure.Model
-@inherits AutoRest.Core.Template<AutoRest.Java.Azure.Fluent.Model.GroupableFluentModel>
+@inherits AutoRest.Core.Template<AutoRest.Java.Azure.Fluent.Model.NestedFluentModel>
+
 /**
 @Header(" * ").TrimMultilineHeader()
  */
@@ -56,14 +57,7 @@ public interface @(Model.JavaInterfaceName)@(Model.ExtendsFrom) {
         /**
          * The first stage of a @(Model.JavaInterfaceName) definition.
          */
-        interface Blank extends GroupableResource.DefinitionWithRegion<WithGroup>
-        {
-        }
-@EmptyLine
-        /**
-         * The stage of the @(Model.JavaInterfaceName) definition allowing to specify the resource group.
-         */
-        interface WithGroup extends GroupableResource.DefinitionStages.WithGroup<@(Model.StageAfterResourceGroup)>
+        interface Blank@(Model.BlankExtendsFrom)
         {
         }
     </text>

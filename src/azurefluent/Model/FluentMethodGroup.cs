@@ -1,24 +1,11 @@
 
-using System.Collections.Generic;
-using System.Globalization;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 using AutoRest.Core;
 using AutoRest.Core.Model;
 using AutoRest.Core.Utilities;
-using AutoRest.Extensions;
-using AutoRest.Extensions.Azure;
-using AutoRest.Java.Azure.Fluent.Model;
-using AutoRest.Java.azure.Templates;
-using AutoRest.Java.Model;
-using AutoRest.Java.vanilla.Templates;
-using System;
-using System.Text.RegularExpressions;
-using System.Diagnostics;
-using System.Text;
-using AutoRest.Java.Azure.Model;
 using AutoRest.Java.azurefluent.Model;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace AutoRest.Java.Azure.Fluent.Model
 {
@@ -106,6 +93,38 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
+        public string Package
+        {
+            get
+            {
+                return $"{Settings.Instance.Namespace.ToLower()}.fluent";
+            }
+        }
+
+        public string ImplementationPackage
+        {
+            get
+            {
+                return $"{Settings.Instance.Namespace.ToLower()}.implementation";
+            }
+        }
+
+        public string InnerMethodGroupImplTypeName
+        {
+            get
+            {
+                return InnerMethodGroup.MethodGroupImplType;
+            }
+        }
+
+        public string InnerMethodGroupAccessorName
+        {
+            get
+            {
+                return InnerMethodGroup.Name.ToPascalCase();
+            }
+        }
+
         public string ExtendsFrom
         {
             get
@@ -154,11 +173,12 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 imports.AddRange(this.ResourceDeleteDescription.Imports);
                 imports.AddRange(this.ResourceGetDescription.Imports);
                 imports.AddRange(this.ResourceListingDescription.Imports);
-                imports.Add($"{Settings.Instance.Namespace.ToLower()}.implementation.{InnerMethodGroup.Name.ToPascalCase()}Inner");
+                // imports.Add($"{Settings.Instance.Namespace.ToLower()}.implementation.{InnerMethodGroup.Name.ToPascalCase()}Inner");
+                imports.Add($"{this.ImplementationPackage}.{this.InnerMethodGroupImplTypeName}");
 
                 bool anyReturnCompletable = OtherMethods
-                    .Select(m => m.InnerMethod)
-                    .Any(m => m.HttpMethod == HttpMethod.Post || m.HttpMethod == HttpMethod.Delete);
+                    .Select(m => new { m = m.InnerMethod, r = m.ReturnModel })
+                    .Any(mr => mr.m.HttpMethod == HttpMethod.Delete || (mr.r is PrimtiveFluentModel));
 
                 if (anyReturnCompletable)
                 {
@@ -166,8 +186,8 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 }
 
                 bool anyReturnObservable = OtherMethods
-                    .Select(m => m.InnerMethod)
-                    .Any(m => m.HttpMethod != HttpMethod.Post && m.HttpMethod == HttpMethod.Delete);
+                    .Select(m => new { m = m.InnerMethod, r = m.ReturnModel })
+                    .Any(mr => mr.m.HttpMethod != HttpMethod.Delete && !(mr.r is PrimtiveFluentModel));
 
                 if (anyReturnObservable)
                 {
@@ -451,6 +471,10 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
+        /// <summary>
+        /// Returns true if the method group is at level 0 and support atleast one resource-group-scoped
+        /// operations (LIST|GET|DELETE|CREATE)ByResourceGroup.
+        /// </summary>
         public bool IsGroupableTopLevel
         {
             get

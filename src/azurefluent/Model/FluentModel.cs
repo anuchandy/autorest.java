@@ -25,6 +25,16 @@ namespace AutoRest.Java.Azure.Fluent.Model
             this.javaInterfaceName = name;
         }
 
+        /// <summary>
+        ///  This ctr is a hack to support PrimitiveFluentModel.
+        ///  Will be removed later.
+        /// </summary>
+        public FluentModel()
+        {
+            this.javaInterfaceName = null;
+            this.InnerModel = null;
+        }
+
         public FluentModel(CompositeTypeJvaf innerModel)
         {
             var n = innerModel.Name.Value;
@@ -34,6 +44,24 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
             this.javaInterfaceName = n.Substring(0, n.Length - "Inner".Length);
             this.InnerModel = innerModel;
+        }
+
+        public static IEqualityComparer<FluentModel> EqualityComparer()
+        {
+            return new FMComparerBasedOnJvaInterfaceName();
+        }
+    }
+
+    class FMComparerBasedOnJvaInterfaceName : IEqualityComparer<FluentModel>
+    {
+        public bool Equals(FluentModel x, FluentModel y)
+        {
+            return x.JavaInterfaceName.EqualsIgnoreCase(y.JavaInterfaceName);
+        }
+
+        public int GetHashCode(FluentModel obj)
+        {
+            return obj.JavaInterfaceName.GetHashCode();
         }
     }
 }

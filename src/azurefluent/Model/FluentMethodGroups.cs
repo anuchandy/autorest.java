@@ -6,8 +6,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using AutoRest.Java.Azure.Fluent.Model;
-using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
@@ -16,6 +14,21 @@ namespace AutoRest.Java.Azure.Fluent.Model
     public class FluentMethodGroups : Dictionary<string, List<FluentMethodGroup>>
     {
         public IEnumerable<GroupableFluentModel> GroupableFluentModels
+        {
+            get; private set;
+        }
+
+        public IEnumerable<NestedFluentModel> NestedFluentModels
+        {
+            get; private set;
+        }
+
+        public IEnumerable<ReadOnlyFluentModel> ReadonlyFluentModels
+        {
+            get; private set;
+        }
+
+        public Dictionary<string, FluentModel> InnerToFluentModelMap
         {
             get; private set;
         }
@@ -387,9 +400,12 @@ namespace AutoRest.Java.Azure.Fluent.Model
 
         private void SpecializeFluentModels()
         {
+            HashSet<string> groupableAndNestedModelNames = new HashSet<string>();
+
             // Promotes the general fluent models to top-level-groupable vs top-level-non-groupable nested child vs other.
             //
-            // Sepeialize the GROUPABLEMODEL
+
+            // Specialize the GROUPABLEMODEL
             //
             this.GroupableFluentModels = this.Select(kv => kv.Value)
                  .SelectMany(fmg => fmg)
@@ -397,6 +413,29 @@ namespace AutoRest.Java.Azure.Fluent.Model
                  .Where(fmg => fmg.IsGroupableTopLevel)
                  .Select(fmg => new GroupableFluentModel(fmg.StandardFluentModel, fmg))
                  .Distinct(GroupableFluentModel.EqualityComparer());
+
+            this.GroupableFluentModels.ForEach(m => groupableAndNestedModelNames.Add(m.JavaInterfaceName));
+
+            // Specialize the NESTEDFLUENTMODEL
+            //
+            this.NestedFluentModels = this.Select(kv => kv.Value)
+                 .SelectMany(fmg => fmg)
+                 .Where(fmg => fmg.StandardFluentModel != null)
+                 .Where(fmg => fmg.IsNested)
+                 .Select(fmg => new NestedFluentModel(fmg.StandardFluentModel, fmg))
+                 .Distinct(NestedFluentModel.EqualityComparer());
+
+            this.NestedFluentModels.ForEach(m => groupableAndNestedModelNames.Add(m.JavaInterfaceName));
+
+            // Specialize thr READONLYMODEL
+            //
+            this.ReadonlyFluentModels = this.Select(kv => kv.Value)
+                .SelectMany(fmg => fmg)
+                .SelectMany(fmg => fmg.OtherFluentModels)
+                .Where(m => !(m is PrimtiveFluentModel))
+                .Distinct(FluentModel.EqualityComparer())
+                .Where(m => !groupableAndNestedModelNames.Contains(m.JavaInterfaceName))
+                .Select(m => new ReadOnlyFluentModel(m));
         }
 
         private static List<String> GetPartsAfterProvider(String url) 
@@ -427,7 +466,5 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 }
             }
         }
-
-
     }
 }

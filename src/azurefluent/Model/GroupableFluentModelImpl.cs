@@ -248,6 +248,14 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 imports.Add($"{this.Interface.UpdatePayloadInnerModel.Package}.{this.Interface.UpdatePayloadInnerModel.Name}");
                 imports.Add($"{this.Interface.InnerModel.Package}.{this.Interface.FluentMethodGroup.InnerMethodGroup.MethodGroupImplType}");
                 imports.Add("rx.Observable");
+                if (this.RequireFlatmapAfterUpdate)
+                {
+                    imports.Add("rx.functions.Func1");
+                }
+                if (this.RequireFlatmapAfterCreate)
+                {
+                    imports.Add("rx.functions.Func1");
+                }
                 return imports;
             }
         }
@@ -277,8 +285,27 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 {
                     return String.Empty;
                 }
+
                 FluentMethod createMethod = this.Interface.FluentMethodGroup.ResourceCreateDescription.CreateMethod;
-                return $"client.{createMethod.InnerMethod.Name}Async(this.resourceGroupName(), this.name(), {this.CreateParameter}).map(innerToFluentMap(this))";
+                if (this.RequireFlatmapAfterCreate)
+                {
+                    string createReturnTypeName = createMethod.ReturnModel.InnerModel.Name;
+                    string innerModelTypeName = this.InnerModelTypeName;
+
+                    return $"client.{createMethod.InnerMethod.Name}Async(this.resourceGroupName(), this.name(), {this.CreateParameter})" +
+                         $"\n        .flatMap(new Func1<{createReturnTypeName}, Observable<{innerModelTypeName}>>() {{" +
+                         $"\n           @Override" +
+                         $"\n           public Observable<{innerModelTypeName}> call({createReturnTypeName} r) {{ " +
+                         $"\n               return getInnerAsync(); " +
+                         $"\n           }} " +
+                         $"\n        }})" +
+                         $"\n        .map(innerToFluentMap(this))";
+                }
+                else
+                {
+                    return $"client.{createMethod.InnerMethod.Name}Async(this.resourceGroupName(), this.name(), {this.CreateParameter})" +
+                        $"\n        .map(innerToFluentMap(this))";
+                }
             }
         }
 
@@ -294,8 +321,82 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 {
                     return String.Empty;
                 }
+
                 FluentMethod updateMethod = this.Interface.FluentMethodGroup.ResourceUpdateDescription.UpdateMethod;
-                return $"client.{updateMethod.InnerMethod.Name}Async(this.resourceGroupName(), this.name(), {this.UpdateParameter}).map(innerToFluentMap(this))";
+                if (this.RequireFlatmapAfterUpdate)
+                {
+                    string updateReturnTypeName = updateMethod.ReturnModel.InnerModel.Name;
+                    string innerModelTypeName = this.InnerModelTypeName;
+
+                    return $"client.{updateMethod.InnerMethod.Name}Async(this.resourceGroupName(), this.name(), {this.UpdateParameter})" +
+                         $"\n        .flatMap(new Func1<{updateReturnTypeName}, Observable<{innerModelTypeName}>>() {{" +
+                         $"\n           @Override" +
+                         $"\n           public Observable<{innerModelTypeName}> call({updateReturnTypeName} r) {{ " +
+                         $"\n               return getInnerAsync(); " +
+                         $"\n           }} " +
+                         $"\n        }})" +
+                         $"\n        .map(innerToFluentMap(this))";
+                }
+                else
+                {
+                    return $"client.{updateMethod.InnerMethod.Name}Async(this.resourceGroupName(), this.name(), {this.UpdateParameter})" +
+                        $"\n        .map(innerToFluentMap(this))";
+                }
+            }
+        }
+
+        /// <summary>
+        /// Checks a flatmap is needed after inner update call, this is needed if the return type of inner update
+        /// and inner model are different.
+        /// </summary>
+        private bool RequireFlatmapAfterUpdate
+        {
+            get
+            {
+                if (!this.Interface.SupportsUpdating)
+                {
+                    return false;
+                }
+                FluentMethod updateMethod = this.Interface.FluentMethodGroup.ResourceUpdateDescription.UpdateMethod;
+                string updateReturnTypeName = updateMethod.ReturnModel.InnerModel.Name;
+                string innerModelTypeName = this.InnerModelTypeName;
+
+                return !updateReturnTypeName.Equals(this.InnerModelTypeName);
+            }
+        }
+
+        /// <summary>
+        /// Checks a flatmap is needed after inner create call, this is needed if the return type of inner create
+        /// and inner model are different.
+        /// </summary>
+        private bool RequireFlatmapAfterCreate
+        {
+            get
+            {
+                if (!this.Interface.SupportsCreating)
+                {
+                    return false;
+                }
+                FluentMethod createMethod = this.Interface.FluentMethodGroup.ResourceCreateDescription.CreateMethod;
+                string createReturnTypeName = createMethod.ReturnModel.InnerModel.Name;
+                string innerModelTypeName = this.InnerModelTypeName;
+                return !createReturnTypeName.Equals(this.InnerModelTypeName);
+            }
+        }
+
+        /// <summary>
+        /// Returns the string representing the call to retrieve the groupable resource by resource group.
+        /// </summary>
+        public string GetInnerInvocation
+        {
+            get
+            {
+                if (!this.Interface.SupportsGetting)
+                {
+                    return String.Empty;
+                }
+                FluentMethod getMethod = this.Interface.FluentMethodGroup.ResourceGetDescription.GetByResourceGroupMethod;
+                return $"client.{getMethod.InnerMethod.Name}Async(this.resourceGroupName(), this.name())";
             }
         }
 

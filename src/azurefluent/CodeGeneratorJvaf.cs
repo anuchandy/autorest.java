@@ -48,20 +48,45 @@ namespace AutoRest.Java.Azure.Fluent
 
             FluentMethodGroups innerMGroupToFluentMGroup = FluentMethodGroups.InnerMethodGroupToFluentMethodGroups(codeModel);
 
-            foreach (FluentMethodGroup fmg in innerMGroupToFluentMGroup.SelectMany( m => m.Value))
+            foreach (ReadOnlyFluentModel fluentModel in innerMGroupToFluentMGroup.ReadonlyFluentModels)
             {
-                var fluentMethodGroupInterfaceTemplate = new FluentMethodGroupInterfaceTemplate { Model = fmg };
-                await Write(fluentMethodGroupInterfaceTemplate, $"{packagePath}/fluent/{fmg.JavaInterfaceName.ToPascalCase()}{ImplementationFileExtension}");
+                var fluentReadOnlyModelInterfaceTemplate = new FluentReadOnlyModelInterfaceTemplate { Model = fluentModel };
+                await Write(fluentReadOnlyModelInterfaceTemplate, $"{packagePath}/fluent/{fluentModel.JavaInterfaceName.ToPascalCase()}{ImplementationFileExtension}");
+
+                //
+                var fluentReadonlyModelImplTemplate = new FluentReadonlyModelImplTemplate { Model = fluentModel.Impl };
+                await Write(fluentReadonlyModelImplTemplate, $"{packagePath}/fluent/implementation/{fluentModel.Impl.JvaClassName.ToPascalCase()}{ImplementationFileExtension}");
+            }
+
+            foreach (NestedFluentModel fluentModel in innerMGroupToFluentMGroup.NestedFluentModels)
+            {
+                var fluentNestedModelInterfaceTemplate = new FluentNestedModelInterfaceTemplate { Model = fluentModel };
+                await Write(fluentNestedModelInterfaceTemplate, $"{packagePath}/fluent/{fluentModel.JavaInterfaceName.ToPascalCase()}{ImplementationFileExtension}");
+
+                //
+                var fluentNestedModelImplTemplate = new FluentNestedModelImplTemplate { Model = fluentModel.Impl };
+                await Write(fluentNestedModelImplTemplate, $"{packagePath}/fluent/implementation/{fluentModel.Impl.JvaClassName.ToPascalCase()}{ImplementationFileExtension}");
+
+                //
+                NestedFluentMethodGroupImpl nestedFluentMethodGroupImpl = new NestedFluentMethodGroupImpl(fluentModel.Impl);
+                var fluentNestedMethodGroupImplTemplate = new FluentNestedMethodGroupImplTemplate { Model = nestedFluentMethodGroupImpl };
+                await Write(fluentNestedMethodGroupImplTemplate, $"{packagePath}/fluent/implementation/{nestedFluentMethodGroupImpl.JvaClassName.ToPascalCase()}{ImplementationFileExtension}");
             }
 
             foreach (GroupableFluentModel fluentModel in innerMGroupToFluentMGroup.GroupableFluentModels)
             {
-                var fluentMethodGroupInterfaceTemplate = new FluentGroupableModelInterfaceTemplate { Model = fluentModel };
-                await Write(fluentMethodGroupInterfaceTemplate, $"{packagePath}/fluent/{fluentModel.JavaInterfaceName.ToPascalCase()}{ImplementationFileExtension}");
+                var fluentGroupableModelInterfaceTemplate = new FluentGroupableModelInterfaceTemplate { Model = fluentModel };
+                await Write(fluentGroupableModelInterfaceTemplate, $"{packagePath}/fluent/{fluentModel.JavaInterfaceName.ToPascalCase()}{ImplementationFileExtension}");
 
-                var fluentMethodGroupImplTemplate = new FluentGroupableModelImplTemplate { Model = fluentModel.Impl };
-                await Write(fluentMethodGroupImplTemplate, $"{packagePath}/fluent/implementation/{fluentModel.Impl.JvaClassName.ToPascalCase()}{ImplementationFileExtension}");
+                var fluentGroupableModelImplTemplate = new FluentGroupableModelImplTemplate { Model = fluentModel.Impl };
+                await Write(fluentGroupableModelImplTemplate, $"{packagePath}/fluent/implementation/{fluentModel.Impl.JvaClassName.ToPascalCase()}{ImplementationFileExtension}");
 
+            }
+
+            foreach (FluentMethodGroup fmg in innerMGroupToFluentMGroup.SelectMany(m => m.Value))
+            {
+                var fluentMethodGroupInterfaceTemplate = new FluentMethodGroupInterfaceTemplate { Model = fmg };
+                await Write(fluentMethodGroupInterfaceTemplate, $"{packagePath}/fluent/{fmg.JavaInterfaceName.ToPascalCase()}{ImplementationFileExtension}");
             }
 
             // Service client

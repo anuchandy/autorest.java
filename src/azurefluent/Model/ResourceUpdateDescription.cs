@@ -32,7 +32,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 }
                 else if (this.supportsUpdating == null)
                 {
-                    this.process();
+                    this.Process();
                 }
                 return this.supportsUpdating.Value;
             }
@@ -53,7 +53,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
 
                     if (this.supportsUpdating == null)
                     {
-                        this.process();
+                        this.Process();
                     }
 
                     if (this.updateMethod == null)
@@ -67,13 +67,13 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 }
                 else if (this.supportsUpdating == null)
                 {
-                    this.process();
+                    this.Process();
                 }
                 return this.updateMethod;
             }
         }
 
-        private void process()
+        private void Process()
         {
             this.supportsUpdating = false;
             foreach (MethodJvaf innerMethod in fluentMethodGroup.InnerMethods)
