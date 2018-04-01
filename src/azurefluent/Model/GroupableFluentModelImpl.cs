@@ -257,13 +257,9 @@ namespace AutoRest.Java.Azure.Fluent.Model
             get
             {
                 HashSet<string> imports = new HashSet<string>();
-                imports.AddRange(this.Interface.PropertiesAndMethodImports);
+                imports.AddRange(this.Interface.PropertiesAndMethodImports.Where(imp => !imp.EndsWith("Inner")));
                 imports.Add("com.microsoft.azure.management.resources.fluentcore.arm.models.implementation.GroupableResourceImpl");
-                imports.Add($"{this.Interface.InnerModel.Package}.{this.Interface.InnerModel.Name}");
                 imports.Add($"{this.Interface.Package}.{this.Interface.JavaInterfaceName}");
-                imports.Add($"{this.Interface.CreatePayloadInnerModel.Package}.{this.Interface.CreatePayloadInnerModel.Name}");
-                imports.Add($"{this.Interface.UpdatePayloadInnerModel.Package}.{this.Interface.UpdatePayloadInnerModel.Name}");
-                imports.Add($"{this.Interface.InnerModel.Package}.{this.Interface.FluentMethodGroup.InnerMethodGroup.MethodGroupImplType}");
                 imports.Add("rx.Observable");
                 if (this.RequireFlatmapAfterUpdate)
                 {
@@ -273,7 +269,6 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 {
                     imports.Add("rx.functions.Func1");
                 }
-                imports.Add($"{this.Interface.Package}.implementation.{this.Interface.FluentMethodGroup.ManagerTypeName}");
                 return imports;
             }
         }

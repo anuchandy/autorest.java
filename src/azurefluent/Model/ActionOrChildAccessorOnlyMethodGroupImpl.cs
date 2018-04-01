@@ -22,7 +22,6 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 HashSet<string> imports = new HashSet<string>
                 {
                     "com.microsoft.azure.management.resources.fluentcore.model.implementation.WrapperImpl",
-                    $"{this.Interface.ImplementationPackage}.{this.Interface.InnerMethodGroupImplTypeName}", // Inner OperationGroup (e.g. VirtualMachinesInner)
                     $"{this.Interface.Package}.{this.Interface.JavaInterfaceName}",
                 };
                 //
@@ -34,7 +33,6 @@ namespace AutoRest.Java.Azure.Fluent.Model
                         otherModelImports.Add("rx.Completable");
                         continue;
                     }
-                    otherModelImports.Add($"{this.Interface.ImplementationPackage}.{model.InnerModel.ClassName}");
                     otherModelImports.Add($"{this.Interface.Package}.{model.JavaInterfaceName}");
                 }
                 if (otherModelImports.Any())
@@ -44,9 +42,10 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 }
                 imports.AddRange(otherModelImports);
                 //
-                //
-                string managerTypeName = this.Interface.ManagerTypeName;
-                imports.Add($"{this.Interface.ImplementationPackage}.{managerTypeName}");
+                foreach (var nestedFluentMethodGroup in this.Interface.ChildFluentMethodGroups)
+                {
+                    imports.Add($"{this.Interface.Package}.{nestedFluentMethodGroup.JavaInterfaceName}");
+                }
                 //
                 return imports;
             }

@@ -31,5 +31,19 @@ namespace AutoRest.Java.Azure.Fluent.Model
             imports.AddRange(propertyImports);
             return imports;
         }
+
+        public static bool IsInPackage(string importStmt, string pacakge)
+        {
+            if (!importStmt.StartsWith(pacakge, StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+            else
+            {
+                var parts1 = importStmt.Split(new char[] { '.' });
+                var parts2 = pacakge.Split(new char[] { '.' });
+                return (parts1.Length - parts2.Length) == 1;
+            }
+        }
     }
 }

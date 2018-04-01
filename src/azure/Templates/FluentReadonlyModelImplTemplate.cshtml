@@ -28,11 +28,10 @@ class @(Model.JvaClassName)@(Model.ExtendsFrom)@(Model.Implements) {
 
 @foreach (PropertyJv property in Model.Interface.LocalProperties)
 {
-@EmptyLine
 @:    @@Override
 @:    public @(((IModelTypeJv)property.ModelType).ResponseVariant.Name) @(property.Name.ToCamelCase())() {
 @:        return this.inner().@(property.Name.ToCamelCase())();
 @:    }
-}
 @EmptyLine
+}
 }

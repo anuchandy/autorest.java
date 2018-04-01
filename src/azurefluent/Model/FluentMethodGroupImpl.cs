@@ -69,9 +69,6 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     $"com.microsoft.azure.management.resources.fluentcore.arm.collection.implementation.GroupableResourcesImpl",
                     $"{this.fluentModelImpl.Interface.Package}.{MethodGroupInterfaceName}",
                     $"{this.fluentModelImpl.Interface.Package}.{GroupableModelInterfaceName}",
-                    $"{this.fluentModelImpl.Interface.Package}.implementation.{GroupableModelInnerName}",
-                    $"{this.fluentModelImpl.Interface.Package}.implementation.{InnerClientName}",
-                    $"{this.fluentModelImpl.Interface.Package}.implementation.{ManagerTypeName}",
                     $"rx.Observable",
                     $"rx.Completable"
                 };
@@ -84,7 +81,6 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     {
                         continue;
                     }
-                    otherModelImports.Add($"{this.Interface.ImplementationPackage}.{model.InnerModel.ClassName}");
                     otherModelImports.Add($"{this.Interface.Package}.{model.JavaInterfaceName}");
                 }
                 if (otherModelImports.Any())
@@ -109,21 +105,25 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     imports.Add("rx.Observable");
                     imports.Add("rx.functions.Func1");
                     imports.Add("com.microsoft.azure.PagedList");
+                }
 
+
+                if (this.Interface.ResourceListingDescription.SupportsListBySubscription)
+                {
                     FluentMethod method = this.Interface.ResourceListingDescription.ListBySubscriptionMethod;
                     if (method.InnerMethod.IsPagingOperation)
                     {
                         imports.Add("com.microsoft.azure.Page");
                         imports.Add("rx.functions.Func1");
                     }
-                    else
+                }
+                else if (this.Interface.ResourceListingDescription.SupportsListByResourceGroup)
+                {
+                    FluentMethod method = this.Interface.ResourceListingDescription.ListByResourceGroupMethod;
+                    if (method.InnerMethod.IsPagingOperation)
                     {
-                        method = this.Interface.ResourceListingDescription.ListByResourceGroupMethod;
-                        if (method.InnerMethod.IsPagingOperation)
-                        {
-                            imports.Add("com.microsoft.azure.Page");
-                            imports.Add("rx.functions.Func1");
-                        }
+                        imports.Add("com.microsoft.azure.Page");
+                        imports.Add("rx.functions.Func1");
                     }
                 }
 

@@ -145,7 +145,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 List<string> extends = new List<string>();
                 if (this.ResourceCreateDescription.SupportsCreating)
                 {
-                    extends.Add($"SupportsCreating<{this.ResourceCreateDescription.CreateMethod.ReturnModel.JavaInterfaceName}>");
+                    extends.Add($"SupportsCreating<{this.ResourceCreateDescription.CreateMethod.ReturnModel.JavaInterfaceName}.DefinitionStages.Blank>");
                 }
                 if (this.ResourceDeleteDescription.SupportsDeleteByResourceGroup)
                 {

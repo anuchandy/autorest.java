@@ -182,17 +182,14 @@ namespace AutoRest.Java.Azure.Fluent.Model
             {
                 HashSet<string> imports = new HashSet<string>();
 
-                imports.Add($"{this.Interface.InnerModel.Package}.{this.Interface.InnerModel.Name}");   // inner (ctr param type)
                 imports.Add($"{this.Interface.Package}.{this.Interface.JavaInterfaceName}");     // The nested model interface
                 if (this.IsCreatableOrUpdatable)
                 {
                     imports.Add("com.microsoft.azure.management.resources.fluentcore.model.implementation.CreatableUpdatableImpl");
-                    imports.Add($"{this.Interface.InnerModel.Package}.{this.Interface.FluentMethodGroup.InnerMethodGroup.MethodGroupImplType}");    // needed for 'client' type local vars in createResourceAsync(),  updateResourceAsync() & getInnerAsync() methods;
                 }
                 else if (this.IsIndexableRefreshable)
                 {
                     imports.Add("com.microsoft.azure.management.resources.fluentcore.model.implementation.IndexableRefreshableWrapperImpl");
-                    imports.Add($"{this.Interface.InnerModel.Package}.{this.Interface.FluentMethodGroup.InnerMethodGroup.MethodGroupImplType}");    // needed for 'client' type local vars in getInnerAsync() method;
                 }
                 else
                 {
@@ -216,11 +213,9 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     imports.Add("rx.functions.Func1");
                 }
 
-                imports.Add($"{this.Interface.Package}.implementation.{this.Interface.FluentMethodGroup.ManagerTypeName}");
-
-                imports.AddRange(this.Interface.UpdateMemberVariablesImports);
-                imports.AddRange(this.Interface.CreateMemberVariablesImports);
-                imports.AddRange(this.Interface.LocalPropertiesImports);
+                imports.AddRange(this.Interface.UpdateMemberVariablesImports.Where(impl => !impl.EndsWith("Inner")));
+                imports.AddRange(this.Interface.CreateMemberVariablesImports.Where(impl => !impl.EndsWith("Inner")));
+                imports.AddRange(this.Interface.LocalPropertiesImports.Where(imp => !imp.EndsWith("Inner")));
 
                 return imports;
             }

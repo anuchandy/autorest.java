@@ -171,9 +171,10 @@ namespace AutoRest.Java.Azure.Fluent
 
             if (true == AutoRest.Core.Settings.Instance.Host?.GetValue<bool?>("regenerate-manager").Result)
             {
+
                 // Manager
                 await Write(
-                    new AzureServiceManagerTemplate { Model = codeModel },
+                    new AzureServiceManagerTemplate { Model = new Azure.Model.ServiceManagerModel(codeModel, innerMGroupToFluentMGroup) },
                     $"{packagePath}/implementation/{codeModel.ServiceName}Manager{ImplementationFileExtension}");
 
                 // POM
