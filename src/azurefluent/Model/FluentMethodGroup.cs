@@ -110,7 +110,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
         {
             get
             {
-                return $"{Settings.Instance.Namespace.ToLower()}.fluent";
+                return $"{Settings.Instance.Namespace.ToLower()}";
             }
         }
 

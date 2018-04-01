@@ -260,7 +260,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 imports.AddRange(this.Interface.PropertiesAndMethodImports);
                 imports.Add("com.microsoft.azure.management.resources.fluentcore.arm.models.implementation.GroupableResourceImpl");
                 imports.Add($"{this.Interface.InnerModel.Package}.{this.Interface.InnerModel.Name}");
-                imports.Add($"{this.Interface.Package}.fluent.{this.Interface.JavaInterfaceName}");
+                imports.Add($"{this.Interface.Package}.{this.Interface.JavaInterfaceName}");
                 imports.Add($"{this.Interface.CreatePayloadInnerModel.Package}.{this.Interface.CreatePayloadInnerModel.Name}");
                 imports.Add($"{this.Interface.UpdatePayloadInnerModel.Package}.{this.Interface.UpdatePayloadInnerModel.Name}");
                 imports.Add($"{this.Interface.InnerModel.Package}.{this.Interface.FluentMethodGroup.InnerMethodGroup.MethodGroupImplType}");

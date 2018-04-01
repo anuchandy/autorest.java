@@ -40,7 +40,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 HashSet<string> imports = new HashSet<string>();
 
                 imports.Add($"{this.Interface.InnerModel.Package}.{this.Interface.InnerModel.Name}");   // inner (ctr param type)
-                imports.Add($"{this.Interface.Package}.fluent.{this.Interface.JavaInterfaceName}");     // The readonly model interface
+                imports.Add($"{this.Interface.Package}.{this.Interface.JavaInterfaceName}");     // The readonly model interface
                 imports.Add("com.microsoft.azure.management.resources.fluentcore.model.implementation.WrapperImpl");
                 return imports;
             }

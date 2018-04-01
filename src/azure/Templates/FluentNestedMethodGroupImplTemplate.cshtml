@@ -13,7 +13,7 @@
  */
 @EmptyLine
 
-package @(Settings.Namespace.ToLower()).fluent.implementation;
+package @(Settings.Namespace.ToLower()).implementation;
 
 @EmptyLine
 
@@ -24,7 +24,7 @@ package @(Settings.Namespace.ToLower()).fluent.implementation;
 @EmptyLine
 
 public class @(Model.JvaClassName)@(Model.ExtendsFrom)@(Model.Implements) {
-    @(Model.DeclareLocalVariables)
+    @(Model.DeclareManagerVariable)
 @foreach (var jvaMethod in Model.JavaMethods)
 {
 @:    @jvaMethod

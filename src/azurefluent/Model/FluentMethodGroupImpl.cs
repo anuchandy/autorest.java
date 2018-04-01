@@ -67,8 +67,8 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 {
                     //
                     $"com.microsoft.azure.management.resources.fluentcore.arm.collection.implementation.GroupableResourcesImpl",
-                    $"{this.fluentModelImpl.Interface.Package}.fluent.{MethodGroupInterfaceName}",
-                    $"{this.fluentModelImpl.Interface.Package}.fluent.{GroupableModelInterfaceName}",
+                    $"{this.fluentModelImpl.Interface.Package}.{MethodGroupInterfaceName}",
+                    $"{this.fluentModelImpl.Interface.Package}.{GroupableModelInterfaceName}",
                     $"{this.fluentModelImpl.Interface.Package}.implementation.{GroupableModelInnerName}",
                     $"{this.fluentModelImpl.Interface.Package}.implementation.{InnerClientName}",
                     $"{this.fluentModelImpl.Interface.Package}.implementation.{ManagerTypeName}",
