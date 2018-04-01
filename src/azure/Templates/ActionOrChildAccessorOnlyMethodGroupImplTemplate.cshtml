@@ -6,8 +6,7 @@
 @using AutoRest.Core.Utilities
 @using AutoRest.Java.Model
 @using AutoRest.Java.Azure.Model
-@inherits AutoRest.Core.Template<AutoRest.Java.Azure.Fluent.Model.NestedFluentMethodGroupImpl>
-
+@inherits AutoRest.Core.Template<AutoRest.Java.Azure.Fluent.Model.ActionOrChildAccessorOnlyMethodGroupImpl>
 /**
 @Header(" * ").TrimMultilineHeader()
  */
@@ -24,7 +23,7 @@ package @(Settings.Namespace.ToLower()).fluent.implementation;
 @EmptyLine
 
 public class @(Model.JvaClassName)@(Model.ExtendsFrom)@(Model.Implements) {
-    @(Model.DeclareLocalVariables)
+@(Model.DeclareManagerVariable)
 @foreach (var jvaMethod in Model.JavaMethods)
 {
 @:    @jvaMethod

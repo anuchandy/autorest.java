@@ -25,6 +25,8 @@ namespace AutoRest.Java.Azure.Fluent.Model
             this.javaInterfaceName = name;
         }
 
+
+
         /// <summary>
         ///  This ctr is a hack to support PrimitiveFluentModel.
         ///  Will be removed later.

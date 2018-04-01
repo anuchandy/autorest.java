@@ -3,6 +3,7 @@ using AutoRest.Core;
 using AutoRest.Core.Model;
 using AutoRest.Core.Utilities;
 using AutoRest.Java.azurefluent.Model;
+using Pluralize.NET;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -25,12 +26,23 @@ namespace AutoRest.Java.Azure.Fluent.Model
         private Dictionary<string, FluentModel> fluentModels;
         private bool derivedFluentModels;
 
-        public FluentMethodGroup()
+        public FluentMethodGroup(FluentMethodGroups fluentMethodGroups)
         {
+            this.FluentMethodGroups = fluentMethodGroups;
             Level = -1;
             ParentMethodGroupNames = new List<String>();
             InnerMethods = new List<MethodJvaf>();
             ChildFluentMethodGroups = new List<FluentMethodGroup>();
+        }
+
+        public FluentMethodGroups FluentMethodGroups { get; private set; }
+
+        public string ManagerTypeName
+        {
+            get
+            {
+                return $"{this.FluentMethodGroups.CodeModel.ServiceName}Manager";
+            }
         }
 
         public int Level { get; set; }
@@ -71,7 +83,8 @@ namespace AutoRest.Java.Azure.Fluent.Model
         {
             get
             {
-                return LocalName.TrimEnd('s');
+                Pluralizer pluralizer = new Pluralizer();
+                return pluralizer.Singularize(LocalName);
             }
         }
 
@@ -121,7 +134,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
         {
             get
             {
-                return InnerMethodGroup.Name.ToPascalCase();
+                return InnerMethodGroup.Name.ToCamelCase();
             }
         }
 
@@ -137,6 +150,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 if (this.ResourceDeleteDescription.SupportsDeleteByResourceGroup)
                 {
                     extends.Add("SupportsDeletingByResourceGroup");
+                    extends.Add("SupportsBatchDeletion");
                 }
                 if (this.ResourceGetDescription.SupportsGetByResourceGroup)
                 {
@@ -176,23 +190,20 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 // imports.Add($"{Settings.Instance.Namespace.ToLower()}.implementation.{InnerMethodGroup.Name.ToPascalCase()}Inner");
                 imports.Add($"{this.ImplementationPackage}.{this.InnerMethodGroupImplTypeName}");
 
-                bool anyReturnCompletable = OtherMethods
-                    .Select(m => new { m = m.InnerMethod, r = m.ReturnModel })
-                    .Any(mr => mr.m.HttpMethod == HttpMethod.Delete || (mr.r is PrimtiveFluentModel));
-
-                if (anyReturnCompletable)
+                if (OtherMethods.Any(m => m.InnerMethod.HttpMethod == HttpMethod.Delete))
                 {
                     imports.Add("rx.Completable");
                 }
 
-                bool anyReturnObservable = OtherMethods
-                    .Select(m => new { m = m.InnerMethod, r = m.ReturnModel })
-                    .Any(mr => mr.m.HttpMethod != HttpMethod.Delete && !(mr.r is PrimtiveFluentModel));
-
-                if (anyReturnObservable)
+                if (this.OtherFluentModels.Where(m => m is PrimtiveFluentModel).Any())
+                {
+                    imports.Add("rx.Completable");
+                }
+                if (this.OtherFluentModels.Where(m => !(m is PrimtiveFluentModel)).Any())
                 {
                     imports.Add("rx.Observable");
                 }
+                //
 
                 imports.Add("com.microsoft.azure.management.resources.fluentcore.model.HasInner");
 
@@ -219,6 +230,22 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     if (ResourceUpdateDescription.SupportsUpdating)
                     {
                         knownMethodNames.Add(ResourceUpdateDescription.UpdateMethod.Name.ToLowerInvariant());
+                        //
+                        FluentMethod updateMethod = ResourceUpdateDescription.UpdateMethod;
+                        if (updateMethod.InnerMethod.HttpMethod == HttpMethod.Put)
+                        {
+                            // If PUT based update is supported then skip any PATCH based update method
+                            // being treated as "Other methods".
+                            //
+                            var patchUpdateMethod = this.InnerMethods
+                                .Where(m => m.HttpMethod == HttpMethod.Patch)
+                                .Where(m => m.Url.EqualsIgnoreCase(updateMethod.InnerMethod.Url))
+                                .FirstOrDefault();
+                            if (patchUpdateMethod != null)
+                            {
+                                knownMethodNames.Add(patchUpdateMethod.Name.ToLowerInvariant());
+                            }
+                        }
                     }
 
                     if (ResourceListingDescription.SupportsListByImmediateParent)
@@ -506,7 +533,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        public static FluentMethodGroup ResolveFluentMethodGroup(List<String> urlParts, HttpMethod httpMethod)
+        public static FluentMethodGroup ResolveFluentMethodGroup(FluentMethodGroups fluentMethodGroups, List<String> urlParts, HttpMethod httpMethod)
         {
             int level = 0;
             List<String> parentFluentMethodGroupNames = new List<String>();
@@ -522,7 +549,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
 
             if (parentFluentMethodGroupNames.Count() == 1)
             {
-                return new FluentMethodGroup()
+                return new FluentMethodGroup(fluentMethodGroups)
                 {
                     LocalName = parentFluentMethodGroupNames[0],
                     Level = 0,
@@ -536,7 +563,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     if (!urlParts.Last().StartsWith("{")
                         && urlParts.Last().EqualsIgnoreCase(parentFluentMethodGroupNames.Last()))
                     {
-                        return new FluentMethodGroup()
+                        return new FluentMethodGroup(fluentMethodGroups)
                         {
                             LocalName = parentFluentMethodGroupNames.SkipLast(1).Last(),
                             Level = parentFluentMethodGroupNames.Count() - 2,
@@ -545,7 +572,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     }
                     else
                     {
-                        return new FluentMethodGroup()
+                        return new FluentMethodGroup(fluentMethodGroups)
                         {
                             LocalName = parentFluentMethodGroupNames.Last(),
                             Level = parentFluentMethodGroupNames.Count() - 1,
@@ -563,7 +590,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 }
                 else
                 {
-                    return new FluentMethodGroup()
+                    return new FluentMethodGroup(fluentMethodGroups)
                     {
                         LocalName = parentFluentMethodGroupNames.Last(),
                         Level = parentFluentMethodGroupNames.Count() - 1,

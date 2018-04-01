@@ -25,14 +25,16 @@ package @(Settings.Namespace.ToLower()).fluent.implementation;
 
 class @(Model.JvaClassName)@(Model.ExtendsFrom)@(Model.Implements) {
 
+    @(Model.DeclareManagerVariable)
 @foreach (var varDecl in Model.DeclareMemberVariables)
 {
     @:@varDecl
 }
-
-@EmptyLine
-    @(Model.JavaMethods)
-@EmptyLine
+@foreach (var jvaMethod in Model.JavaMethods)
+{
+@:    @jvaMethod
+@:    @EmptyLine
+}
 
 @foreach (PropertyJv property in Model.Interface.LocalProperties)
 {

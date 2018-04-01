@@ -245,6 +245,9 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     imports.Add("com.microsoft.azure.management.resources.fluentcore.model.Creatable");
                 }
 
+                imports.Add("com.microsoft.azure.management.resources.fluentcore.arm.models.HasManager");
+                imports.Add($"{this.Package}.implementation.{this.FluentMethodGroup.ManagerTypeName}");
+
                 imports.AddRange(this.UpdateMemberVariablesImports);
                 imports.AddRange(this.CreateMemberVariablesImports);
                 imports.AddRange(LocalPropertiesImports);
@@ -275,6 +278,8 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 {
                     extends.Add($"Updatable<{this.JavaInterfaceName}.Update>");
                 }
+
+                extends.Add($"HasManager<{this.FluentMethodGroup.ManagerTypeName}>");
 
                 if (extends.Count() > 0)
                 {

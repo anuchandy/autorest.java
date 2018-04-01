@@ -6,6 +6,7 @@
 @using AutoRest.Core.Utilities
 @using AutoRest.Java.Model
 @using AutoRest.Java.Azure.Model
+@using AutoRest.Java.Azure.Fluent.Model
 @inherits AutoRest.Core.Template<AutoRest.Java.Azure.Fluent.Model.FluentMethodGroup>
 
 /**
@@ -33,7 +34,7 @@ public interface @(Model.JavaInterfaceName)@(Model.ExtendsFrom) {
      * Entry point to manage @(Model.LocalSingularName) @(nestedFluentMethodGroup.LocalName).
      */
     </text>
-    @:@(nestedFluentMethodGroup.JavaInterfaceName) @(nestedFluentMethodGroup.LocalName.ToPascalCase())();
+    @:@(nestedFluentMethodGroup.JavaInterfaceName) @(nestedFluentMethodGroup.LocalName.ToCamelCase())();
 }
 
 @if (@Model.ResourceListingDescription.SupportsListByImmediateParent)
@@ -138,6 +139,10 @@ public interface @(Model.JavaInterfaceName)@(Model.ExtendsFrom) {
     */
     </text>
     @if (method.InnerMethod.HttpMethod == AutoRest.Core.Model.HttpMethod.Delete)
+    {
+@:Completable @(method.Name)Async(@method.InnerMethod.MethodRequiredParameterDeclaration);
+    }
+    else if (method.ReturnModel is PrimtiveFluentModel)
     {
 @:Completable @(method.Name)Async(@method.InnerMethod.MethodRequiredParameterDeclaration);
     }

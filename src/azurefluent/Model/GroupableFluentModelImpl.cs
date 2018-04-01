@@ -60,6 +60,23 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
+        public string CtrImplementation
+        {
+            get
+            {
+                StringBuilder methodBuilder = new StringBuilder();
+                methodBuilder.AppendLine($"{JvaClassName}(String name, {InnerModelTypeName} inner, {this.Interface.FluentMethodGroup.ManagerTypeName} manager)");
+                methodBuilder.AppendLine($"{{");
+                methodBuilder.AppendLine($"    super(name, inner, manager);");
+                foreach(string initvariable in InitCreateAndUpdateVariables)
+                {
+                    methodBuilder.AppendLine($"    {initvariable}");
+                }
+                methodBuilder.AppendLine($"}}");
+                return methodBuilder.ToString();
+            }
+        }
+
         /// <summary>
         /// Checks 'updateResourceAsync' method needs to be overriden.
         /// </summary>
@@ -256,6 +273,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 {
                     imports.Add("rx.functions.Func1");
                 }
+                imports.Add($"{this.Interface.Package}.implementation.{this.Interface.FluentMethodGroup.ManagerTypeName}");
                 return imports;
             }
         }
@@ -270,7 +288,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 return $" extends GroupableResourceImpl<{this.Interface.JavaInterfaceName}, " +
                     $"{this.Interface.InnerModel.Name}, " +
                     $"{this.JvaClassName}, " +
-                    $"Object>";
+                    $"{this.Interface.FluentMethodGroup.ManagerTypeName}>";
             }
         }
 
@@ -468,6 +486,22 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     .Union(this.Interface.OptionalDefinitionStages)
                     .SelectMany(s => s.Methods)
                     .Intersect(this.Interface.UpdateStages.SelectMany(u => u.Methods), FluentDefinitionOrUpdateStageMethod.EqualityComparer());
+            }
+        }
+
+        public string CtrInvocationFromWrapExistingInnerModel
+        {
+            get
+            {
+                return $" new {JvaClassName}(inner.name(), inner, this.manager());";
+            }
+        }
+
+        public string CtrInvocationFromWrapNewInnerModel
+        {
+            get
+            {
+                return $"new {JvaClassName}(name, new {InnerModelTypeName}(), this.manager());";
             }
         }
     }

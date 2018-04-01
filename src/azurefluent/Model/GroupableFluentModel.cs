@@ -5,6 +5,7 @@ using AutoRest.Java.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace AutoRest.Java.Azure.Fluent.Model
 {
@@ -189,6 +190,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 List<string> extends = new List<string>
                 {
                     $"HasInner<{this.InnerModel.Name}>",
+                    "Resource",
                     "HasResourceGroup"
                 };
 
@@ -201,6 +203,8 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 {
                     extends.Add($"Updatable<{this.rawFluentModel.JavaInterfaceName}.Update>");
                 }
+
+                extends.Add($"HasManager<{this.FluentMethodGroup.ManagerTypeName}>");
 
                 if (extends.Count() > 0)
                 {
@@ -224,7 +228,8 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 HashSet<string> imports = new HashSet<string>
                 {
                     "com.microsoft.azure.management.resources.fluentcore.model.HasInner",
-                    "com.microsoft.azure.management.resources.fluentcore.arm.models.HasResourceGroup"
+                    "com.microsoft.azure.management.resources.fluentcore.arm.models.Resource",
+                    "com.microsoft.azure.management.resources.fluentcore.arm.models.HasResourceGroup",
                 };
                 if (this.SupportsGetting)
                 {
@@ -244,9 +249,14 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     imports.Add("com.microsoft.azure.management.resources.fluentcore.arm.models.Resource"); // Resource.DefinitionWithTags<WithCreate>
                 }
 
+                imports.Add("com.microsoft.azure.management.resources.fluentcore.arm.models.HasManager");
+                imports.Add($"{this.Package}.implementation.{this.FluentMethodGroup.ManagerTypeName}");
+
+
                 imports.AddRange(this.PropertiesAndMethodImports);
 
                 imports.Add($"{InnerModel.Package}.{InnerModel.Name}");
+
                 return imports;
             }
         }

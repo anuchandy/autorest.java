@@ -13,6 +13,13 @@ namespace AutoRest.Java.Azure.Fluent.Model
 {
     public class FluentMethodGroups : Dictionary<string, List<FluentMethodGroup>>
     {
+        public CodeModelJvaf CodeModel { get; private set; }
+
+        private FluentMethodGroups(CodeModelJvaf codeModel)
+        {
+            this.CodeModel = codeModel;
+        }
+
         public IEnumerable<GroupableFluentModel> GroupableFluentModels
         {
             get; private set;
@@ -33,9 +40,14 @@ namespace AutoRest.Java.Azure.Fluent.Model
             get; private set;
         }
 
+        public Dictionary<string, ActionOrChildAccessorOnlyMethodGroupImpl> ActionOrChildAccessorOnlyMethodGroups
+        {
+            get; private set;
+        }
+
         public static FluentMethodGroups InnerMethodGroupToFluentMethodGroups(CodeModelJvaf codeModel)
         {
-            FluentMethodGroups innerMethodGroupToFluentMethodGroups = new FluentMethodGroups();
+            FluentMethodGroups innerMethodGroupToFluentMethodGroups = new FluentMethodGroups(codeModel);
 
             foreach (MethodGroupJvaf innerMethodGroup in codeModel.AllOperations)
             {
@@ -66,14 +78,14 @@ namespace AutoRest.Java.Azure.Fluent.Model
                         FluentMethodGroup fluentMGroup = null;
                         if (parts.Count() == 1)
                         {
-                            fluentMGroup = new FluentMethodGroup()
+                            fluentMGroup = new FluentMethodGroup(innerMethodGroupToFluentMethodGroups)
                             {
                                 LocalName = "<Delay_FluentMethodGroup_Resolution>",
                             };
                         }
                         else 
                         {
-                            fluentMGroup = FluentMethodGroup.ResolveFluentMethodGroup(parts, innerMethod.HttpMethod);
+                            fluentMGroup = FluentMethodGroup.ResolveFluentMethodGroup(innerMethodGroupToFluentMethodGroups, parts, innerMethod.HttpMethod);
                         }
 
                         Debug.Assert(fluentMGroup != null);
@@ -123,7 +135,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                         .FirstOrDefault(fmg => fmg.LocalName.EqualsIgnoreCase(ancestorName) && fmg.Level == ofmg.Level - 1);
                     if (stepParentFluentMethodGroup == null)
                     {
-                        stepParentFluentMethodGroup = new FluentMethodGroup
+                        stepParentFluentMethodGroup = new FluentMethodGroup(this)
                         {
                             LocalName = ancestorName,
                             Level = ofmg.Level - 1,
@@ -153,7 +165,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                         .FirstOrDefault(fmg => fmg.Level == 0);
                     if (level0FluentMethodGroup == null)
                     {
-                        level0FluentMethodGroup = new FluentMethodGroup()
+                        level0FluentMethodGroup = new FluentMethodGroup(this)
                         {
                             LocalName = kvPair.Key,
                             InnerMethodGroup = (MethodGroupJvaf) codeModel
@@ -233,7 +245,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                         {
                             if (fmg.Level > 0)
                             {
-                                fmg.JavaInterfaceName = $"{fmg.ParentFluentMethodGroup.LocalSingularName}{fmg.JavaInterfaceName}";
+                                fmg.JavaInterfaceName = $"{fmg.ParentFluentMethodGroup.LocalSingularName.ToPascalCase()}{fmg.JavaInterfaceName}";
                             }
                             else
                             {
@@ -427,7 +439,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
 
             this.NestedFluentModels.ForEach(m => groupableAndNestedModelNames.Add(m.JavaInterfaceName));
 
-            // Specialize thr READONLYMODEL
+            // Specialize the READONLYMODEL
             //
             this.ReadonlyFluentModels = this.Select(kv => kv.Value)
                 .SelectMany(fmg => fmg)
@@ -436,6 +448,20 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 .Distinct(FluentModel.EqualityComparer())
                 .Where(m => !groupableAndNestedModelNames.Contains(m.JavaInterfaceName))
                 .Select(m => new ReadOnlyFluentModel(m));
+
+            // Not groupable or nested method group
+            //
+            this.ActionOrChildAccessorOnlyMethodGroups = new Dictionary<string, ActionOrChildAccessorOnlyMethodGroupImpl>();
+            this.Select(kv => kv.Value)
+                 .SelectMany(fmg => fmg)
+                 .Where(fmg => fmg.StandardFluentModel == null)
+                 .ForEach(fmg =>
+                 {
+                     if (!ActionOrChildAccessorOnlyMethodGroups.ContainsKey(fmg.JavaInterfaceName))
+                     {
+                         ActionOrChildAccessorOnlyMethodGroups.Add(fmg.JavaInterfaceName, new ActionOrChildAccessorOnlyMethodGroupImpl(fmg));
+                     }
+                 });
         }
 
         private static List<String> GetPartsAfterProvider(String url) 

@@ -77,6 +77,10 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 if (this.SupportsDeleteByResourceGroup)
                 {
                     imports.Add("com.microsoft.azure.management.resources.fluentcore.arm.collection.SupportsDeletingByResourceGroup");
+                    imports.Add("com.microsoft.azure.management.resources.fluentcore.arm.collection.SupportsBatchDeletion");
+                }
+                if (this.supportsDeleteByImmediateParent)
+                {
                 }
                 return imports;
             }

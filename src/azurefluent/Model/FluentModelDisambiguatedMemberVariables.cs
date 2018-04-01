@@ -376,7 +376,6 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     this.memberVariablesForUpdate.Add(updatePayloadVariable.VariableName, uNewVariable);
                     //
                     this.MemberVariables.Add(cNewVariable);
-                    this.MemberVariables.Add(uNewVariable);
                 }
                 else
                 {
