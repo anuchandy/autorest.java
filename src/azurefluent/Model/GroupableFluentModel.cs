@@ -190,8 +190,9 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 List<string> extends = new List<string>
                 {
                     $"HasInner<{this.InnerModel.Name}>",
-                    "Resource",
-                    "HasResourceGroup"
+                    $"Resource",
+                    $"GroupableResource<{this.FluentMethodGroup.ManagerTypeName}, {this.InnerModel.Name}>",
+                    $"HasResourceGroup"
                 };
 
                 if (this.SupportsGetting)

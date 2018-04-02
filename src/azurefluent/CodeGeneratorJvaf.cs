@@ -46,6 +46,9 @@ namespace AutoRest.Java.Azure.Fluent
                 throw new InvalidCastException("CodeModel is not a Azure Java Fluent CodeModel");
             }
 
+            var idParsingUtilsTemplate = new IdParsingUtilsTemplate { Model = codeModel };
+            await Write(idParsingUtilsTemplate, $"{packagePath}/implementation/IdParsingUtils{ImplementationFileExtension}");
+
             FluentMethodGroups innerMGroupToFluentMGroup = FluentMethodGroups.InnerMethodGroupToFluentMethodGroups(codeModel);
 
             foreach (ReadOnlyFluentModel fluentModel in innerMGroupToFluentMGroup.ReadonlyFluentModels)
@@ -103,7 +106,6 @@ namespace AutoRest.Java.Azure.Fluent
             // Service client
             var serviceClientTemplate = new AzureServiceClientTemplate { Model = codeModel };
             await Write(serviceClientTemplate, $"{packagePath}/implementation/{codeModel.Name.ToPascalCase()}Impl{ImplementationFileExtension}");
-
             // operations
             foreach (MethodGroupJvaf methodGroup in codeModel.AllOperations)
             {

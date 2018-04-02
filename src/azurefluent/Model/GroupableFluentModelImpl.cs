@@ -65,8 +65,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
             get
             {
                 StringBuilder methodBuilder = new StringBuilder();
-                methodBuilder.AppendLine($"{JvaClassName}(String name, {InnerModelTypeName} inner, {this.Interface.FluentMethodGroup.ManagerTypeName} manager)");
-                methodBuilder.AppendLine($"{{");
+                methodBuilder.AppendLine($"{JvaClassName}(String name, {InnerModelTypeName} inner, {this.Interface.FluentMethodGroup.ManagerTypeName} manager) {{");
                 methodBuilder.AppendLine($"    super(name, inner, manager);");
                 foreach(string initvariable in InitCreateAndUpdateVariables)
                 {

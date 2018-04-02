@@ -24,6 +24,9 @@ package @(Settings.Namespace.ToLower());
 }
 @EmptyLine
 
+/**
+ * Type representing @(Model.JavaInterfaceName).
+ */
 public interface @(Model.JavaInterfaceName)@(Model.ExtendsFrom) {
 
 @foreach (var nestedFluentMethodGroup in Model.ChildFluentMethodGroups)
@@ -31,7 +34,7 @@ public interface @(Model.JavaInterfaceName)@(Model.ExtendsFrom) {
 @EmptyLine
     <text>
     /**
-     * Entry point to manage @(Model.LocalSingularName) @(nestedFluentMethodGroup.LocalName).
+     * @@return Entry point to manage @(Model.LocalSingularName) @(nestedFluentMethodGroup.LocalName).
      */
     </text>
     @:@(nestedFluentMethodGroup.JavaInterfaceName) @(nestedFluentMethodGroup.LocalName.ToCamelCase())();
@@ -62,7 +65,7 @@ public interface @(Model.JavaInterfaceName)@(Model.ExtendsFrom) {
     * @@return the observable for the request
     */
     </text>
-    @:Observable<@(returnModel.JavaInterfaceName)> ListBy@(Model.ParentFluentMethodGroup.LocalSingularName)Async(@innerMethod.MethodRequiredParameterDeclaration);
+    @:Observable<@(returnModel.JavaInterfaceName)> listBy@(Model.ParentFluentMethodGroup.LocalSingularName)Async(@innerMethod.MethodRequiredParameterDeclaration);
 }
 @if (@Model.ResourceGetDescription.SupportsGetByImmediateParent)
 {
@@ -89,7 +92,7 @@ public interface @(Model.JavaInterfaceName)@(Model.ExtendsFrom) {
     * @@return the observable for the request
     */
     </text>
-    @:Observable<@(returnModel.JavaInterfaceName)> GetBy@(Model.ParentFluentMethodGroup.LocalSingularName)Async(@innerMethod.MethodRequiredParameterDeclaration);
+    @:Observable<@(returnModel.JavaInterfaceName)> getBy@(Model.ParentFluentMethodGroup.LocalSingularName)Async(@innerMethod.MethodRequiredParameterDeclaration);
 }
 @if (@Model.ResourceDeleteDescription.SupportsDeleteByImmediateParent)
 {
@@ -115,7 +118,7 @@ public interface @(Model.JavaInterfaceName)@(Model.ExtendsFrom) {
     * @@return the observable for the request
     */
     </text>
-    @:Completable DeleteBy@(Model.ParentFluentMethodGroup.LocalSingularName)Async(@innerMethod.MethodRequiredParameterDeclaration);
+    @:Completable deleteBy@(Model.ParentFluentMethodGroup.LocalSingularName)Async(@innerMethod.MethodRequiredParameterDeclaration);
 }
 @foreach (var method in Model.OtherMethods)
 {

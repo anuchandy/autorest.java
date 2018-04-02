@@ -127,6 +127,13 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     }
                 }
 
+                if (this.Interface.OtherMethods.Any(m => m.InnerMethod.IsPagingOperation))
+                {
+                    imports.Add("rx.Observable");
+                    imports.Add("com.microsoft.azure.Page");
+                    imports.Add("rx.functions.Func1");
+                }
+
                 //
                 foreach (var nestedFluentMethodGroup in this.Interface.ChildFluentMethodGroups)
                 {
@@ -366,7 +373,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     }
                     else
                     {
-                        string nextPageMethodName = $"ListByResourceGroupNextInnerPageAsync";
+                        string nextPageMethodName = $"listByResourceGroupNextInnerPageAsync";
 
                         methodBuilder.AppendLine($"private Observable<Page<{this.GroupableModelInnerName}>> {nextPageMethodName}(String nextLink) {{");
                         methodBuilder.AppendLine($"    if (nextLink == null) {{");
@@ -458,7 +465,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     }
                     else
                     {
-                        string nextPageMethodName = $"ListNextInnerPageAsync";
+                        string nextPageMethodName = $"listNextInnerPageAsync";
 
                         methodBuilder.AppendLine($"private Observable<Page<{this.GroupableModelInnerName}>> {nextPageMethodName}(String nextLink) {{");
                         methodBuilder.AppendLine($"    if (nextLink == null) {{");
@@ -541,7 +548,6 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     else
                     {
                         FluentModel returnModel = otherMethod.ReturnModel;
-                        string rxReturnType = null;
                         if (returnModel is PrimtiveFluentModel)
                         {
                             methodsBuilder.AppendLine($"@Override");
@@ -552,18 +558,65 @@ namespace AutoRest.Java.Azure.Fluent.Model
                         }
                         else
                         {
-                            rxReturnType = $"Observable<{returnModel.JavaInterfaceName}>";
-                            methodsBuilder.AppendLine("@Override");
-                            methodsBuilder.AppendLine($"public {rxReturnType} {otherMethod.Name}Async({otherMethod.InnerMethod.MethodRequiredParameterDeclaration}) {{");
-                            methodsBuilder.AppendLine($"    {this.InnerClientName} client = this.inner();");
-                            methodsBuilder.AppendLine($"    return client.{otherMethod.Name}Async({InnerMethodInvocationParameter(otherMethod.InnerMethod)})");
-                            methodsBuilder.AppendLine($"    .map(new Func1<{returnModel.InnerModel.ClassName}, {returnModel.JavaInterfaceName}>() {{");
-                            methodsBuilder.AppendLine($"        @Override");
-                            methodsBuilder.AppendLine($"        public {returnModel.JavaInterfaceName} call({returnModel.InnerModel.ClassName} inner) {{");
-                            methodsBuilder.AppendLine($"            return new {returnModel.JavaInterfaceName}Impl(inner);");
-                            methodsBuilder.AppendLine($"        }}");
-                            methodsBuilder.AppendLine($"    }});");
-                            methodsBuilder.AppendLine($"}}");
+                            if (!otherMethod.InnerMethod.IsPagingOperation)
+                            {
+                                string rxReturnType = $"Observable<{returnModel.JavaInterfaceName}>";
+                                methodsBuilder.AppendLine("@Override");
+                                methodsBuilder.AppendLine($"public {rxReturnType} {otherMethod.Name}Async({otherMethod.InnerMethod.MethodRequiredParameterDeclaration}) {{");
+                                methodsBuilder.AppendLine($"    {this.InnerClientName} client = this.inner();");
+                                methodsBuilder.AppendLine($"    return client.{otherMethod.Name}Async({InnerMethodInvocationParameter(otherMethod.InnerMethod)})");
+                                methodsBuilder.AppendLine($"    .map(new Func1<{returnModel.InnerModel.ClassName}, {returnModel.JavaInterfaceName}>() {{");
+                                methodsBuilder.AppendLine($"        @Override");
+                                methodsBuilder.AppendLine($"        public {returnModel.JavaInterfaceName} call({returnModel.InnerModel.ClassName} inner) {{");
+                                methodsBuilder.AppendLine($"            return new {returnModel.JavaInterfaceName}Impl(inner);");
+                                methodsBuilder.AppendLine($"        }}");
+                                methodsBuilder.AppendLine($"    }});");
+                                methodsBuilder.AppendLine($"}}");
+                            }
+                            else
+                            {
+                                string nextPageMethodName = $"{otherMethod.Name}NextInnerPageAsync";
+                                string rxPagedReturnType = $"Observable<Page<{returnModel.InnerModel.ClassName}>>";
+
+                                methodsBuilder.AppendLine($"private {rxPagedReturnType} {nextPageMethodName}(String nextLink) {{");
+                                methodsBuilder.AppendLine($"    if (nextLink == null) {{");
+                                methodsBuilder.AppendLine($"        Observable.empty();");
+                                methodsBuilder.AppendLine($"    }}");
+                                methodsBuilder.AppendLine($"    {this.InnerClientName} client = this.inner();");
+                                methodsBuilder.AppendLine($"    return client.{otherMethod.Name}NextAsync(nextLink)");
+                                methodsBuilder.AppendLine($"    .flatMap(new Func1<Page<{returnModel.InnerModel.ClassName}>, Observable<Page<{returnModel.InnerModel.ClassName}>>>() {{");
+                                methodsBuilder.AppendLine($"        @Override");
+                                methodsBuilder.AppendLine($"        public Observable<Page<{returnModel.InnerModel.ClassName}>> call(Page<{returnModel.InnerModel.ClassName}> page) {{");
+                                methodsBuilder.AppendLine($"            return Observable.just(page).concatWith({nextPageMethodName}(page.nextPageLink()));");
+                                methodsBuilder.AppendLine($"        }}");
+                                methodsBuilder.AppendLine($"    }});");
+                                methodsBuilder.AppendLine($"}}");
+
+                                string rxReturnType = $"Observable<{returnModel.JavaInterfaceName}>";
+                                methodsBuilder.AppendLine($"@Override");
+                                methodsBuilder.AppendLine($"public {rxReturnType} {otherMethod.Name}Async({otherMethod.InnerMethod.MethodRequiredParameterDeclaration}) {{");
+                                methodsBuilder.AppendLine($"    {this.InnerClientName} client = this.inner();");
+                                methodsBuilder.AppendLine($"    return client.{otherMethod.Name}Async()");
+                                methodsBuilder.AppendLine($"    .flatMap(new Func1<Page<{returnModel.InnerModel.ClassName}>, Observable<Page<{returnModel.InnerModel.ClassName}>>>() {{");
+                                methodsBuilder.AppendLine($"        @Override");
+                                methodsBuilder.AppendLine($"        public Observable<Page<{returnModel.InnerModel.ClassName}>> call(Page<{returnModel.InnerModel.ClassName}> page) {{");
+                                methodsBuilder.AppendLine($"            return {nextPageMethodName}(page.nextPageLink());");
+                                methodsBuilder.AppendLine($"        }}");
+                                methodsBuilder.AppendLine($"    }})");
+                                methodsBuilder.AppendLine($"    .flatMapIterable(new Func1<Page<{returnModel.InnerModel.ClassName}>, Iterable<{returnModel.InnerModel.ClassName}>>() {{");
+                                methodsBuilder.AppendLine($"        @Override");
+                                methodsBuilder.AppendLine($"        public Iterable<{returnModel.InnerModel.ClassName}> call(Page<{returnModel.InnerModel.ClassName}> page) {{");
+                                methodsBuilder.AppendLine($"            return page.items();");
+                                methodsBuilder.AppendLine($"        }}");
+                                methodsBuilder.AppendLine($"   }})");
+                                methodsBuilder.AppendLine($"    .map(new Func1<{returnModel.InnerModel.ClassName}, {returnModel.JavaInterfaceName}>() {{");
+                                methodsBuilder.AppendLine($"        @Override");
+                                methodsBuilder.AppendLine($"        public {returnModel.JavaInterfaceName} call({returnModel.InnerModel.ClassName} inner) {{");
+                                methodsBuilder.AppendLine($"            return new {returnModel.JavaInterfaceName}Impl(inner);");
+                                methodsBuilder.AppendLine($"        }}");
+                                methodsBuilder.AppendLine($"   }});");
+                                methodsBuilder.AppendLine($"}}");
+                            }
                         }
                     }
                 }

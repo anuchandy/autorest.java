@@ -91,79 +91,18 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     var parentVars = this.Interface.DisambiguatedMemberVariables.MemberVariables.OfType<FluentModelParentRefMemberVariable>();
                     foreach (var parentVar in parentVars)
                     {
-                        yield return $"{parentVar.VariableAccessor} = GetValueFromIdByName(inner.id(), \"{parentVar.ParentRefName}\");";
+                        yield return $"{parentVar.VariableAccessor} = IdParsingUtils.getValueFromIdByName(inner.id(), \"{parentVar.ParentRefName}\");";
                     }
 
                     var posVars = this.Interface.DisambiguatedMemberVariables.MemberVariables.OfType<FluentModelPositionalPathMemberVariable>();
                     foreach (var posVar in posVars)
                     {
-                        yield return $"{posVar.VariableAccessor} = GetValueFromIdByPosition(inner.id(), {posVar.Position});";
+                        yield return $"{posVar.VariableAccessor} = IdParsingUtils.getValueFromIdByPosition(inner.id(), {posVar.Position});";
                     }
                 }
                 else
                 {
                     yield break;
-                }
-            }
-        }
-
-        public string IdParsingHelperMethods
-        {
-            get
-            {
-                if (this.RequiresIdParsing)
-                {
-                    string valByNameFunc =
-                        "private static String GetValueFromIdByName(String id, String name) {" + "\n" +
-                        "    if (id == null) {" + "\n" +
-                        "        return null;" + "\n" +
-                        "    }" + "\n" +
-                        "    Iterable<String> iterable = Arrays.asList(id.split(\"/\"));" + "\n" +
-                        "    Iterator <String> itr = iterable.iterator(); " + "\n" +
-                        "    while (itr.hasNext()) { " + "\n" +
-                        "        String part = itr.next();" + "\n" +
-                        "        if (part != null && part.trim() != \"\") {" + "\n" +
-                        "            if (part.equalsIgnoreCase(name)) {" + "\n" +
-                        "                if (itr.hasNext()) {" + "\n" +
-                        "                    return itr.next();" + "\n" +
-                        "                } else {" + "\n" +
-                        "                    return null;" + "\n" +
-                        "                }" + "\n" +
-                        "            }" + "\n" +
-                        "        }" + "\n" +
-                        "    }" + "\n" +
-                        "    return null;" + "\n" +
-                        "}" + "\n";
-
-                        string valByPosFunc =
-                        "private static String GetValueFromIdByPosition(String id, int pos) {" + "\n" +
-                        "    if (id == null) {" + "\n" +
-                        "        return null;" + "\n" +
-                        "    }" + "\n" +
-                        "    Iterable<String> iterable = Arrays.asList(id.split(\"/\"));" + "\n" +
-                        "    Iterator <String> itr = iterable.iterator(); " + "\n" +
-                        "    int index = 0;" + "\n" +
-                        "    while (itr.hasNext()) { " + "\n" +
-                        "        String part = itr.next();" + "\n" +
-                        "        if (part != null && part.trim() != \"\") {" + "\n" +
-                        "            if (index == pos) {" + "\n" +
-                        "                if (itr.hasNext()) {" + "\n" +
-                        "                    return itr.next();" + "\n" +
-                        "                } else {" + "\n" +
-                        "                    return null;" + "\n" +
-                        "                }" + "\n" +
-                        "            }" + "\n" +
-                        "        }" + "\n" +
-                        "        index++;" + "\n" +
-                        "    }" + "\n" +
-                        "    return null;" + "\n" +
-                        "}" + "\n";
-
-                    return valByNameFunc + "\n" + valByPosFunc + "\n";
-                }
-                else
-                {
-                    return String.Empty;
                 }
             }
         }
@@ -196,13 +135,6 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     imports.Add("com.microsoft.azure.management.resources.fluentcore.model.implementation.WrapperImpl");
                 }
 
-                if (this.RequiresIdParsing)
-                {
-                    // Required for Id parsing helper function ref: EmitIdParsingHelperIfNeeded - Iterator & Arrays.AsList
-                    //
-                    imports.Add("java.util.Arrays");
-                    imports.Add("java.util.Iterator");
-                }
                 imports.Add("rx.Observable");
                 if (this.RequireFlatmapAfterUpdate)
                 {
@@ -353,7 +285,11 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     methodBuilder.AppendLine($"{this.JvaClassName}(String name, {managerTypeName} manager) {{");
                     methodBuilder.AppendLine($"    super(name, new {this.InnerModelTypeName}());");               // CreatableUpdatableImpl(name, inner)
                     methodBuilder.AppendLine($"    this.manager = manager;");
+                    methodBuilder.AppendLine($"    // Set resource name");
                     methodBuilder.AppendLine($"    {MemberVariableAccessorHoldingResourceName} = name;");
+                    // init create update member variables
+                    //
+                    methodBuilder.AppendLine($"    //");
                     foreach (string initMemberVariable in this.InitMemberVariables)
                     {
                         methodBuilder.AppendLine($"    {initMemberVariable}");
@@ -367,16 +303,25 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     methodBuilder.AppendLine($"{this.JvaClassName}(String name, {this.InnerModelTypeName} inner,  {managerTypeName} manager) {{");
                     methodBuilder.AppendLine($"    super(name, inner);");       // CreatableUpdatableImpl(name, inner)
                     methodBuilder.AppendLine($"    this.manager = manager;");
+                    methodBuilder.AppendLine($"    // Set resource name");
+                    methodBuilder.AppendLine($"    {MemberVariableAccessorHoldingResourceName} = name;");
                     // Init member variables
+                    methodBuilder.AppendLine($"    // resource ancestor names");
                     var parentVars = this.Interface.DisambiguatedMemberVariables.MemberVariables.OfType<FluentModelParentRefMemberVariable>();
                     foreach (var parentVar in parentVars)
                     {
-                        methodBuilder.AppendLine($"    {parentVar.VariableAccessor} = GetValueFromIdByName(inner.id(), \"{parentVar.ParentRefName}\");");
+                        methodBuilder.AppendLine($"    {parentVar.VariableAccessor} = IdParsingUtils.getValueFromIdByName(inner.id(), \"{parentVar.ParentRefName}\");");
                     }
                     var posVars = this.Interface.DisambiguatedMemberVariables.MemberVariables.OfType<FluentModelPositionalPathMemberVariable>();
                     foreach (var posVar in posVars)
                     {
-                        methodBuilder.AppendLine($"    {posVar.VariableAccessor} = GetValueFromIdByPosition(inner.id(), {posVar.Position});");
+                        methodBuilder.AppendLine($"    {posVar.VariableAccessor} = IdParsingUtils.getValueFromIdByPosition(inner.id(), {posVar.Position});");
+                    }
+                    methodBuilder.AppendLine($"    //");
+                    // init create update member variables
+                    foreach (string initMemberVariable in this.InitMemberVariables)
+                    {
+                        methodBuilder.AppendLine($"    {initMemberVariable}");
                     }
                     //
                     methodBuilder.AppendLine($"}}");
@@ -396,12 +341,12 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     var parentVars = this.Interface.DisambiguatedMemberVariables.MemberVariables.OfType<FluentModelParentRefMemberVariable>();
                     foreach (var parentVar in parentVars)
                     {
-                        methodBuilder.AppendLine($"    {parentVar.VariableAccessor} = GetValueFromIdByName(inner.id(), \"{parentVar.ParentRefName}\");");
+                        methodBuilder.AppendLine($"    {parentVar.VariableAccessor} = IdParsingUtils.getValueFromIdByName(inner.id(), \"{parentVar.ParentRefName}\");");
                     }
                     var posVars = this.Interface.DisambiguatedMemberVariables.MemberVariables.OfType<FluentModelPositionalPathMemberVariable>();
                     foreach (var posVar in posVars)
                     {
-                        methodBuilder.AppendLine($"    {posVar.VariableAccessor} = GetValueFromIdByPosition(inner.id(), {posVar.Position});");
+                        methodBuilder.AppendLine($"    {posVar.VariableAccessor} = IdParsingUtils.getValueFromIdByPosition(inner.id(), {posVar.Position});");
                     }
                     //
                     methodBuilder.AppendLine($"}}");

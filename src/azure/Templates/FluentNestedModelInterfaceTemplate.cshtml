@@ -23,6 +23,9 @@ package @(Settings.Namespace.ToLower());
 }
 @EmptyLine
 
+/**
+ * Type representing @(Model.JavaInterfaceName).
+ */
 public interface @(Model.JavaInterfaceName)@(Model.ExtendsFrom) {
 @foreach (PropertyJv property in Model.LocalProperties)
 {
@@ -57,8 +60,7 @@ public interface @(Model.JavaInterfaceName)@(Model.ExtendsFrom) {
         /**
          * The first stage of a @(Model.JavaInterfaceName) definition.
          */
-        interface Blank@(Model.BlankExtendsFrom)
-        {
+        interface Blank@(Model.BlankExtendsFrom) {
         }
     </text>
 @EmptyLine
