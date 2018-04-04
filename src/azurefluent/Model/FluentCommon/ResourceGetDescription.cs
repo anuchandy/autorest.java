@@ -7,21 +7,22 @@ using AutoRest.Java.azurefluent.Model;
 
 namespace AutoRest.Java.Azure.Fluent.Model
 {
-    public class ResourceDeleteDescription
+    public class ResourceGetDescription
     {
         private readonly FluentMethodGroup fluentMethodGroup;
         private bool isProcessed;
 
-        private bool supportsDeleteByResourceGroup;
-        private bool supportsDeleteByImmediateParent;
-        private FluentMethod deleteByResourceGroupMethod;
-        private FluentMethod deleteByImmediateParentMethod;
-        public ResourceDeleteDescription(FluentMethodGroup fluentMethodGroup)
+        private bool supportsGetByResourceGroup;
+        private bool supportsGetByImmediateParent;
+        private FluentMethod getByResourceGroupMethod;
+        private FluentMethod getByImmediateParentMethod;
+
+        public ResourceGetDescription(FluentMethodGroup fluentMethodGroup)
         {
             this.fluentMethodGroup = fluentMethodGroup;
         }
 
-        public bool SupportsDeleteByResourceGroup
+        public bool SupportsGetByResourceGroup
         {
             get
             {
@@ -29,11 +30,11 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 {
                     Process();
                 }
-                return this.supportsDeleteByResourceGroup;
+                return this.supportsGetByResourceGroup;
             }
         }
 
-        public bool SupportsDeleteByImmediateParent
+        public bool SupportsGetByImmediateParent
         {
             get
             {
@@ -41,11 +42,11 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 {
                     Process();
                 }
-                return this.supportsDeleteByImmediateParent;
+                return this.supportsGetByImmediateParent;
             }
         }
 
-        public FluentMethod DeleteByResourceGroupMethod
+        public FluentMethod GetByResourceGroupMethod
         {
             get
             {
@@ -53,11 +54,11 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 {
                     Process();
                 }
-                return this.deleteByResourceGroupMethod;
+                return this.getByResourceGroupMethod;
             }
         }
 
-        public FluentMethod DeleteByImmediateParentMethod
+        public FluentMethod GetByImmediateParentMethod
         {
             get
             {
@@ -65,7 +66,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 {
                     Process();
                 }
-                return this.deleteByImmediateParentMethod;
+                return this.getByImmediateParentMethod;
             }
         }
 
@@ -74,13 +75,9 @@ namespace AutoRest.Java.Azure.Fluent.Model
             get
             {
                 HashSet<string> imports = new HashSet<string>();
-                if (this.SupportsDeleteByResourceGroup)
+                if (this.SupportsGetByResourceGroup)
                 {
-                    imports.Add("com.microsoft.azure.management.resources.fluentcore.arm.collection.SupportsDeletingByResourceGroup");
-                    imports.Add("com.microsoft.azure.management.resources.fluentcore.arm.collection.SupportsBatchDeletion");
-                }
-                if (this.supportsDeleteByImmediateParent)
-                {
+                    imports.Add("com.microsoft.azure.management.resources.fluentcore.arm.collection.SupportsGettingByResourceGroup");
                 }
                 return imports;
             }
@@ -91,7 +88,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
             this.isProcessed = true;
             foreach (MethodJvaf innerMethod in fluentMethodGroup.InnerMethods)
             {
-                if (innerMethod.HttpMethod == HttpMethod.Delete)
+                if (innerMethod.HttpMethod == HttpMethod.Get)
                 {
                     String Url = innerMethod.FluentUrl();
                     if (Url != null)
@@ -104,7 +101,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                         else
                         {
                             bool matched = urlParts.SkipLast(1).Last() // Get the methodGroup local name
-                                .EqualsIgnoreCase(fluentMethodGroup.LocalName);
+                                .EqualsIgnoreCase(fluentMethodGroup.LocalNameInPascalCase);
                             if (matched)
                             {
                                 if (this.fluentMethodGroup.Level == 0)
@@ -116,10 +113,10 @@ namespace AutoRest.Java.Azure.Fluent.Model
                                             .ToList();
                                         if (urlParts.Count() > 0 && urlParts.First().EqualsIgnoreCase("resourceGroups")) 
                                         {
-                                            if (!this.supportsDeleteByResourceGroup)
+                                            if (!this.supportsGetByResourceGroup)
                                             {
-                                                this.supportsDeleteByResourceGroup = true;
-                                                this.deleteByResourceGroupMethod = new FluentMethod(true, innerMethod, this.fluentMethodGroup);
+                                                this.supportsGetByResourceGroup = true;
+                                                this.getByResourceGroupMethod = new FluentMethod(true, innerMethod, this.fluentMethodGroup);
                                             }
                                         }
                                     }
@@ -129,15 +126,15 @@ namespace AutoRest.Java.Azure.Fluent.Model
                                     FluentMethodGroup parentMethodGroup = this.fluentMethodGroup.ParentFluentMethodGroup;
                                     if (urlParts.Count() > 2 && parentMethodGroup != null)
                                     {
-                                        if (!this.supportsDeleteByImmediateParent)
+                                        if (!this.supportsGetByImmediateParent)
                                         {
-                                            this.supportsDeleteByImmediateParent = urlParts
+                                            this.supportsGetByImmediateParent = urlParts
                                                 .SkipLast(3)
                                                 .Last()
-                                                .EqualsIgnoreCase(parentMethodGroup.LocalName);
-                                            if (this.supportsDeleteByImmediateParent)
+                                                .EqualsIgnoreCase(parentMethodGroup.LocalNameInPascalCase);
+                                            if (this.supportsGetByImmediateParent)
                                             {
-                                                this.deleteByImmediateParentMethod = new FluentMethod(true, innerMethod, this.fluentMethodGroup);
+                                                this.getByImmediateParentMethod = new FluentMethod(true, innerMethod, this.fluentMethodGroup);
                                             }
                                         }
                                     }

@@ -7,22 +7,23 @@ using AutoRest.Java.azurefluent.Model;
 
 namespace AutoRest.Java.Azure.Fluent.Model
 {
-    public class ResourceGetDescription
+    public class ResourceListingDescription
     {
         private readonly FluentMethodGroup fluentMethodGroup;
         private bool isProcessed;
+        private bool supportsListByResourceGroup;
+        private bool supportsListBySubscription;
+        private bool supportsListByImmediateParent;
+        private FluentMethod listByResourceGroupMethod;
+        private FluentMethod listBySubscriptionMethod;
+        private FluentMethod listByImmediateParentMethod;
 
-        private bool supportsGetByResourceGroup;
-        private bool supportsGetByImmediateParent;
-        private FluentMethod getByResourceGroupMethod;
-        private FluentMethod getByImmediateParentMethod;
-
-        public ResourceGetDescription(FluentMethodGroup fluentMethodGroup)
+        public ResourceListingDescription(FluentMethodGroup fluentMethodGroup) 
         {
             this.fluentMethodGroup = fluentMethodGroup;
         }
 
-        public bool SupportsGetByResourceGroup
+        public bool SupportsListByResourceGroup
         {
             get
             {
@@ -30,11 +31,11 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 {
                     Process();
                 }
-                return this.supportsGetByResourceGroup;
+                return this.supportsListByResourceGroup;
             }
         }
 
-        public bool SupportsGetByImmediateParent
+        public bool SupportsListBySubscription
         {
             get
             {
@@ -42,11 +43,11 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 {
                     Process();
                 }
-                return this.supportsGetByImmediateParent;
+                return this.supportsListBySubscription;
             }
         }
 
-        public FluentMethod GetByResourceGroupMethod
+        public bool SupportsListByImmediateParent
         {
             get
             {
@@ -54,19 +55,43 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 {
                     Process();
                 }
-                return this.getByResourceGroupMethod;
+                return this.supportsListByImmediateParent;
             }
         }
 
-        public FluentMethod GetByImmediateParentMethod
+        public FluentMethod ListByResourceGroupMethod
         {
-            get
+            get 
             {
                 if (!isProcessed)
                 {
                     Process();
                 }
-                return this.getByImmediateParentMethod;
+                return this.listByResourceGroupMethod;
+            }
+        }
+
+        public FluentMethod ListBySubscriptionMethod
+        {
+            get 
+            {
+                if (!isProcessed)
+                {
+                    Process();
+                }
+                return this.listBySubscriptionMethod;
+            }
+        }
+
+        public FluentMethod ListByImmediateParentMethod
+        {
+            get 
+            {
+                if (!isProcessed)
+                {
+                    Process();
+                }
+                return this.listByImmediateParentMethod;
             }
         }
 
@@ -75,9 +100,13 @@ namespace AutoRest.Java.Azure.Fluent.Model
             get
             {
                 HashSet<string> imports = new HashSet<string>();
-                if (this.SupportsGetByResourceGroup)
+                if (this.SupportsListByResourceGroup)
                 {
-                    imports.Add("com.microsoft.azure.management.resources.fluentcore.arm.collection.SupportsGettingByResourceGroup");
+                    imports.Add("com.microsoft.azure.management.resources.fluentcore.arm.collection.SupportsListingByResourceGroup");
+                }
+                if (this.SupportsListBySubscription)
+                {
+                    imports.Add("com.microsoft.azure.management.resources.fluentcore.collection.SupportsListing");
                 }
                 return imports;
             }
@@ -98,10 +127,10 @@ namespace AutoRest.Java.Azure.Fluent.Model
                         {
                             continue;
                         }
-                        else
+                        else 
                         {
-                            bool matched = urlParts.SkipLast(1).Last() // Get the methodGroup local name
-                                .EqualsIgnoreCase(fluentMethodGroup.LocalName);
+                            bool matched = urlParts.Last() // Get the methodGroup local name
+                                .EqualsIgnoreCase(fluentMethodGroup.LocalNameInPascalCase);
                             if (matched)
                             {
                                 if (this.fluentMethodGroup.Level == 0)
@@ -113,10 +142,18 @@ namespace AutoRest.Java.Azure.Fluent.Model
                                             .ToList();
                                         if (urlParts.Count() > 0 && urlParts.First().EqualsIgnoreCase("resourceGroups")) 
                                         {
-                                            if (!this.supportsGetByResourceGroup)
+                                            if (!this.supportsListByResourceGroup)
                                             {
-                                                this.supportsGetByResourceGroup = true;
-                                                this.getByResourceGroupMethod = new FluentMethod(true, innerMethod, this.fluentMethodGroup);
+                                                this.supportsListByResourceGroup = true;
+                                                this.listByResourceGroupMethod = new FluentMethod(true, innerMethod, this.fluentMethodGroup);
+                                            }
+                                        }
+                                        else
+                                        {
+                                            if (!this.supportsListBySubscription)
+                                            {
+                                                this.supportsListBySubscription = true;
+                                                this.listBySubscriptionMethod = new FluentMethod(true, innerMethod, this.fluentMethodGroup);
                                             }
                                         }
                                     }
@@ -126,15 +163,15 @@ namespace AutoRest.Java.Azure.Fluent.Model
                                     FluentMethodGroup parentMethodGroup = this.fluentMethodGroup.ParentFluentMethodGroup;
                                     if (urlParts.Count() > 2 && parentMethodGroup != null)
                                     {
-                                        if (!this.supportsGetByImmediateParent)
+                                        if (!this.supportsListByImmediateParent)
                                         {
-                                            this.supportsGetByImmediateParent = urlParts
-                                                .SkipLast(3)
+                                            this.supportsListByImmediateParent = urlParts
+                                                .SkipLast(2)
                                                 .Last()
-                                                .EqualsIgnoreCase(parentMethodGroup.LocalName);
-                                            if (this.supportsGetByImmediateParent)
+                                                .EqualsIgnoreCase(parentMethodGroup.LocalNameInPascalCase);
+                                            if (this.supportsListByImmediateParent)
                                             {
-                                                this.getByImmediateParentMethod = new FluentMethod(true, innerMethod, this.fluentMethodGroup);
+                                                this.listByImmediateParentMethod = new FluentMethod(true, innerMethod, this.fluentMethodGroup);
                                             }
                                         }
                                     }

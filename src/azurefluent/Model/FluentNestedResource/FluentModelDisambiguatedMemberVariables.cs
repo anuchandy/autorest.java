@@ -9,9 +9,9 @@ namespace AutoRest.Java.Azure.Fluent.Model
 {
     public class FluentModelDisambiguatedMemberVariables
     {
-        private FluentNestedModelCreateMemberVariables cVariables;
-        private FluentNestedModelUpdateMemberVariables uVariables;
-        private FluentNestedModelGetMemeberVariables gVariables;
+        private NestedFluentModelCreateMemberVariables cVariables;
+        private NestedFluentModelUpdateMemberVariables uVariables;
+        private NestedFluentModelGetMemeberVariables gVariables;
 
         private IDictionary<string, FluentModelMemberVariable> memberVariablesForCreate;
         private IDictionary<string, FluentModelMemberVariable> memberVariablesForUpdate;
@@ -22,9 +22,9 @@ namespace AutoRest.Java.Azure.Fluent.Model
             // Initialize create, update and get variables to empty memeber variable collection
             // Each of this will be overriden if With[Create|Update|Get]MemberVariable() methods
             //
-            this.cVariables = new FluentNestedModelCreateMemberVariables();
-            this.uVariables = new FluentNestedModelUpdateMemberVariables();
-            this.gVariables = new FluentNestedModelGetMemeberVariables();
+            this.cVariables = new NestedFluentModelCreateMemberVariables();
+            this.uVariables = new NestedFluentModelUpdateMemberVariables();
+            this.gVariables = new NestedFluentModelGetMemeberVariables();
 
             this.memberVariablesForCreate = null;
             this.memberVariablesForUpdate = null;
@@ -36,7 +36,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
         /// </summary>
         /// <param name="cVariables">create member variables</param>
         /// <returns>FluentModelDisambiguatedMemberVariables</returns>
-        public FluentModelDisambiguatedMemberVariables WithCreateMemberVariable(FluentNestedModelCreateMemberVariables cVariables)
+        public FluentModelDisambiguatedMemberVariables WithCreateMemberVariable(NestedFluentModelCreateMemberVariables cVariables)
         {
             this.cVariables = cVariables;
             return this;
@@ -47,7 +47,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
         /// </summary>
         /// <param name="cVariables">update member variables</param>
         /// <returns>FluentModelDisambiguatedMemberVariables</returns>
-        public FluentModelDisambiguatedMemberVariables WithUpdateMemberVariable(FluentNestedModelUpdateMemberVariables uVariables)
+        public FluentModelDisambiguatedMemberVariables WithUpdateMemberVariable(NestedFluentModelUpdateMemberVariables uVariables)
         {
             if (this.cVariables.IsCompatibleWith(uVariables))
             {
@@ -61,7 +61,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
         /// </summary>
         /// <param name="cVariables">get member variables</param>
         /// <returns>FluentModelDisambiguatedMemberVariables</returns>
-        public FluentModelDisambiguatedMemberVariables WithGetMemberVariable(FluentNestedModelGetMemeberVariables gVariables)
+        public FluentModelDisambiguatedMemberVariables WithGetMemberVariable(NestedFluentModelGetMemeberVariables gVariables)
         {
             if (this.cVariables.IsCompatibleWith(gVariables) && this.uVariables.IsCompatibleWith(gVariables))
             {

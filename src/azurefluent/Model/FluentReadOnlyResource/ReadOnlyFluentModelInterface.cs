@@ -7,12 +7,12 @@ using AutoRest.Core.Utilities;
 
 namespace AutoRest.Java.Azure.Fluent.Model
 {
-    public class ReadOnlyFluentModel
+    public class ReadOnlyFluentModelInterface
     {
         private readonly FluentModel rawFluentModel;
         private ReadOnlyFluentModelImpl impl;
 
-        public ReadOnlyFluentModel(FluentModel rawFluentModel)
+        public ReadOnlyFluentModelInterface(FluentModel rawFluentModel)
         {
             this.rawFluentModel = rawFluentModel;
         }

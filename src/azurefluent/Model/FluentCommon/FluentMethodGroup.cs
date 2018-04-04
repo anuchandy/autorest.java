@@ -22,7 +22,6 @@ namespace AutoRest.Java.Azure.Fluent.Model
         private FluentModel standardFluentModel;
         private Dictionary<string, CompositeTypeJvaf> innersRequireWrapping;
 
-
         private Dictionary<string, FluentModel> fluentModels;
         private bool derivedFluentModels;
 
@@ -37,6 +36,9 @@ namespace AutoRest.Java.Azure.Fluent.Model
 
         public FluentMethodGroups FluentMethodGroups { get; private set; }
 
+        /// <summary>
+        /// The name of the manager type.
+        /// </summary>
         public string ManagerTypeName
         {
             get
@@ -45,6 +47,9 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
+        /// <summary>
+        /// The level of this fluent method group in the url.
+        /// </summary>
         public int Level { get; set; }
 
         public String JavaInterfaceName
@@ -52,7 +57,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
             get; set;
         }
 
-        public String LocalName
+        public string LocalNameInPascalCase
         {
             get
             {
@@ -63,28 +68,37 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 this.localName = $"{value.First().ToString().ToUpper()}{value.Substring(1)}";
             }
         }
-        public String GlobalName
+
+        public string LocalNameInCamelCase
+        {
+            get
+            {
+                return this.localName.ToCamelCase();
+            }
+        }
+
+        public String FullyQualifiedName
         {
             get
             {
                 String parentsStr = FullyQualifiedParentName;
                 if (!String.IsNullOrEmpty(parentsStr))
                 {
-                    return $"{parentsStr}_{LocalName}".ToLowerInvariant();
+                    return $"{parentsStr}_{LocalNameInPascalCase}".ToLowerInvariant();
                 }
                 else
                 {
-                    return LocalName.ToLowerInvariant();
+                    return LocalNameInPascalCase.ToLowerInvariant();
                 }
             }
         }
 
-        public String LocalSingularName
+        public String LocalSingularNameInPascalCase
         {
             get
             {
                 Pluralizer pluralizer = new Pluralizer();
-                return pluralizer.Singularize(LocalName);
+                return pluralizer.Singularize(LocalNameInPascalCase);
             }
         }
 
@@ -122,7 +136,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        public string InnerMethodGroupImplTypeName
+        public string InnerMethodGroupTypeName
         {
             get
             {
@@ -188,7 +202,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 imports.AddRange(this.ResourceGetDescription.Imports);
                 imports.AddRange(this.ResourceListingDescription.Imports);
                 // imports.Add($"{Settings.Instance.Namespace.ToLower()}.implementation.{InnerMethodGroup.Name.ToPascalCase()}Inner");
-                imports.Add($"{this.ImplementationPackage}.{this.InnerMethodGroupImplTypeName}");
+                imports.Add($"{this.ImplementationPackage}.{this.InnerMethodGroupTypeName}");
 
                 if (OtherMethods.Any(m => m.InnerMethod.HttpMethod == HttpMethod.Delete))
                 {
@@ -412,53 +426,53 @@ namespace AutoRest.Java.Azure.Fluent.Model
 
             this.derivedFluentModels = true;
 
-            // Find ONE fluent model used across "Standard methods"
+            // Find "ONE" fluent model that can be used across "Standard methods" (GetByResourceGroup |
+            // ListByResourceGroup | ListBySubscription | GetByImmediateParent | ListByImmediateParent |
+            // Create in RG, Update)
             //
-            // Derive an "inner model then a fluent model" that represents the
-            // return type of standard methods (SupportsCreating, SupportsListing)
-            // in this fluent model. We want all thoses standard methods to 
-            // return same fluent type though the inner methods can return 
-            // different inner model types.
+            // Derive an "inner model then a fluent model" that represents the return type of standard methods 
+            // in this fluent model. We want all thoses standard methods to return same fluent type though the
+            // inner methods can return different inner model types.
             //
-            CompositeTypeJvaf derivedInnerModel = null;
+            CompositeTypeJvaf standardModelInner = null;
             this.innersRequireWrapping = new Dictionary<string, CompositeTypeJvaf>();
 
             if (ResourceGetDescription.SupportsGetByResourceGroup)
             {
-                derivedInnerModel = ResourceGetDescription.GetByResourceGroupMethod.InnerReturnType;
+                standardModelInner = ResourceGetDescription.GetByResourceGroupMethod.InnerReturnType;
             }
             else if (ResourceCreateDescription.SupportsCreating)
             {
-                derivedInnerModel = ResourceCreateDescription.CreateMethod.InnerReturnType;
+                standardModelInner = ResourceCreateDescription.CreateMethod.InnerReturnType;
             }
             else if (ResourceListingDescription.SupportsListByResourceGroup)
             {
-                derivedInnerModel = ResourceListingDescription.ListByResourceGroupMethod.InnerReturnType;
+                standardModelInner = ResourceListingDescription.ListByResourceGroupMethod.InnerReturnType;
             }
             else if (ResourceListingDescription.SupportsListBySubscription)
             {
-                derivedInnerModel = ResourceListingDescription.ListBySubscriptionMethod.InnerReturnType;
+                standardModelInner = ResourceListingDescription.ListBySubscriptionMethod.InnerReturnType;
             }
             else if (ResourceGetDescription.SupportsGetByImmediateParent)
             {
-                derivedInnerModel = ResourceGetDescription.GetByImmediateParentMethod.InnerReturnType;
+                standardModelInner = ResourceGetDescription.GetByImmediateParentMethod.InnerReturnType;
             }
             else if (ResourceListingDescription.SupportsListByImmediateParent)
             {
-                derivedInnerModel = ResourceListingDescription.ListByImmediateParentMethod.InnerReturnType;
+                standardModelInner = ResourceListingDescription.ListByImmediateParentMethod.InnerReturnType;
             }
             else if (ResourceUpdateDescription.SupportsUpdating)
             {
-                derivedInnerModel = ResourceUpdateDescription.UpdateMethod.InnerReturnType;
+                standardModelInner = ResourceUpdateDescription.UpdateMethod.InnerReturnType;
             }
 
             // For the "standard model" (FModel) in a FluentMethodGroup we need to gen "FModel wrapModel(ModelInner)"
             // but if there are different ModelInner types mapping that needs to be mapped to the same FModel
             // we will be generating one over load per inner -> FModel mapping
             //
-            if (derivedInnerModel != null)
+            if (standardModelInner != null)
             {
-                this.standardFluentModel = new FluentModel(derivedInnerModel);
+                this.standardFluentModel = new FluentModel(standardModelInner);
 
                 if (ResourceGetDescription.SupportsGetByResourceGroup)
                 {
@@ -500,7 +514,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
 
         /// <summary>
         /// Returns true if the method group is at level 0 and support atleast one resource-group-scoped
-        /// operations (LIST|GET|DELETE|CREATE)ByResourceGroup.
+        /// operations "(LIST|GET|DELETE|CREATE)ByResourceGroup".
         /// </summary>
         public bool IsGroupableTopLevel
         {
@@ -533,74 +547,89 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
+        /// <summary>
+        /// Given an ARM operation endpoint url derive a fluent method group that the operation can possibly belongs to.
+        /// </summary>
+        /// <param name="fluentMethodGroups">the dict holding fluent method groups</param>
+        /// <param name="urlParts">the ARM operation endpoint url parts</param>
+        /// <param name="httpMethod">the http method associated with the ARM operation</param>
+        /// <returns>The method group</returns>
         public static FluentMethodGroup ResolveFluentMethodGroup(FluentMethodGroups fluentMethodGroups, List<String> urlParts, HttpMethod httpMethod)
         {
             int level = 0;
-            List<String> parentFluentMethodGroupNames = new List<String>();
+            List<String> fluentMethodGroupNamesInUrl = new List<String>();
+            Pluralizer pluralizer = new Pluralizer();
 
-            foreach (String part in urlParts)
+            foreach (String urlPart in urlParts)
             {
-                if (!part.StartsWith("{") && part.EndsWith("s"))
+                if (!IsParameter(urlPart) && IsPlural(urlPart))
                 {
-                    parentFluentMethodGroupNames.Add(part);
+                    fluentMethodGroupNamesInUrl.Add(urlPart);
                     level++;
                 }
             }
 
-            if (parentFluentMethodGroupNames.Count() == 1)
+            if (fluentMethodGroupNamesInUrl.Count() == 1)
             {
                 return new FluentMethodGroup(fluentMethodGroups)
                 {
-                    LocalName = parentFluentMethodGroupNames[0],
+                    LocalNameInPascalCase = fluentMethodGroupNamesInUrl[0],
                     Level = 0,
                     ParentMethodGroupNames = new List<string>()
                 };
             }
-            else
+            else if (httpMethod == HttpMethod.Post)
             {
-                if (httpMethod == HttpMethod.Post)
+                if (!IsParameter(urlParts.Last()) && urlParts.Last().EqualsIgnoreCase(fluentMethodGroupNamesInUrl.Last()))
                 {
-                    if (!urlParts.Last().StartsWith("{")
-                        && urlParts.Last().EqualsIgnoreCase(parentFluentMethodGroupNames.Last()))
+                    return new FluentMethodGroup(fluentMethodGroups)
                     {
-                        return new FluentMethodGroup(fluentMethodGroups)
-                        {
-                            LocalName = parentFluentMethodGroupNames.SkipLast(1).Last(),
-                            Level = parentFluentMethodGroupNames.Count() - 2,
-                            ParentMethodGroupNames = parentFluentMethodGroupNames.SkipLast(2).ToList()
-                        };
-                    }
-                    else
-                    {
-                        return new FluentMethodGroup(fluentMethodGroups)
-                        {
-                            LocalName = parentFluentMethodGroupNames.Last(),
-                            Level = parentFluentMethodGroupNames.Count() - 1,
-                            ParentMethodGroupNames = parentFluentMethodGroupNames.SkipLast(1).ToList()
-                        };
-                        /**
-                        return new FluentMethodGroup()
-                         {
-                             LocalName = parentFluentMethodGroupNames.SkipLast(1).Last(),
-                             Level = parentFluentMethodGroupNames.Count() - 2,
-                             ParentMethodGroupNames = parentFluentMethodGroupNames.SkipLast(2).ToList()
-                         };
-                         **/
-                    }
+                        LocalNameInPascalCase = fluentMethodGroupNamesInUrl.SkipLast(1).Last(),
+                        Level = fluentMethodGroupNamesInUrl.Count() - 2,
+                        ParentMethodGroupNames = fluentMethodGroupNamesInUrl.SkipLast(2).ToList()
+                    };
                 }
                 else
                 {
                     return new FluentMethodGroup(fluentMethodGroups)
                     {
-                        LocalName = parentFluentMethodGroupNames.Last(),
-                        Level = parentFluentMethodGroupNames.Count() - 1,
-                        ParentMethodGroupNames = parentFluentMethodGroupNames.SkipLast(1).ToList()
+                        LocalNameInPascalCase = fluentMethodGroupNamesInUrl.Last(),
+                        Level = fluentMethodGroupNamesInUrl.Count() - 1,
+                        ParentMethodGroupNames = fluentMethodGroupNamesInUrl.SkipLast(1).ToList()
                     };
                 }
             }
-
-
+            else
+            {
+                return new FluentMethodGroup(fluentMethodGroups)
+                {
+                    LocalNameInPascalCase = fluentMethodGroupNamesInUrl.Last(),
+                    Level = fluentMethodGroupNamesInUrl.Count() - 1,
+                    ParentMethodGroupNames = fluentMethodGroupNamesInUrl.SkipLast(1).ToList()
+                };
+            }
         }
 
+        /// <param name="strToCheck"></param>
+        /// <returns>true if the given string represent a url parameter</returns>
+        private static bool IsParameter(string strToCheck)
+        {
+            if (strToCheck == null)
+            {
+                throw new ArgumentNullException("strToCheck");
+            }
+            return strToCheck.Trim().StartsWith("{");
+        }
+
+        /// <param name="strToCheck"></param>
+        /// <returns>true if the given string is plural</returns>
+        private static bool IsPlural(string strToCheck)
+        {
+            if (strToCheck == null)
+            {
+                throw new ArgumentNullException("strToCheck");
+            }
+            return strToCheck.EndsWith("s");
+        }
     }
 }

@@ -26,7 +26,7 @@ namespace AutoRest.Java.Azure.Model
                 HashSet<string> imports = new HashSet<string>();
                 if (fluentMethodGroups != null)
                 {
-                    foreach (NestedFluentModel fluentModel in fluentMethodGroups.NestedFluentModels)
+                    foreach (NestedFluentModelInterface fluentModel in fluentMethodGroups.NestedFluentModels)
                     {
                         imports.Add($"{ns}.{fluentModel.FluentMethodGroup.JavaInterfaceName}");
                     }
@@ -36,7 +36,7 @@ namespace AutoRest.Java.Azure.Model
                         imports.Add($"{ns}.{group.Interface.JavaInterfaceName}");
                     }
 
-                    foreach (GroupableFluentModel fluentModel in fluentMethodGroups.GroupableFluentModels)
+                    foreach (GroupableFluentModelInterface fluentModel in fluentMethodGroups.GroupableFluentModels)
                     {
                         imports.Add($"{ns}.{fluentModel.FluentMethodGroup.JavaInterfaceName}");
                     }
@@ -91,7 +91,7 @@ namespace AutoRest.Java.Azure.Model
             {
                 if (fluentMethodGroups != null)
                 {
-                    foreach (NestedFluentModel fluentModel in fluentMethodGroups.NestedFluentModels)
+                    foreach (NestedFluentModelInterface fluentModel in fluentMethodGroups.NestedFluentModels)
                     {
                         yield return $"private {fluentModel.FluentMethodGroup.JavaInterfaceName} {fluentModel.FluentMethodGroup.JavaInterfaceName.ToCamelCase()};";
                     }
@@ -101,7 +101,7 @@ namespace AutoRest.Java.Azure.Model
                         yield return $"private {group.Interface.JavaInterfaceName} {group.Interface.JavaInterfaceName.ToCamelCase()};";
                     }
 
-                    foreach (GroupableFluentModel fluentModel in fluentMethodGroups.GroupableFluentModels)
+                    foreach (GroupableFluentModelInterface fluentModel in fluentMethodGroups.GroupableFluentModels)
                     {
                         yield return $"private {fluentModel.FluentMethodGroup.JavaInterfaceName} {fluentModel.FluentMethodGroup.JavaInterfaceName.ToCamelCase()};";
                     }
@@ -115,7 +115,7 @@ namespace AutoRest.Java.Azure.Model
             {
                 if (fluentMethodGroups != null)
                 {
-                    foreach (NestedFluentModel fluentModel in fluentMethodGroups.NestedFluentModels)
+                    foreach (NestedFluentModelInterface fluentModel in fluentMethodGroups.NestedFluentModels)
                     {
                         StringBuilder methodBuilder = new StringBuilder();
                         methodBuilder.AppendLine($"/**");
@@ -146,7 +146,7 @@ namespace AutoRest.Java.Azure.Model
                         yield return methodBuilder.ToString();
                     }
 
-                    foreach (GroupableFluentModel fluentModel in fluentMethodGroups.GroupableFluentModels)
+                    foreach (GroupableFluentModelInterface fluentModel in fluentMethodGroups.GroupableFluentModels)
                     {
                         StringBuilder methodBuilder = new StringBuilder();
                         methodBuilder.AppendLine($"/**");

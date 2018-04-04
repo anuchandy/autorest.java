@@ -101,7 +101,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                         {
                             bool matched = urlParts.SkipLast(1) // Skip {resourceName}
                                 .Last()                         // Get the methodGroup local name
-                                .EqualsIgnoreCase(fluentMethodGroup.LocalName);
+                                .EqualsIgnoreCase(fluentMethodGroup.LocalNameInPascalCase);
                             if (matched)
                             {
                                 if (this.fluentMethodGroup.Level == 0)

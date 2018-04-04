@@ -6,11 +6,11 @@ using System.Text;
 
 namespace AutoRest.Java.Azure.Fluent.Model
 {
-    public class ActionOrChildAccessorOnlyMethodGroupImpl
+    public class NonGroupableTopLevelMethodGroupImpl
     {
         public FluentMethodGroup Interface { get; private set; }
 
-        public ActionOrChildAccessorOnlyMethodGroupImpl(FluentMethodGroup fluentMethodGroup)
+        public NonGroupableTopLevelMethodGroupImpl(FluentMethodGroup fluentMethodGroup)
         {
             this.Interface = fluentMethodGroup;
         }

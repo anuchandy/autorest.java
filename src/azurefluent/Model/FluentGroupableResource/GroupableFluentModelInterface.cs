@@ -12,12 +12,12 @@ namespace AutoRest.Java.Azure.Fluent.Model
     /// <summary>
     /// The interface-metadata model that can generate a groupable model interface.
     /// </summary>
-    public class GroupableFluentModel
+    public class GroupableFluentModelInterface
     {
         private readonly FluentModel rawFluentModel;
         private GroupableFluentModelImpl impl;
 
-        public GroupableFluentModel(FluentModel rawFluentModel, FluentMethodGroup fluentMethodGroup)
+        public GroupableFluentModelInterface(FluentModel rawFluentModel, FluentMethodGroup fluentMethodGroup)
         {
             this.rawFluentModel = rawFluentModel;
             this.FluentMethodGroup = fluentMethodGroup;
@@ -615,7 +615,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        public static IEqualityComparer<GroupableFluentModel> EqualityComparer()
+        public static IEqualityComparer<GroupableFluentModelInterface> EqualityComparer()
         {
             return new GFMComparerBasedOnJvaInterfaceName();
         }
@@ -646,14 +646,14 @@ namespace AutoRest.Java.Azure.Fluent.Model
         }
     }
 
-    class GFMComparerBasedOnJvaInterfaceName : IEqualityComparer<GroupableFluentModel>
+    class GFMComparerBasedOnJvaInterfaceName : IEqualityComparer<GroupableFluentModelInterface>
     {
-        public bool Equals(GroupableFluentModel x, GroupableFluentModel y)
+        public bool Equals(GroupableFluentModelInterface x, GroupableFluentModelInterface y)
         {
             return x.JavaInterfaceName.EqualsIgnoreCase(y.JavaInterfaceName);
         }
 
-        public int GetHashCode(GroupableFluentModel obj)
+        public int GetHashCode(GroupableFluentModelInterface obj)
         {
             return obj.JavaInterfaceName.GetHashCode();
         }

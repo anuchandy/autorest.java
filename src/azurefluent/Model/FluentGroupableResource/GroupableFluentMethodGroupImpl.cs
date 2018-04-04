@@ -6,12 +6,12 @@ using System.Text;
 
 namespace AutoRest.Java.Azure.Fluent.Model
 {
-    public class FluentMethodGroupImpl
+    public class GroupableFluentMethodGroupImpl
     {
         private readonly GroupableFluentModelImpl fluentModelImpl;
         private readonly FluentMethodGroup Interface;
 
-        public FluentMethodGroupImpl(GroupableFluentModelImpl fluentModelImpl)
+        public GroupableFluentMethodGroupImpl(GroupableFluentModelImpl fluentModelImpl)
         {
             this.fluentModelImpl = fluentModelImpl;
             this.Interface = fluentModelImpl.Interface.FluentMethodGroup;
@@ -182,7 +182,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     StringBuilder methodBuilder = new StringBuilder();
 
                     methodBuilder.AppendLine($"@Override");
-                    methodBuilder.AppendLine($"public {nestedFluentMethodGroup.JavaInterfaceName} {nestedFluentMethodGroup.LocalName.ToCamelCase()}() {{");
+                    methodBuilder.AppendLine($"public {nestedFluentMethodGroup.JavaInterfaceName} {nestedFluentMethodGroup.LocalNameInCamelCase}() {{");
                     methodBuilder.AppendLine($"    {nestedFluentMethodGroup.JavaInterfaceName} accessor = this.manager().{nestedFluentMethodGroup.JavaInterfaceName.ToCamelCase()}();");
                     methodBuilder.AppendLine($"    return accessor;");
                     methodBuilder.AppendLine($"}}");
@@ -541,7 +541,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     {
                         methodsBuilder.AppendLine("@Override");
                         methodsBuilder.AppendLine($"public Completable {otherMethod.Name}Async({otherMethod.InnerMethod.MethodRequiredParameterDeclaration}) {{");
-                        methodsBuilder.AppendLine($"    {this.Interface.InnerMethodGroupImplTypeName} client = this.inner();");
+                        methodsBuilder.AppendLine($"    {this.Interface.InnerMethodGroupTypeName} client = this.inner();");
                         methodsBuilder.AppendLine($"    return client.{otherMethod.Name}Async({InnerMethodInvocationParameter(otherMethod.InnerMethod)}).toCompletable();");
                         methodsBuilder.AppendLine($"}}");
                     }
@@ -552,7 +552,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                         {
                             methodsBuilder.AppendLine($"@Override");
                             methodsBuilder.AppendLine($"public Completable { otherMethod.Name}Async({otherMethod.InnerMethod.MethodRequiredParameterDeclaration}) {{");
-                            methodsBuilder.AppendLine($"    {this.Interface.InnerMethodGroupImplTypeName} client = this.inner();");
+                            methodsBuilder.AppendLine($"    {this.Interface.InnerMethodGroupTypeName} client = this.inner();");
                             methodsBuilder.AppendLine($"    return client.{otherMethod.Name}Async({InnerMethodInvocationParameter(otherMethod.InnerMethod)}).toCompletable();");
                             methodsBuilder.AppendLine($"}}");
                         }
@@ -698,7 +698,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
         {
             get
             {
-                return this.Interface.InnerMethodGroupImplTypeName;
+                return this.Interface.InnerMethodGroupTypeName;
             }
         }
 

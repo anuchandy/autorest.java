@@ -6,18 +6,18 @@ using System.Linq;
 
 namespace AutoRest.Java.Azure.Fluent.Model
 {
-    public class FluentNestedModelUpdateMemberVariables : FluentModelMemberVariables
+    public class NestedFluentModelUpdateMemberVariables : FluentModelMemberVariables
     {
         private List<FluentDefinitionOrUpdateStage> updateStages;
         private FluentModelDisambiguatedMemberVariables disambiguatedMemberVariables;
 
-        public FluentNestedModelUpdateMemberVariables() : base(null)
+        public NestedFluentModelUpdateMemberVariables() : base(null)
         {
             this.FluentMethodGroup = null;
             this.updateStages = null;
         }
 
-        public FluentNestedModelUpdateMemberVariables(FluentMethodGroup fluentMethodGroup) : 
+        public NestedFluentModelUpdateMemberVariables(FluentMethodGroup fluentMethodGroup) : 
             base (fluentMethodGroup.ResourceUpdateDescription.SupportsUpdating ? fluentMethodGroup.ResourceUpdateDescription .UpdateMethod : null)
         {
             this.FluentMethodGroup = fluentMethodGroup;

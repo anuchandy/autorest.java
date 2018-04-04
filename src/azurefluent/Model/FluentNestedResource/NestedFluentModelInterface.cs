@@ -10,23 +10,28 @@ namespace AutoRest.Java.Azure.Fluent.Model
     /// Represents interface-metadata model that can generate a model interface
     /// that represents standard model of a nested method group.
     /// </summary>
-    public class NestedFluentModel
+    public class NestedFluentModelInterface
     {
         private readonly FluentModel rawFluentModel;
-        private readonly FluentNestedModelCreateMemberVariables createMemberVariables;
-        private readonly FluentNestedModelUpdateMemberVariables updateMemberVariables;
-        private readonly FluentNestedModelGetMemeberVariables getMemberVariables;
+        private readonly NestedFluentModelCreateMemberVariables createMemberVariables;
+        private readonly NestedFluentModelUpdateMemberVariables updateMemberVariables;
+        private readonly NestedFluentModelGetMemeberVariables getMemberVariables;
 
         private NestedFluentModelImpl impl;
 
-        public NestedFluentModel(FluentModel rawFluentModel, FluentMethodGroup fluentMethodGroup)
+        /// <summary>
+        /// Creates NestedFluentModelInterface.
+        /// </summary>
+        /// <param name="rawFluentModel"></param>
+        /// <param name="fluentMethodGroup"></param>
+        public NestedFluentModelInterface(FluentModel rawFluentModel, FluentMethodGroup fluentMethodGroup)
         {
             this.rawFluentModel = rawFluentModel;
             this.FluentMethodGroup = fluentMethodGroup;
 
-            this.createMemberVariables = new FluentNestedModelCreateMemberVariables(fluentMethodGroup);
-            this.updateMemberVariables = new FluentNestedModelUpdateMemberVariables(fluentMethodGroup);
-            this.getMemberVariables = new FluentNestedModelGetMemeberVariables(fluentMethodGroup);
+            this.createMemberVariables = new NestedFluentModelCreateMemberVariables(fluentMethodGroup);
+            this.updateMemberVariables = new NestedFluentModelUpdateMemberVariables(fluentMethodGroup);
+            this.getMemberVariables = new NestedFluentModelGetMemeberVariables(fluentMethodGroup);
 
             this.DisambiguatedMemberVariables = new FluentModelDisambiguatedMemberVariables()
                 .WithCreateMemberVariable(this.createMemberVariables)
@@ -494,21 +499,21 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        public static IEqualityComparer<NestedFluentModel> EqualityComparer()
+        public static IEqualityComparer<NestedFluentModelInterface> EqualityComparer()
         {
             return new NFMComparerBasedOnJvaInterfaceName();
         }
 
     }
 
-    class NFMComparerBasedOnJvaInterfaceName : IEqualityComparer<NestedFluentModel>
+    class NFMComparerBasedOnJvaInterfaceName : IEqualityComparer<NestedFluentModelInterface>
     {
-        public bool Equals(NestedFluentModel x, NestedFluentModel y)
+        public bool Equals(NestedFluentModelInterface x, NestedFluentModelInterface y)
         {
             return x.JavaInterfaceName.EqualsIgnoreCase(y.JavaInterfaceName);
         }
 
-        public int GetHashCode(NestedFluentModel obj)
+        public int GetHashCode(NestedFluentModelInterface obj)
         {
             return obj.JavaInterfaceName.GetHashCode();
         }

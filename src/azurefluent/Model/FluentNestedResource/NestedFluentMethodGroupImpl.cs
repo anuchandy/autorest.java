@@ -147,7 +147,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     StringBuilder methodBuilder = new StringBuilder();
 
                     methodBuilder.AppendLine($"@Override");
-                    methodBuilder.AppendLine($"public {nestedFluentMethodGroup.JavaInterfaceName} {nestedFluentMethodGroup.LocalName.ToCamelCase()}() {{");
+                    methodBuilder.AppendLine($"public {nestedFluentMethodGroup.JavaInterfaceName} {nestedFluentMethodGroup.LocalNameInCamelCase}() {{");
                     methodBuilder.AppendLine($"    {nestedFluentMethodGroup.JavaInterfaceName} accessor = this.manager().{nestedFluentMethodGroup.JavaInterfaceName.ToCamelCase()}();");
                     methodBuilder.AppendLine($"    return accessor;");
                     methodBuilder.AppendLine($"}}");
@@ -232,7 +232,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     {
                         methodsBuilder.AppendLine("@Override");
                         methodsBuilder.AppendLine($"public Completable {otherMethod.Name}Async({otherMethod.InnerMethod.MethodRequiredParameterDeclaration}) {{");
-                        methodsBuilder.AppendLine($"    {this.Interface.InnerMethodGroupImplTypeName} client = this.inner();");
+                        methodsBuilder.AppendLine($"    {this.Interface.InnerMethodGroupTypeName} client = this.inner();");
                         methodsBuilder.AppendLine($"    return client.{otherMethod.Name}Async({InnerMethodInvocationParameter(otherMethod.InnerMethod)}).toCompletable();");
                         methodsBuilder.AppendLine($"}}");
                     }
@@ -244,7 +244,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                         {
                             methodsBuilder.AppendLine($"@Override");
                             methodsBuilder.AppendLine($"public Completable { otherMethod.Name}Async({otherMethod.InnerMethod.MethodRequiredParameterDeclaration}) {{");
-                            methodsBuilder.AppendLine($"    {this.Interface.InnerMethodGroupImplTypeName} client = this.inner();");
+                            methodsBuilder.AppendLine($"    {this.Interface.InnerMethodGroupTypeName} client = this.inner();");
                             methodsBuilder.AppendLine($"    return client.{otherMethod.Name}Async({InnerMethodInvocationParameter(otherMethod.InnerMethod)}).toCompletable();");
                             methodsBuilder.AppendLine($"}}");
                         }
@@ -253,7 +253,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                             rxReturnType = $"Observable<{returnModel.JavaInterfaceName}>";
                             methodsBuilder.AppendLine("@Override");
                             methodsBuilder.AppendLine($"public {rxReturnType} {otherMethod.Name}Async({otherMethod.InnerMethod.MethodRequiredParameterDeclaration}) {{");
-                            methodsBuilder.AppendLine($"    {this.Interface.InnerMethodGroupImplTypeName} client = this.inner();");
+                            methodsBuilder.AppendLine($"    {this.Interface.InnerMethodGroupTypeName} client = this.inner();");
                             methodsBuilder.AppendLine($"    return client.{otherMethod.Name}Async({InnerMethodInvocationParameter(otherMethod.InnerMethod)})");
                             methodsBuilder.AppendLine($"    .map(new Func1<{returnModel.InnerModel.ClassName}, {returnModel.JavaInterfaceName}>() {{");
                             methodsBuilder.AppendLine($"        @Override");
@@ -281,12 +281,12 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     {
                         FluentModel returnModel = method.ReturnModel;
                         //
-                        string methodName = $"listBy{ this.Interface.ParentFluentMethodGroup.LocalSingularName}Async";
+                        string methodName = $"listBy{ this.Interface.ParentFluentMethodGroup.LocalSingularNameInPascalCase}Async";
                         string parameterDecl = method.InnerMethod.MethodRequiredParameterDeclaration;
 
                         methodBuilder.AppendLine($"@Override");
                         methodBuilder.AppendLine($"public Observable<{this.fluentModelImpl.Interface.JavaInterfaceName}> {methodName}({parameterDecl}) {{");
-                        methodBuilder.AppendLine($"    {this.Interface.InnerMethodGroupImplTypeName} client = this.inner();");
+                        methodBuilder.AppendLine($"    {this.Interface.InnerMethodGroupTypeName} client = this.inner();");
                         methodBuilder.AppendLine($"    return client.{method.Name}Async({InnerMethodInvocationParameter(method.InnerMethod)})");
                         methodBuilder.AppendLine($"    .map(new Func1<{this.fluentModelImpl.Interface.InnerModel.ClassName}, {this.fluentModelImpl.Interface.JavaInterfaceName}>() {{");
                         methodBuilder.AppendLine($"        @Override");
@@ -298,13 +298,13 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     }
                     else
                     {
-                        string nextPageMethodName = $"listBy{ this.Interface.ParentFluentMethodGroup.LocalSingularName}NextInnerPageAsync";
+                        string nextPageMethodName = $"listBy{ this.Interface.ParentFluentMethodGroup.LocalSingularNameInPascalCase}NextInnerPageAsync";
 
                         methodBuilder.AppendLine($"private Observable<Page<{this.fluentModelImpl.Interface.InnerModel.ClassName}>> {nextPageMethodName}(String nextLink) {{");
                         methodBuilder.AppendLine($"    if (nextLink == null) {{");
                         methodBuilder.AppendLine($"        Observable.empty();");
                         methodBuilder.AppendLine($"    }}");
-                        methodBuilder.AppendLine($"    {this.Interface.InnerMethodGroupImplTypeName} client = this.inner();");
+                        methodBuilder.AppendLine($"    {this.Interface.InnerMethodGroupTypeName} client = this.inner();");
                         methodBuilder.AppendLine($"    return client.{method.Name}NextAsync(nextLink)");
                         methodBuilder.AppendLine($"    .flatMap(new Func1<Page<{this.fluentModelImpl.Interface.InnerModel.ClassName}>, Observable<Page<{this.fluentModelImpl.Interface.InnerModel.ClassName}>>>() {{");
                         methodBuilder.AppendLine($"        @Override");
@@ -314,12 +314,12 @@ namespace AutoRest.Java.Azure.Fluent.Model
                         methodBuilder.AppendLine($"    }});");
                         methodBuilder.AppendLine($"}}");
 
-                        var methodName = $"listBy{ this.Interface.ParentFluentMethodGroup.LocalSingularName}Async";
+                        var methodName = $"listBy{ this.Interface.ParentFluentMethodGroup.LocalSingularNameInPascalCase}Async";
                         string parameterDecl = method.InnerMethod.MethodRequiredParameterDeclaration;
 
                         methodBuilder.AppendLine($"@Override");
                         methodBuilder.AppendLine($"public Observable<{this.fluentModelImpl.Interface.JavaInterfaceName}> {methodName}({parameterDecl}) {{");
-                        methodBuilder.AppendLine($"    {this.Interface.InnerMethodGroupImplTypeName} client = this.inner();");
+                        methodBuilder.AppendLine($"    {this.Interface.InnerMethodGroupTypeName} client = this.inner();");
                         methodBuilder.AppendLine($"    return client.{method.Name}Async({InnerMethodInvocationParameter(method.InnerMethod)})");
                         methodBuilder.AppendLine($"    .flatMap(new Func1<Page<{this.fluentModelImpl.Interface.InnerModel.ClassName}>, Observable<Page<{this.fluentModelImpl.Interface.InnerModel.ClassName}>>>() {{");
                         methodBuilder.AppendLine($"        @Override");
@@ -357,12 +357,12 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     FluentMethod method = this.Interface.ResourceGetDescription.GetByImmediateParentMethod;
                     FluentModel returnModel = method.ReturnModel;
                     //
-                    string methodName = $"getBy{ this.Interface.ParentFluentMethodGroup.LocalSingularName}Async";
+                    string methodName = $"getBy{ this.Interface.ParentFluentMethodGroup.LocalSingularNameInPascalCase}Async";
                     string parameterDecl = method.InnerMethod.MethodRequiredParameterDeclaration;
 
                     methodBuilder.AppendLine($"@Override");
                     methodBuilder.AppendLine($"public Observable<{this.fluentModelImpl.Interface.JavaInterfaceName}> {methodName}({parameterDecl}) {{");
-                    methodBuilder.AppendLine($"    {this.Interface.InnerMethodGroupImplTypeName} client = this.inner();");
+                    methodBuilder.AppendLine($"    {this.Interface.InnerMethodGroupTypeName} client = this.inner();");
                     methodBuilder.AppendLine($"    return client.{method.Name}Async({InnerMethodInvocationParameter(method.InnerMethod)})");
                     methodBuilder.AppendLine($"    .map(new Func1<{this.fluentModelImpl.Interface.InnerModel.ClassName}, {this.fluentModelImpl.Interface.JavaInterfaceName}>() {{");
                     methodBuilder.AppendLine($"        @Override");
@@ -387,12 +387,12 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     FluentMethod method = this.Interface.ResourceDeleteDescription.DeleteByImmediateParentMethod;
                     FluentModel returnModel = method.ReturnModel;
                     //
-                    string methodName = $"deleteBy{ this.Interface.ParentFluentMethodGroup.LocalSingularName}Async";
+                    string methodName = $"deleteBy{ this.Interface.ParentFluentMethodGroup.LocalSingularNameInPascalCase}Async";
                     string parameterDecl = method.InnerMethod.MethodRequiredParameterDeclaration;
 
                     methodBuilder.AppendLine("@Override");
                     methodBuilder.AppendLine($"public Completable {methodName}({parameterDecl}) {{");
-                    methodBuilder.AppendLine($"    {this.Interface.InnerMethodGroupImplTypeName} client = this.inner();");
+                    methodBuilder.AppendLine($"    {this.Interface.InnerMethodGroupTypeName} client = this.inner();");
                     methodBuilder.AppendLine($"    return client.{method.Name}Async({InnerMethodInvocationParameter(method.InnerMethod)}).toCompletable();");
                     methodBuilder.AppendLine($"}}");
                 }

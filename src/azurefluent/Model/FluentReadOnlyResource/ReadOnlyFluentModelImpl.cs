@@ -7,12 +7,12 @@ namespace AutoRest.Java.Azure.Fluent.Model
 {
     public class ReadOnlyFluentModelImpl
     {
-        public ReadOnlyFluentModelImpl(ReadOnlyFluentModel mInterface)
+        public ReadOnlyFluentModelImpl(ReadOnlyFluentModelInterface mInterface)
         {
             this.Interface = mInterface;
         }
 
-        public ReadOnlyFluentModel Interface
+        public ReadOnlyFluentModelInterface Interface
         {
             get; private set;
         }

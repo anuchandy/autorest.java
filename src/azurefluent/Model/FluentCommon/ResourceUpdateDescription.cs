@@ -44,13 +44,6 @@ namespace AutoRest.Java.Azure.Fluent.Model
             {
                 if (this.createDescription.SupportsCreating)
                 {
-                    // if (this.createDescription.CreateMethod.Name.StartsWith("CreateOrUpdate", StringComparison.OrdinalIgnoreCase))
-                    // {
-                        // In fluent we prefer PUT if that can be used for both create & update
-                        //
-                        // return this.createDescription.CreateMethod;
-                    // }
-
                     if (this.supportsUpdating == null)
                     {
                         this.Process();
@@ -58,7 +51,9 @@ namespace AutoRest.Java.Azure.Fluent.Model
 
                     if (this.updateMethod == null)
                     {
-                        return this.createDescription.CreateMethod;
+                        FluentMethod createMethod = this.createDescription.CreateMethod;
+                        // .CreateMethod.Name [CreateOrUpdate]
+                        return createMethod;
                     }
                     else
                     {
@@ -92,7 +87,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                         {
                             bool matched = urlParts.SkipLast(1)  // Skip {resourceName}
                                 .Last()                          // Get the methodGroup local name
-                                .EqualsIgnoreCase(fluentMethodGroup.LocalName);
+                                .EqualsIgnoreCase(fluentMethodGroup.LocalNameInPascalCase);
                             if (matched)
                             {
                                 this.supportsUpdating = true;

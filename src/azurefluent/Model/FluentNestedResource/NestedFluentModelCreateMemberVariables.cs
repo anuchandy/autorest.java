@@ -7,20 +7,20 @@ using System.Text;
 
 namespace AutoRest.Java.Azure.Fluent.Model
 {
-    public class FluentNestedModelCreateMemberVariables : FluentModelMemberVariables
+    public class NestedFluentModelCreateMemberVariables : FluentModelMemberVariables
     {
         private List<FluentDefinitionOrUpdateStage> reqDefStages;
         private List<FluentDefinitionOrUpdateStage> optDefStages;
         private FluentModelDisambiguatedMemberVariables disambiguatedMemberVariables;
 
-        public FluentNestedModelCreateMemberVariables() : base(null)
+        public NestedFluentModelCreateMemberVariables() : base(null)
         {
             this.FluentMethodGroup = null;
             this.reqDefStages = null;
             this.optDefStages = null;
         }
 
-        public FluentNestedModelCreateMemberVariables(FluentMethodGroup fluentMethodGroup) : 
+        public NestedFluentModelCreateMemberVariables(FluentMethodGroup fluentMethodGroup) : 
             base (fluentMethodGroup.ResourceCreateDescription.SupportsCreating ? fluentMethodGroup.ResourceCreateDescription .CreateMethod : null)
         {
             this.FluentMethodGroup = fluentMethodGroup;
@@ -234,7 +234,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
         private FluentDefinitionOrUpdateStage FirstDefintionStage(IOrderedEnumerable<FluentModelParentRefMemberVariable> parentRefMemberVariables)
         {
             var pVariables = parentRefMemberVariables
-                .Where(pref => !pref.ParentRefName.Equals(this.FluentMethodGroup.LocalName, StringComparison.OrdinalIgnoreCase));
+                .Where(pref => !pref.ParentRefName.Equals(this.FluentMethodGroup.LocalNameInPascalCase, StringComparison.OrdinalIgnoreCase));
 
             string ancestorWitherSuffix = Pluralizer.Singularize(FluentMethodGroup.ParentFluentMethodGroup.JavaInterfaceName);
             FluentDefinitionOrUpdateStage stage = new FluentDefinitionOrUpdateStage("", $"With{ancestorWitherSuffix}");
