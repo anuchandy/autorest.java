@@ -18,6 +18,10 @@ using AutoRest.Java.vanilla.Templates;
 using System;
 using System.Text.RegularExpressions;
 using System.Diagnostics;
+using AutoRest.Java.azure.Templates.FluentCommon;
+using AutoRest.Java.azure.Templates.ReadOnlyFluentResource;
+using AutoRest.Java.azure.Templates.NestedFluentResource;
+using AutoRest.Java.azure.Templates.GroupableFluentResource;
 
 namespace AutoRest.Java.Azure.Fluent
 {
@@ -59,7 +63,7 @@ namespace AutoRest.Java.Azure.Fluent
                 await Write(modelInterfaceTemplate, $"{packagePath}/{fluentModel.JavaInterfaceName.ToPascalCase()}{ImplementationFileExtension}");
 
                 //
-                var modelImplTemplate = new ReadonlyFluentModelImplTemplate { Model = fluentModel.Impl };
+                var modelImplTemplate = new ReadOnlyFluentModelImplTemplate { Model = fluentModel.Impl };
                 await Write(modelImplTemplate, $"{packagePath}/implementation/{fluentModel.Impl.JvaClassName.ToPascalCase()}{ImplementationFileExtension}");
 
                 // No specific method group for readonly models these models are shared between other type of method groups (Groupable, no-Groupable-top-level and nested)

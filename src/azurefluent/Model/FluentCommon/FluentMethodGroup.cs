@@ -65,6 +65,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
             set
             {
+                // e.g. VirtualMachines
                 this.localName = $"{value.First().ToString().ToUpper()}{value.Substring(1)}";
             }
         }
@@ -73,7 +74,18 @@ namespace AutoRest.Java.Azure.Fluent.Model
         {
             get
             {
+                // e.g. virtualMachines
                 return this.localName.ToCamelCase();
+            }
+        }
+
+        public String LocalSingularNameInPascalCase
+        {
+            get
+            {
+                Pluralizer pluralizer = new Pluralizer();
+                // e.g. VirtualMachine
+                return pluralizer.Singularize(LocalNameInPascalCase);
             }
         }
 
@@ -90,15 +102,6 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 {
                     return LocalNameInPascalCase.ToLowerInvariant();
                 }
-            }
-        }
-
-        public String LocalSingularNameInPascalCase
-        {
-            get
-            {
-                Pluralizer pluralizer = new Pluralizer();
-                return pluralizer.Singularize(LocalNameInPascalCase);
             }
         }
 
