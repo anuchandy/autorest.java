@@ -66,7 +66,7 @@ namespace AutoRest.Java.Azure.Fluent
                 var modelImplTemplate = new ReadOnlyFluentModelImplTemplate { Model = fluentModel.Impl };
                 await Write(modelImplTemplate, $"{packagePath}/implementation/{fluentModel.Impl.JvaClassName.ToPascalCase()}{ImplementationFileExtension}");
 
-                // No specific method group for readonly models these models are shared between other type of method groups (Groupable, no-Groupable-top-level and nested)
+                // No specific method group for readonly models these models are shared between other type of method groups [Groupable, no-Groupable-top-level and nested]
             }
             #endregion
 
@@ -114,9 +114,17 @@ namespace AutoRest.Java.Azure.Fluent
             }
             #endregion
 
-            #region  Produce all method group interfaces
-            // 
-            foreach (FluentMethodGroup fmg in innerMGroupToFluentMGroup.SelectMany(m => m.Value))
+            #region Produce non-groupable top-level model interface & impl, non-groupable top-level group impl
+
+            foreach (NonGroupableTopLevelFluentModelInterface fluentModel in innerMGroupToFluentMGroup.NonGroupableTopLevelFluentModels)
+            {
+            }
+
+            #endregion
+
+                #region  Produce all method group interfaces
+                // 
+                foreach (FluentMethodGroup fmg in innerMGroupToFluentMGroup.SelectMany(m => m.Value))
             {
                 var methodGroupInterfaceTemplate = new FluentMethodGroupInterfaceTemplate { Model = fmg };
                 await Write(methodGroupInterfaceTemplate, $"{packagePath}/{fmg.JavaInterfaceName.ToPascalCase()}{ImplementationFileExtension}");

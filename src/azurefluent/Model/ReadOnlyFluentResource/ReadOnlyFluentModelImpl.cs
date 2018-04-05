@@ -74,21 +74,28 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
+        public string DeclareManagerVariable
+        {
+            get
+            {
+                return $"private final {this.Interface.ManagerTypeName} manager;";
+            }
+        }
+
         public String CtrInvocationFromWrapExistingInnerModel
         {
             get
             {
-                return $" new {this.JvaClassName}(inner);";
+                return $" new {this.JvaClassName}(inner, this.manager());";
             }
         }
 
-        public string JavaMethods
+        public IEnumerable<string> JavaMethods
         {
             get
             {
-                StringBuilder methodsBuilder = new StringBuilder();
-                methodsBuilder.AppendLine(this.CtrImplementation);
-                return methodsBuilder.ToString();
+                yield return this.CtrImplementation;
+                yield return this.ManagerGetterImplementation;
             }
         }
 
@@ -96,9 +103,28 @@ namespace AutoRest.Java.Azure.Fluent.Model
         {
             get
             {
+                //
                 StringBuilder methodBuilder = new StringBuilder();
-                methodBuilder.AppendLine($"{this.JvaClassName}({this.InnerModelTypeName} inner) {{");
+                methodBuilder.AppendLine($"{this.JvaClassName}({this.InnerModelTypeName} inner, {this.Interface.ManagerTypeName} manager) {{");
                 methodBuilder.AppendLine($"    super(inner);"); // WrapperImpl(inner)
+                methodBuilder.AppendLine($"    this.manager = manager;");
+                methodBuilder.AppendLine($"}}");
+                return methodBuilder.ToString();
+            }
+        }
+
+        /// <summary>
+        /// Implement HasManager<T> interface.
+        /// </summary>
+        private string ManagerGetterImplementation
+        {
+            get
+            {
+                string managerTypeName = this.Interface.ManagerTypeName;
+                StringBuilder methodBuilder = new StringBuilder();
+                methodBuilder.AppendLine($"@Override");
+                methodBuilder.AppendLine($"public {managerTypeName} manager() {{");
+                methodBuilder.AppendLine($"    return this.manager;");
                 methodBuilder.AppendLine($"}}");
                 return methodBuilder.ToString();
             }

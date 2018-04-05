@@ -4,7 +4,7 @@
 @using AutoRest.Java.Model
 @using AutoRest.Java.Azure.Model
 @using  AutoRest.Java.Azure.Fluent.Model;
-@inherits AutoRest.Core.Template<AutoRest.Java.Azure.Fluent.Model.ReadOnlyFluentModelImpl>
+@inherits AutoRest.Core.Template<AutoRest.Java.Azure.Fluent.Model.NonGroupableTopLevelFluentModelImpl>
 /**
 @Header(" * ").TrimMultilineHeader()
  */
@@ -21,13 +21,10 @@ package @(Settings.Namespace.ToLower()).implementation;
 @EmptyLine
 
 class @(Model.JvaClassName)@(Model.ExtendsFrom)@(Model.Implements) {
-    @Model.DeclareManagerVariable
 
-@foreach (var jvaMethod in Model.JavaMethods)
-{
-@:    @jvaMethod
-@:    @EmptyLine
-}
+@EmptyLine
+    @(Model.JavaMethods)
+@EmptyLine
 
 @foreach (PropertyJv property in Model.Interface.LocalProperties)
 {

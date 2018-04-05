@@ -12,9 +12,10 @@ namespace AutoRest.Java.Azure.Fluent.Model
         private readonly FluentModel rawFluentModel;
         private ReadOnlyFluentModelImpl impl;
 
-        public ReadOnlyFluentModelInterface(FluentModel rawFluentModel)
+        public ReadOnlyFluentModelInterface(FluentModel rawFluentModel, string managerTypeName)
         {
             this.rawFluentModel = rawFluentModel;
+            this.ManagerTypeName = managerTypeName;
         }
 
         public string JavaInterfaceName
@@ -37,6 +38,9 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
+        public string ManagerTypeName { get; private set; }
+
+
         public HashSet<string> LocalPropertiesImports
         {
             get
@@ -58,8 +62,10 @@ namespace AutoRest.Java.Azure.Fluent.Model
             {
                 HashSet<string> imports = new HashSet<string>
                 {
-                    "com.microsoft.azure.management.resources.fluentcore.model.HasInner",
-                    $"{InnerModel.Package}.{InnerModel.Name}", // import "T" in HasInner<T>
+                    $"com.microsoft.azure.management.resources.fluentcore.model.HasInner",
+                    $"com.microsoft.azure.management.resources.fluentcore.arm.models.HasManager",
+                    $"{this.Package}.implementation.{this.ManagerTypeName}", // import "T" in HasManager<T>
+                    $"{this.Package}.implementation.{InnerModel.Name}", // import "T" in HasInner<T>
                 };
                 imports.AddRange(LocalPropertiesImports);
                 return imports;
@@ -74,6 +80,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 List<string> extends = new List<string>
                 {
                     $"HasInner<{this.InnerModel.Name}>",
+                    $"HasManager<{this.ManagerTypeName}>"
                 };
 
                 if (extends.Count() > 0)

@@ -90,9 +90,9 @@ namespace AutoRest.Java.Azure.Fluent.Model
 
                 // 1. first stage to set the ancestors (parents)
                 //
-
                 FluentDefinitionOrUpdateStage currentStage = FirstDefintionStage(this.ParentRefMemberVariables);
                 this.reqDefStages.Add(currentStage);
+
                 // --
 
                 IEnumerable<FluentModelMemberVariable> memberVariables = this.Values;

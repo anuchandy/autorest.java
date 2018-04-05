@@ -48,6 +48,14 @@ namespace AutoRest.Java.Azure.Fluent.Model
             get; private set;
         }
 
+        public string ManagerTypeName
+        {
+            get
+            {
+                return $"{this.CodeModel.ServiceName}Manager";
+            }
+        }
+
         public static FluentMethodGroups InnerMethodGroupToFluentMethodGroups(CodeModelJvaf codeModel)
         {
             FluentMethodGroups innerMethodGroupToFluentMethodGroups = new FluentMethodGroups(codeModel);
@@ -557,8 +565,8 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 .SelectMany(fmg => fmg.OtherFluentModels)
                 .Where(m => !(m is PrimtiveFluentModel))
                 .Distinct(FluentModel.EqualityComparer())
-                .Where(m => !topLevelAndNestedModelNames.Contains(m.JavaInterfaceName))
-                .Select(m => new ReadOnlyFluentModelInterface(m));
+                .Where(fluentModel => !topLevelAndNestedModelNames.Contains(fluentModel.JavaInterfaceName))
+                .Select(fluentModel => new ReadOnlyFluentModelInterface(fluentModel, this.ManagerTypeName));
 
             // Not groupable or nested method group
             //

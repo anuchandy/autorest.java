@@ -9,12 +9,12 @@ namespace AutoRest.Java.Azure.Fluent.Model
     //
     public class NonGroupableTopLevelFluentModelImpl
     {
-        public NonGroupableTopLevelFluentModelImpl(ReadOnlyFluentModelInterface mInterface)
+        public NonGroupableTopLevelFluentModelImpl(NonGroupableTopLevelFluentModelInterface mInterface)
         {
             this.Interface = mInterface;
         }
 
-        public ReadOnlyFluentModelInterface Interface
+        public NonGroupableTopLevelFluentModelInterface Interface
         {
             get; private set;
         }

@@ -8,11 +8,13 @@ namespace AutoRest.Java.Azure.Fluent.Model
 {
     public class NonGroupableTopLevelMethodGroupImpl
     {
-        public FluentMethodGroup Interface { get; private set; }
+        private readonly NonGroupableTopLevelFluentModelImpl fluentModelImpl;
+        private readonly FluentMethodGroup Interface;
 
-        public NonGroupableTopLevelMethodGroupImpl(FluentMethodGroup fluentMethodGroup)
+        public NonGroupableTopLevelMethodGroupImpl(NonGroupableTopLevelFluentModelImpl fluentModelImpl)
         {
-            this.Interface = fluentMethodGroup;
+            this.fluentModelImpl = fluentModelImpl;
+            this.Interface = fluentModelImpl.Interface.FluentMethodGroup;
         }
 
         public HashSet<string> Imports
@@ -153,6 +155,78 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 return methodBuilder.ToString();
             }
         }
+
+        private string ListBySubscriptionMethodAsyncImplementation
+        {
+            get
+            {
+                StringBuilder methodBuilder = new StringBuilder();
+                if (this.Interface.ResourceListingDescription.SupportsListBySubscription)
+                {
+                    FluentMethod method = this.Interface.ResourceListingDescription.ListBySubscriptionMethod;
+                    if (!method.InnerMethod.IsPagingOperation)
+                    {
+                        FluentModel returnModel = method.ReturnModel;
+                        //
+                        methodBuilder.AppendLine($"@Override");
+                        methodBuilder.AppendLine($"public Observable<{this.fluentModelImpl.Interface.JavaInterfaceName}> listAsync() {{");
+                        methodBuilder.AppendLine($"    {this.Interface.InnerMethodGroupTypeName} client = this.inner();");
+                        methodBuilder.AppendLine($"    return client.{method.Name}Async()");
+                        methodBuilder.AppendLine($"    .map(new Func1<{this.fluentModelImpl.Interface.InnerModel.ClassName}, {this.fluentModelImpl.Interface.JavaInterfaceName}>() {{");
+                        methodBuilder.AppendLine($"        @Override");
+                        methodBuilder.AppendLine($"        public {this.fluentModelImpl.Interface.JavaInterfaceName} call({this.fluentModelImpl.Interface.InnerModel.ClassName} inner) {{");
+                        methodBuilder.AppendLine($"            return wrapModel(inner);");
+                        methodBuilder.AppendLine($"        }}");
+                        methodBuilder.AppendLine($"    }});");
+                        methodBuilder.AppendLine($"}}");
+                    }
+                    else
+                    {
+                        string nextPageMethodName = $"listNextInnerPageAsync";
+
+                        methodBuilder.AppendLine($"private Observable<Page<{this.fluentModelImpl.Interface.InnerModel.ClassName}>> {nextPageMethodName}(String nextLink) {{");
+                        methodBuilder.AppendLine($"    if (nextLink == null) {{");
+                        methodBuilder.AppendLine($"        Observable.empty();");
+                        methodBuilder.AppendLine($"    }}");
+                        methodBuilder.AppendLine($"    {this.Interface.InnerMethodGroupTypeName} client = this.inner();");
+                        methodBuilder.AppendLine($"    return client.{method.Name}NextAsync(nextLink)");
+                        methodBuilder.AppendLine($"    .flatMap(new Func1<Page<{this.fluentModelImpl.Interface.InnerModel.ClassName}>, Observable<Page<{this.fluentModelImpl.Interface.InnerModel.ClassName}>>>() {{");
+                        methodBuilder.AppendLine($"        @Override");
+                        methodBuilder.AppendLine($"        public Observable<Page<{this.fluentModelImpl.Interface.InnerModel.ClassName}>> call(Page<{this.fluentModelImpl.Interface.InnerModel.ClassName}> page) {{");
+                        methodBuilder.AppendLine($"            return Observable.just(page).concatWith({nextPageMethodName}(page.nextPageLink()));");
+                        methodBuilder.AppendLine($"        }}");
+                        methodBuilder.AppendLine($"    }});");
+                        methodBuilder.AppendLine($"}}");
+
+                        methodBuilder.AppendLine($"@Override");
+                        methodBuilder.AppendLine($"public Observable<{this.fluentModelImpl.Interface.JavaInterfaceName}> listAsync() {{");
+                        methodBuilder.AppendLine($"    {this.Interface.InnerMethodGroupTypeName} client = this.inner();");
+                        methodBuilder.AppendLine($"    return client.{method.Name}Async()");
+                        methodBuilder.AppendLine($"    .flatMap(new Func1<Page<{this.fluentModelImpl.Interface.InnerModel.ClassName}>, Observable<Page<{this.fluentModelImpl.Interface.InnerModel.ClassName}>>>() {{");
+                        methodBuilder.AppendLine($"        @Override");
+                        methodBuilder.AppendLine($"        public Observable<Page<{this.fluentModelImpl.Interface.InnerModel.ClassName}>> call(Page<{this.fluentModelImpl.Interface.InnerModel.ClassName}> page) {{");
+                        methodBuilder.AppendLine($"            return {nextPageMethodName}(page.nextPageLink());");
+                        methodBuilder.AppendLine($"        }}");
+                        methodBuilder.AppendLine($"    }})");
+                        methodBuilder.AppendLine($"    .flatMapIterable(new Func1<Page<{this.fluentModelImpl.Interface.InnerModel.ClassName}>, Iterable<{this.fluentModelImpl.Interface.InnerModel.ClassName}>>() {{");
+                        methodBuilder.AppendLine($"        @Override");
+                        methodBuilder.AppendLine($"        public Iterable<{this.fluentModelImpl.Interface.InnerModel.ClassName}> call(Page<{this.fluentModelImpl.Interface.InnerModel.ClassName}> page) {{");
+                        methodBuilder.AppendLine($"            return page.items();");
+                        methodBuilder.AppendLine($"        }}");
+                        methodBuilder.AppendLine($"   }})");
+                        methodBuilder.AppendLine($"    .map(new Func1<{this.fluentModelImpl.Interface.InnerModel.ClassName}, {this.fluentModelImpl.Interface.InnerModel.ClassName}>() {{");
+                        methodBuilder.AppendLine($"        @Override");
+                        methodBuilder.AppendLine($"        public {this.fluentModelImpl.Interface.JavaInterfaceName} call({this.fluentModelImpl.Interface.InnerModel.ClassName} inner) {{");
+                        methodBuilder.AppendLine($"            return wrapModel(inner);");
+                        methodBuilder.AppendLine($"        }}");
+                        methodBuilder.AppendLine($"   }});");
+                        methodBuilder.AppendLine($"}}");
+                    }
+                }
+                return methodBuilder.ToString();
+            }
+        }
+
 
         private string OtherMethodImplementation
         {

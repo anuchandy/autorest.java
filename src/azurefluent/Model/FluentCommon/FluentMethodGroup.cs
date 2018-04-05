@@ -43,7 +43,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
         {
             get
             {
-                return $"{this.FluentMethodGroups.CodeModel.ServiceName}Manager";
+                return this.FluentMethodGroups.ManagerTypeName;
             }
         }
 

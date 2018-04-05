@@ -20,7 +20,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
         public FluentModelDisambiguatedMemberVariables()
         {
             // Initialize create, update and get variables to empty memeber variable collection
-            // Each of this will be overriden if With[Create|Update|Get]MemberVariable() methods
+            // Each of this will be overriden "With[Create|Update|Get]MemberVariable()" methods
             //
             this.cVariables = new NestedFluentModelCreateMemberVariables();
             this.uVariables = new NestedFluentModelUpdateMemberVariables();

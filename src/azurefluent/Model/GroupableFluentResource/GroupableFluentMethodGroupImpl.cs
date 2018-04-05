@@ -568,7 +568,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                                 methodsBuilder.AppendLine($"    .map(new Func1<{returnModel.InnerModel.ClassName}, {returnModel.JavaInterfaceName}>() {{");
                                 methodsBuilder.AppendLine($"        @Override");
                                 methodsBuilder.AppendLine($"        public {returnModel.JavaInterfaceName} call({returnModel.InnerModel.ClassName} inner) {{");
-                                methodsBuilder.AppendLine($"            return new {returnModel.JavaInterfaceName}Impl(inner);");
+                                methodsBuilder.AppendLine($"            return new {returnModel.JavaInterfaceName}Impl(inner, manager());");
                                 methodsBuilder.AppendLine($"        }}");
                                 methodsBuilder.AppendLine($"    }});");
                                 methodsBuilder.AppendLine($"}}");
@@ -612,7 +612,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                                 methodsBuilder.AppendLine($"    .map(new Func1<{returnModel.InnerModel.ClassName}, {returnModel.JavaInterfaceName}>() {{");
                                 methodsBuilder.AppendLine($"        @Override");
                                 methodsBuilder.AppendLine($"        public {returnModel.JavaInterfaceName} call({returnModel.InnerModel.ClassName} inner) {{");
-                                methodsBuilder.AppendLine($"            return new {returnModel.JavaInterfaceName}Impl(inner);");
+                                methodsBuilder.AppendLine($"            return new {returnModel.JavaInterfaceName}Impl(inner, manager());");
                                 methodsBuilder.AppendLine($"        }}");
                                 methodsBuilder.AppendLine($"   }});");
                                 methodsBuilder.AppendLine($"}}");
