@@ -11,46 +11,20 @@ namespace AutoRest.Java.Azure.Fluent.Model
     /// Represents interface-metadata model that can generate a model interface
     /// that represents standard model of a nested method group.
     /// </summary>
-    public class NestedFluentModelInterface
+    public class NestedFluentModelInterface : CreatableUpdatableModel
     {
         private readonly FluentModel rawFluentModel;
-        private readonly NestedFluentModelMemberVariablesForCreate createMemberVariables;
-        private readonly NestedFluentModelMemberVariablesForUpdate updateMemberVariables;
-        private readonly FluentModelMemeberVariablesForGet getMemberVariables;
         private readonly string package = Settings.Instance.Namespace.ToLower();
 
         private NestedFluentModelImpl impl;
 
-        /// <summary>
-        /// Creates NestedFluentModelInterface.
-        /// </summary>
-        /// <param name="rawFluentModel"></param>
-        /// <param name="fluentMethodGroup"></param>
-        public NestedFluentModelInterface(FluentModel rawFluentModel, FluentMethodGroup fluentMethodGroup)
+        public NestedFluentModelInterface(FluentModel rawFluentModel, FluentMethodGroup fluentMethodGroup) : 
+            base(fluentMethodGroup, 
+                new NestedFluentModelMemberVariablesForCreate(fluentMethodGroup), 
+                new NestedFluentModelMemberVariablesForUpdate(fluentMethodGroup), 
+                new FluentModelMemberVariablesForGet(fluentMethodGroup))
         {
             this.rawFluentModel = rawFluentModel;
-            this.FluentMethodGroup = fluentMethodGroup;
-
-            this.createMemberVariables = new NestedFluentModelMemberVariablesForCreate(fluentMethodGroup);
-            this.updateMemberVariables = new NestedFluentModelMemberVariablesForUpdate(fluentMethodGroup);
-            this.getMemberVariables = new FluentModelMemeberVariablesForGet(fluentMethodGroup);
-
-            this.DisambiguatedMemberVariables = new FluentModelDisambiguatedMemberVariables()
-                .WithCreateMemberVariable(this.createMemberVariables)
-                .WithUpdateMemberVariable(this.updateMemberVariables)
-                .WithGetMemberVariable(this.getMemberVariables)
-                .Disambiguate();
-
-            this.createMemberVariables.SetDisambiguatedMemberVariables(this.DisambiguatedMemberVariables);
-            this.updateMemberVariables.SetDisambiguatedMemberVariables(this.DisambiguatedMemberVariables);
-        }
-
-        /// <summary>
-        /// The nested fluent method group that this netsed model interface belongs to.
-        /// </summary>
-        public FluentMethodGroup FluentMethodGroup
-        {
-            get; private set;
         }
 
         /// <summary>
@@ -80,11 +54,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        /// <summary>
-        /// Checks this nested model interface represents a nested resource that can be created under 
-        /// a parent resource.
-        /// </summary>
-        public bool SupportsCreating
+        public override bool SupportsCreating
         {
             get
             {
@@ -93,38 +63,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        /// <summary>
-        /// Checks this nested model interface represents a nested resource that can updated in
-        /// the context of parent resource.
-        /// </summary>
-        public bool SupportsUpdating
-        {
-            get
-            {
-                if (this.FluentMethodGroup.ResourceUpdateDescription.SupportsUpdating)
-                {
-                    // RP supports updating the nested model but can we expose "Update" method in the fluent model? 
-                    // yes only if one of the following satisfies -
-                    //
-                    //     1.If the nested model supports "Create"-ing then fluent "Update" method will be 
-                    //       exposed in model only if URL for "Create" request matches with the URL of "Update".
-                    //
-                    //     2. If the nested model does not support "Create"-ing then fluent "Update" method can be exposed.
-                    // 
-                    return this.createMemberVariables.IsCompatibleWith(this.updateMemberVariables);
-                }
-                else
-                {
-                    return false;
-                }
-            }
-        }
-
-        /// <summary>
-        /// Checks this model interface represents a nested resource which supports getting in
-        /// it's parent resource.
-        /// </summary>
-        public bool SupportsGetting
+        public override bool SupportsGetting
         {
             get
             {
@@ -132,38 +71,6 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        /// <summary>
-        /// Checks this model interface represents a rested resource that is refreshable.
-        /// </summary>
-        public bool SupportsRefreshing
-        {
-            get
-            {
-                if (this.SupportsGetting)
-                {
-                    bool supportCreating = this.SupportsCreating;
-                    bool supportsUpdating = this.SupportsUpdating;
-
-                    if (supportCreating)
-                    {
-                        return this.createMemberVariables.IsCompatibleWith(this.getMemberVariables);
-                    }
-                    else if (supportsUpdating)
-                    {
-                        return this.updateMemberVariables.IsCompatibleWith(this.getMemberVariables);
-                    }
-                    else
-                    {
-                        return true;
-                    }
-                }
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// Checks this groupable model interface represents a nested resource which supports listing in it's parent resource.
-        /// </summary>
         private bool SupportsListing
         {
             get
@@ -172,91 +79,11 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        public FluentModelDisambiguatedMemberVariables DisambiguatedMemberVariables
-        {
-            get; private set;
-        }
-
-        /// <summary>
-        /// Imports required by create member variables (= def stages imports).
-        /// </summary>
-        public HashSet<string> CreateImportsForInterface
-        {
-            get
-            {
-                if (this.SupportsCreating)
-                {
-                    return this.createMemberVariables.ImportsForInterface;
-                }
-                else
-                {
-                    return new HashSet<string>();
-                }
-            }
-        }
-
-
-        /// <summary>
-        /// Imports required by create member variables (= def stages imports).
-        /// </summary>
-        public HashSet<string> CreateImportsForImpl
-        {
-            get
-            {
-                if (this.SupportsCreating)
-                {
-                    return this.createMemberVariables.ImportsForImpl;
-                }
-                else
-                {
-                    return new HashSet<string>();
-                }
-            }
-        }
-
-
-        /// <summary>
-        /// The imports needed by various update stage interfaces methods.
-        /// </summary>
-        public HashSet<string> UpdateImportsForInterface
-        {
-            get
-            {
-                if (this.SupportsUpdating)
-                {
-                    return this.updateMemberVariables.ImportsForInterface;
-                }
-                else
-                {
-                    return new HashSet<string>();
-                }
-            }
-        }
-
-        /// <summary>
-        /// The imports needed by various update stage implementation methods.
-        /// </summary>
-        public HashSet<string> UpdateImportsForImpl
-        {
-            get
-            {
-                if (this.SupportsUpdating)
-                {
-                    return this.updateMemberVariables.ImportsForImpl;
-                }
-                else
-                {
-                    return new HashSet<string>();
-                }
-            }
-        }
-
         public HashSet<string> PropertiesImportsForInterface
         {
             get
             {
                 HashSet<string> imports = new HashSet<string>();
-                string thisPackage = this.Package;
                 foreach (PropertyJvaf property in this.LocalProperties)
                 {
                     var propertyImports = Utils.PropertyImportsForInterface(property, this.package);
@@ -271,7 +98,6 @@ namespace AutoRest.Java.Azure.Fluent.Model
             get
             {
                 HashSet<string> imports = new HashSet<string>();
-                string thisPackage = this.Package;
                 foreach (PropertyJvaf property in this.LocalProperties)
                 {
                     var propertyImports = Utils.PropertyImportsForImpl(property, this.package);
@@ -306,7 +132,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 }
 
                 imports.Add("com.microsoft.azure.management.resources.fluentcore.arm.models.HasManager");
-                imports.Add($"{this.Package}.implementation.{this.FluentMethodGroup.ManagerTypeName}");
+                imports.Add($"{this.package}.implementation.{this.FluentMethodGroup.ManagerTypeName}");
 
                 imports.AddRange(this.UpdateImportsForInterface);
                 imports.AddRange(this.CreateImportsForInterface);
@@ -365,11 +191,6 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     {
                         "DefinitionStages.Blank",
                     };
-
-                    if (this.RequiredDefinitionStages.Any())
-                    {
-                        
-                    }
                     foreach (FluentDefinitionOrUpdateStage stage in this.RequiredDefinitionStages)
                     {
                         extends.Add($"DefinitionStages.{stage.Name}");
@@ -410,7 +231,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
         {
             get
             {
-                var requiredDefStages = this.createMemberVariables.RequiredDefinitionStages();
+                var requiredDefStages = this.RequiredDefinitionStages;
                 if (requiredDefStages.Any())
                 {
                     return $" extends {requiredDefStages.First().Name}";
@@ -421,7 +242,6 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 }
             }
         }
-
 
         /// <summary>
         /// The comma seperated interfaces that WithCreate interface extednds from.
@@ -484,60 +304,14 @@ namespace AutoRest.Java.Azure.Fluent.Model
         }
 
         /// <summary>
-        /// The nested resource required defintion stages.
-        /// </summary>
-        public List<FluentDefinitionOrUpdateStage> RequiredDefinitionStages
-        {
-            get
-            {
-                return this.createMemberVariables.RequiredDefinitionStages();
-            }
-        }
-
-        /// <summary>
-        /// The nested resource optional defintion stages.
-        /// </summary>
-        public List<FluentDefinitionOrUpdateStage> OptionalDefinitionStages
-        {
-            get
-            {
-                return this.createMemberVariables.OptionalDefinitionStages();
-            }
-        }
-
-        /// <summary>
-        /// The nested resource update stages.
-        /// </summary>
-        public List<FluentDefinitionOrUpdateStage> UpdateStages
-        {
-            get
-            {
-                if (!this.SupportsUpdating)
-                {
-                    return new List<FluentDefinitionOrUpdateStage>();
-                }
-                else
-                {
-                    return this.updateMemberVariables.UpdateStages();
-                }
-            }
-        }
-
-        /// <summary>
         /// The java package this nested model inteface belongs to.
+        /// //TODO: Get rid of this
         /// </summary>
         public string Package
         {
             get
             {
-                if (InnerModel.Package.EndsWith(".implementation"))
-                {
-                    return InnerModel.Package.Substring(0, InnerModel.Package.Length - 15);
-                }
-                else
-                {
-                    return InnerModel.Package;
-                }
+                return package;
             }
         }
 

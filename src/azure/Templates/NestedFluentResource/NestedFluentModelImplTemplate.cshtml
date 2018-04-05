@@ -46,7 +46,7 @@ class @(Model.JvaClassName)@(Model.ExtendsFrom)@(Model.Implements) {
 }
 @EmptyLine
 
-@foreach (FluentDefinitionOrUpdateStageMethod createWither in Model.CreateOnlyWither)
+@foreach (FluentDefinitionOrUpdateStageMethod createWither in Model.Interface.CreateOnlyWither)
 {
 @EmptyLine
     var methodSignature = $"{Model.JvaClassName} {createWither.Name}({createWither.ParameterDeclaration})";
@@ -59,7 +59,7 @@ class @(Model.JvaClassName)@(Model.ExtendsFrom)@(Model.Implements) {
 @:    }
 }
 
-@foreach (FluentDefinitionOrUpdateStageMethod updateWither in Model.UpdateOnlyWithers)
+@foreach (FluentDefinitionOrUpdateStageMethod updateWither in Model.Interface.UpdateOnlyWithers)
 {
 @EmptyLine
     var methodSignature = $"{Model.JvaClassName} {updateWither.Name}({updateWither.ParameterDeclaration})";
@@ -72,7 +72,7 @@ class @(Model.JvaClassName)@(Model.ExtendsFrom)@(Model.Implements) {
 @:    }
 }
 
-@foreach (FluentDefinitionOrUpdateStageMethod cuWither in Model.CreateAndUpdateWithers)
+@foreach (FluentDefinitionOrUpdateStageMethod cuWither in Model.Interface.CreateAndUpdateWithers)
 {
 @EmptyLine
     var methodSignature = $"{Model.JvaClassName} {cuWither.Name}({cuWither.ParameterDeclaration})";

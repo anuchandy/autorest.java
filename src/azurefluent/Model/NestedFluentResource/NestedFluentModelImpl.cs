@@ -7,8 +7,6 @@ namespace AutoRest.Java.Azure.Fluent.Model
 {
     public class NestedFluentModelImpl
     {
-        private const string resetCreateUpdateParametersMethodName = "resetCreateUpdateParameters";
-
         public NestedFluentModelImpl(NestedFluentModelInterface mInterface)
         {
             this.Interface = mInterface;
@@ -138,13 +136,12 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 }
 
                 imports.Add("rx.Observable");
-                if (this.RequireFlatmapAfterUpdate || this.RequireFlatmapAfterCreate || this.RequirePayloadReset)
+                if (this.RequireFlatmapAfterUpdate || this.RequireFlatmapAfterCreate || this.Interface.RequirePayloadReset)
                 {
                     imports.Add("rx.functions.Func1");
                 }
 
-                imports.AddRange(this.Interface.UpdateImportsForImpl);
-                imports.AddRange(this.Interface.CreateImportsForImpl);
+                imports.AddRange(this.Interface.ImportsForImpl);
                 imports.AddRange(this.Interface.PropertiesImportsForImpl);
 
                 return imports;
@@ -216,7 +213,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     methodsBuilder.AppendLine("}");
                     yield return methodsBuilder.ToString();
                 }
-                yield return MethodToResetRquestPayload;
+                yield return this.Interface.MethodToResetRquestPayload;
             }
         }
 
@@ -460,9 +457,9 @@ namespace AutoRest.Java.Azure.Fluent.Model
                         methodBuilder.AppendLine($"        .flatMap(new Func1<{createReturnTypeName}, Observable<{innerModelTypeName}>>() {{");
                         methodBuilder.AppendLine($"           @Override");
                         methodBuilder.AppendLine($"           public Observable<{innerModelTypeName}> call({createReturnTypeName} resource) {{");
-                        if (RequirePayloadReset)
+                        if (this.Interface.RequirePayloadReset)
                         {
-                            methodBuilder.AppendLine($"               {resetCreateUpdateParametersMethodName}(); ");
+                            methodBuilder.AppendLine($"               {CreatableUpdatableModel.ResetCreateUpdateParametersMethodName}(); ");
                         }
                         methodBuilder.AppendLine($"               return getInnerAsync(); ");
                         methodBuilder.AppendLine($"           }} ");
@@ -475,12 +472,12 @@ namespace AutoRest.Java.Azure.Fluent.Model
                         string innerModelTypeName = this.InnerModelTypeName;
 
                         methodBuilder.AppendLine($"    return client.{createMethod.InnerMethod.Name}Async({createMethodParametersCombined})");
-                        if (RequirePayloadReset)
+                        if (this.Interface.RequirePayloadReset)
                         {
                             methodBuilder.AppendLine($"        .map(new Func1<{innerModelTypeName}, {innerModelTypeName}>() {{");
                             methodBuilder.AppendLine($"           @Override");
                             methodBuilder.AppendLine($"           public {createReturnTypeName} call({createReturnTypeName} resource) {{");
-                            methodBuilder.AppendLine($"               {resetCreateUpdateParametersMethodName}(); ");
+                            methodBuilder.AppendLine($"               {CreatableUpdatableModel.ResetCreateUpdateParametersMethodName}(); ");
                             methodBuilder.AppendLine($"               return resource; ");
                             methodBuilder.AppendLine($"           }} ");
                             methodBuilder.AppendLine($"        }})");
@@ -545,9 +542,9 @@ namespace AutoRest.Java.Azure.Fluent.Model
                         methodBuilder.AppendLine($"        .flatMap(new Func1<{updateReturnTypeName}, Observable<{innerModelTypeName}>>() {{");
                         methodBuilder.AppendLine($"           @Override");
                         methodBuilder.AppendLine($"           public Observable<{innerModelTypeName}> call({updateReturnTypeName} r) {{");
-                        if (RequirePayloadReset)
+                        if (this.Interface.RequirePayloadReset)
                         {
-                            methodBuilder.AppendLine($"               {resetCreateUpdateParametersMethodName}(); ");
+                            methodBuilder.AppendLine($"               {CreatableUpdatableModel.ResetCreateUpdateParametersMethodName}(); ");
                         }
                         methodBuilder.AppendLine($"               return getInnerAsync(); ");
                         methodBuilder.AppendLine($"           }} ");
@@ -560,12 +557,12 @@ namespace AutoRest.Java.Azure.Fluent.Model
                         string innerModelTypeName = this.InnerModelTypeName;
 
                         methodBuilder.AppendLine($"    return client.{updateMethod.InnerMethod.Name}Async({updateMethodParametersCombined})");
-                        if (RequirePayloadReset)
+                        if (this.Interface.RequirePayloadReset)
                         {
                             methodBuilder.AppendLine($"        .map(new Func1<{innerModelTypeName}, {innerModelTypeName}>() {{");
                             methodBuilder.AppendLine($"           @Override");
                             methodBuilder.AppendLine($"           public {updateReturnTypeName} call({updateReturnTypeName} resource) {{");
-                            methodBuilder.AppendLine($"               {resetCreateUpdateParametersMethodName}(); ");
+                            methodBuilder.AppendLine($"               {CreatableUpdatableModel.ResetCreateUpdateParametersMethodName}(); ");
                             methodBuilder.AppendLine($"               return resource; ");
                             methodBuilder.AppendLine($"           }} ");
                             methodBuilder.AppendLine($"        }})");
@@ -640,47 +637,6 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        private string MethodToResetRquestPayload
-        {
-            get
-            {
-                var payloadMemberVariableInits = this.Interface.DisambiguatedMemberVariables
-                    .MemberVariables
-                    .Select(m => m.VariableInitialize)
-                    .Where(d => !string.IsNullOrEmpty(d));
-
-                if (payloadMemberVariableInits.Any())
-                {
-                    StringBuilder methodBuilder = new StringBuilder();
-
-                    methodBuilder.AppendLine($"private void {resetCreateUpdateParametersMethodName}() {{");
-                    foreach (var varInit in payloadMemberVariableInits)
-                    {
-                        methodBuilder.AppendLine($"    {varInit}");
-                    }
-                    methodBuilder.AppendLine($"}}");
-                    return methodBuilder.ToString();
-                }
-                else
-                {
-                    return String.Empty;
-                }
-            }
-        }
-
-        private bool RequirePayloadReset
-        {
-            get
-            {
-                return this.Interface.DisambiguatedMemberVariables
-                    .MemberVariables
-                    .Select(m => m.VariableInitialize)
-                    .Where(d => !string.IsNullOrEmpty(d))
-                    .Any();
-            }
-        }
-
-
         /// <summary>
         /// Check the nested model is creatable or updatable.
         /// </summary>
@@ -700,81 +656,6 @@ namespace AutoRest.Java.Azure.Fluent.Model
             get
             {
                 return this.Interface.SupportsRefreshing;
-            }
-        }
-
-
-
-        /// <summary>
-        /// Returns the methods used to set the nested resource properties applicable only during resource creation time.
-        /// </summary>
-        public IEnumerable<FluentDefinitionOrUpdateStageMethod> CreateOnlyWither
-        {
-            get
-            {
-                return this.Interface.RequiredDefinitionStages
-                    .Union(this.Interface.OptionalDefinitionStages)
-                    .SelectMany(s => s.Methods)
-                    .Except(this.Interface.UpdateStages.SelectMany(r => r.Methods), FluentDefinitionOrUpdateStageMethod.EqualityComparer());
-            }
-        }
-
-        /// <summary>
-        /// Returns the methods used to set the nested resource properties applicable only during resource update time.
-        /// </summary>
-        public IEnumerable<FluentDefinitionOrUpdateStageMethod> UpdateOnlyWithers
-        {
-            get
-            {
-                return this.Interface.UpdateStages
-                     .SelectMany(s => s.Methods)
-                     .Except(this.Interface.RequiredDefinitionStages.Union(this.Interface.OptionalDefinitionStages).SelectMany(r => r.Methods), FluentDefinitionOrUpdateStageMethod.EqualityComparer());
-            }
-        }
-
-        /// <summary>
-        /// Returns the methods used to set the nested resource properties applicable for both resource creation and update time.
-        /// </summary>
-        public IEnumerable<FluentDefinitionOrUpdateStageMethod> CreateAndUpdateWithers
-        {
-            get
-            {
-                var defMethods = this.Interface.RequiredDefinitionStages
-                    .Union(this.Interface.OptionalDefinitionStages)
-                    .SelectMany(s => s.Methods);
-
-                var updateMethods = this.Interface.UpdateStages
-                    .SelectMany(u => u.Methods);
-
-                var comparer = FluentDefinitionOrUpdateStageMethod.EqualityComparer();
-                foreach (var defMethod in defMethods)
-                {
-                    foreach (var updateMethod in updateMethods)
-                    {
-                        if (comparer.Equals(defMethod, updateMethod))
-                        {
-                            if (defMethod.Body.Equals(updateMethod.Body))
-                            {
-                                yield return defMethod; // or updateMethod
-                            }
-                            else
-                            {
-                                FluentDefinitionOrUpdateStageMethod mergedMethod = new FluentDefinitionOrUpdateStageMethod(defMethod.Name, 
-                                    defMethod.ParameterDeclaration, 
-                                    defMethod.ParameterTypesKey);
-
-                                string mergedBody = "if (isInCreateMode()) {" + "\n" + 
-                                                   $"    {defMethod.Body}" + "\n" +
-                                                    "} else {" + "\n" +
-                                                   $"    {updateMethod.Body}" + "\n" +
-                                                    "}";
-
-                                mergedMethod.Body = mergedBody;
-                                yield return mergedMethod;
-                            }
-                        }
-                    }
-                }
             }
         }
     }
