@@ -1,4 +1,5 @@
-﻿using AutoRest.Core.Model;
+﻿using AutoRest.Core;
+using AutoRest.Core.Model;
 using AutoRest.Core.Utilities;
 using System;
 using System.Collections.Generic;
@@ -14,6 +15,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
         private List<FluentDefinitionOrUpdateStage> reqDefStages;
         private List<FluentDefinitionOrUpdateStage> optDefStages;
         private FluentModelDisambiguatedMemberVariables disambiguatedMemberVariables;
+        private readonly string package = Settings.Instance.Namespace.ToLower();
 
         public FluentModelMemberVariablesForCreate() : base(null)
         {
@@ -41,9 +43,9 @@ namespace AutoRest.Java.Azure.Fluent.Model
         }
 
         /// <summary>
-        /// Imports needed by the memeber veriables.
+        /// The imports required for the types used in the nested resource defintion interfaces.
         /// </summary>
-        public virtual HashSet<string> Imports
+        public virtual HashSet<string> ImportsForInterface
         {
             get
             {
@@ -52,16 +54,72 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 {
                     return imports;
                 }
-                this.PositionalPathAndNotPayloadInnerMemberVariables.ForEach(v =>
+
+                this.PositionalPathAndNotPayloadInnerMemberVariables
+                    .Select(v => v.FromParameter)
+                    .SelectMany(p => Utils.ParameterImportsForInterface(p, package))
+                    .ForEach(import =>
+                    {
+                        imports.Add(import);
+                    });
+
+                FluentModelMemberVariable payloadInnerModel = this.PayloadInnerModelVariable;
+                if (payloadInnerModel != null)
                 {
-                    imports.AddRange(v.FromParameter.InterfaceImports);
-                });
-                if (this.PayloadInnerModelVariable != null)
-                {
-                    imports.AddRange(this.PayloadInnerModelVariable.FromParameter.InterfaceImports);
+                    Utils.ParameterImportsForInterface(this.PayloadInnerModelVariable.FromParameter, this.package)
+                        .ForEach(import =>
+                        {
+                            if (!import.EndsWith(payloadInnerModel.VariableTypeName))
+                            {
+                                imports.Add(import);
+                            }
+                        });
                 }
                 return imports;
             }
+        }
+
+        /// <summary>
+        /// The imports required for the types used in the nested resource defintion interface implementation
+        /// other definition specific types.
+        /// </summary>
+        public virtual HashSet<string> ImportsForImpl
+        {
+            get
+            {
+                HashSet<string> imports = new HashSet<string>();
+                if (!SupportsCreating)
+                {
+                    return imports;
+                }
+                this.PositionalPathAndNotPayloadInnerMemberVariables
+                    .Select(v => v.FromParameter)
+                    .SelectMany(p => Utils.ParameterImportsForImpl(p, package))
+                    .ForEach(import =>
+                    {
+                        imports.Add(import);
+                    });
+
+                if (this.PayloadInnerModelVariable != null)
+                {
+                    Utils.ParameterImportsForImpl(this.PayloadInnerModelVariable.FromParameter, this.package)
+                        .ForEach(import =>
+                        {
+                            imports.Add(import);
+                        });
+                }
+                return imports;
+            }
+        }
+
+        public virtual List<FluentDefinitionOrUpdateStage> RequiredDefinitionStages()
+        {
+            return this.RequiredDefinitionStages(null);
+        }
+
+        public virtual List<FluentDefinitionOrUpdateStage> OptionalDefinitionStages()
+        {
+            return this.OptionalDefinitionStages(null);
         }
 
         /// <summary>
@@ -69,7 +127,6 @@ namespace AutoRest.Java.Azure.Fluent.Model
         /// </summary>
         protected List<FluentDefinitionOrUpdateStage> RequiredDefinitionStages(List<FluentDefinitionOrUpdateStage> initialStages)
         {
-
             if (this.reqDefStages != null)
             {
                 return this.reqDefStages;

@@ -1,4 +1,5 @@
-﻿using AutoRest.Core.Utilities;
+﻿using AutoRest.Core;
+using AutoRest.Core.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,6 +12,8 @@ namespace AutoRest.Java.Azure.Fluent.Model
     /// </summary>
     public class NestedFluentModelMemberVariablesForCreate : FluentModelMemberVariablesForCreate
     {
+        private readonly string package = Settings.Instance.Namespace.ToLower();
+
         public NestedFluentModelMemberVariablesForCreate() : base()
         {
         }
@@ -24,23 +27,44 @@ namespace AutoRest.Java.Azure.Fluent.Model
             base.SetDisambiguatedMemberVariables(dMemberVariables);
         }
 
-        /// <summary>
-        /// Imports imposed by the memeber variables.
-        /// </summary>
-        public override HashSet<string> Imports
+        public override HashSet<string> ImportsForInterface
         {
             get
             {
                 HashSet<string> imports = new HashSet<string>();
-                if (!SupportsCreating)
+                if (!this.SupportsCreating)
                 {
                     return imports;
                 }
-                this.ParentRefMemberVariables.ForEach(v =>
+                this.ParentRefMemberVariables
+                    .Select(v => v.FromParameter)
+                    .SelectMany(p => Utils.ParameterImportsForInterface(p, package))
+                    .ForEach(import =>
+                    {
+                        imports.Add(import);
+                    });
+                imports.AddRange(base.ImportsForInterface);
+                return imports;
+            }
+        }
+
+        public override HashSet<string> ImportsForImpl
+        {
+            get
+            {
+                HashSet<string> imports = new HashSet<string>();
+                if (!this.SupportsCreating)
                 {
-                    imports.AddRange(v.FromParameter.InterfaceImports);
-                });
-                imports.AddRange(base.Imports);
+                    return imports;
+                }
+                this.ParentRefMemberVariables
+                    .Select(v => v.FromParameter)
+                    .SelectMany(p => Utils.ParameterImportsForImpl(p, package))
+                    .ForEach(import =>
+                    {
+                        imports.Add(import);
+                    });
+                imports.AddRange(base.ImportsForImpl);
                 return imports;
             }
         }
@@ -48,9 +72,9 @@ namespace AutoRest.Java.Azure.Fluent.Model
         /// <summary>
         /// Derive and return required definition stages from the create member variables.
         /// </summary>
-        public List<FluentDefinitionOrUpdateStage> RequiredDefinitionStages()
+        public override List<FluentDefinitionOrUpdateStage> RequiredDefinitionStages()
         {
-            if (!SupportsCreating)
+            if (!this.SupportsCreating)
             {
                 return base.RequiredDefinitionStages(null);
             }
@@ -67,7 +91,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
         /// <summary>
         /// Derive and return optional definition stages from the create member variables.
         /// </summary>
-        public List<FluentDefinitionOrUpdateStage> OptionalDefinitionStages()
+        public override List<FluentDefinitionOrUpdateStage> OptionalDefinitionStages()
         {
             return base.OptionalDefinitionStages(null);
         }

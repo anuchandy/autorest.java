@@ -1,5 +1,7 @@
-﻿using AutoRest.Core.Model;
+﻿using AutoRest.Core;
+using AutoRest.Core.Model;
 using AutoRest.Core.Utilities;
+using AutoRest.Java.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,6 +12,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
     {
         private List<FluentDefinitionOrUpdateStage> updateStages;
         private FluentModelDisambiguatedMemberVariables disambiguatedMemberVariables;
+        private readonly string package = Settings.Instance.Namespace.ToLower();
 
         public FluentModelMemberVariablesForUpdate() : base(null)
         {
@@ -35,10 +38,11 @@ namespace AutoRest.Java.Azure.Fluent.Model
         /// </summary>
         public FluentMethodGroup FluentMethodGroup { get; private set; }
 
+
         /// <summary>
-        /// Imports imposed by the memeber veriables.
+        /// The imports required for the types used in the nested resource update interfaces.
         /// </summary>
-        public HashSet<string> Imports
+        public virtual HashSet<string> ImportsForInterface
         {
             get
             {
@@ -48,76 +52,132 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     return imports;
                 }
 
-                this.NotParentRefNotPositionalPathAndNotPayloadInnerMemberVariables.ForEach(v =>
+                this.NotParentRefNotPositionalPathAndNotPayloadInnerMemberVariables
+                    .Select(v => v.FromParameter)
+                    .SelectMany(p => Utils.ParameterImportsForInterface(p, package))
+                    .ForEach(import =>
+                    {
+                        imports.Add(import);
+                    });
+
+                FluentModelMemberVariable payloadInnerModel = this.PayloadInnerModelVariable;
+                if (payloadInnerModel != null)
                 {
-                    imports.AddRange(v.FromParameter.InterfaceImports);
-                });
-                if (this.PayloadInnerModelVariable != null)
-                {
-                    imports.AddRange(this.PayloadInnerModelVariable.FromParameter.InterfaceImports);
+                    Utils.ParameterImportsForInterface(this.PayloadInnerModelVariable.FromParameter, this.package)
+                        .ForEach(import =>
+                        {
+                            if (!import.EndsWith(payloadInnerModel.VariableTypeName))
+                            {
+                                imports.Add(import);
+                            }
+                        });
                 }
                 return imports;
             }
         }
 
         /// <summary>
-        /// The imports required for the types used in the nested resource interface and it's
-        /// definition and update stages.
+        /// The imports required for the types used in the nested resource update interface implementation and
+        /// other update specific types.
         /// </summary>
-        public HashSet<string> InterfaceImports
+        public virtual HashSet<string> ImportsForImpl
         {
             get
             {
-                return null;
+                HashSet<string> imports = new HashSet<string>();
+                if (!SupportsUpdating)
+                {
+                    return imports;
+                }
+
+                this.NotParentRefNotPositionalPathAndNotPayloadInnerMemberVariables
+                    .Select(v => v.FromParameter)
+                    .SelectMany(p => Utils.ParameterImportsForImpl(p, package))
+                    .ForEach(import =>
+                    {
+                        imports.Add(import);
+                    });
+
+                if (this.PayloadInnerModelVariable != null)
+                {
+                    Utils.ParameterImportsForImpl(this.PayloadInnerModelVariable.FromParameter, this.package)
+                        .ForEach(import =>
+                        {
+                            imports.Add(import);
+                        });
+                }
+                return imports;
             }
         }
 
-        /// <summary>
-        /// The imports required for the types used in the nested resource implementation.
-        /// </summary>
-        public HashSet<string> ImplImports
+
+        public virtual List<FluentDefinitionOrUpdateStage> UpdateStages()
         {
-            get
+            if (this.updateStages != null)
             {
-                return null;
+                return this.updateStages;
             }
-        }
 
-
-        public List<FluentDefinitionOrUpdateStage> UpdateStages
-        {
-            get
+            this.updateStages = new List<FluentDefinitionOrUpdateStage>();
+            if (!this.SupportsUpdating)
             {
-                if (this.updateStages != null)
+                return this.updateStages;
+            }
+
+            var dmvs = this.disambiguatedMemberVariables ?? throw new ArgumentNullException("dMemberVariables");
+
+            FluentDefinitionOrUpdateStage updateGrouping = new FluentDefinitionOrUpdateStage("", "Update");
+
+            // During resource update changing parent ref properties and other path properties are not allowed
+            //
+            IEnumerable<FluentModelMemberVariable> nonExpandableUpdatableMemberVariables = this.NotParentRefNotPositionalPathAndNotPayloadInnerMemberVariables;
+            foreach (var memberVariable in nonExpandableUpdatableMemberVariables)
+            {
+                string methodName = $"with{memberVariable.FromParameter.Name.ToPascalCase()}";
+                string parameterName = memberVariable.VariableName;
+                string methodParameterDecl = $"{memberVariable.VariableTypeName} {parameterName}";
+                FluentDefinitionOrUpdateStageMethod method = new FluentDefinitionOrUpdateStageMethod(methodName, methodParameterDecl, memberVariable.VariableTypeName)
                 {
-                    return this.updateStages;
-                }
+                    CommentFor = parameterName,
+                    Body = $"{(dmvs.MemeberVariablesForUpdate[memberVariable.VariableName]).VariableAccessor} = {parameterName};"
+                };
 
-                this.updateStages = new List<FluentDefinitionOrUpdateStage>();
-                if (!this.SupportsUpdating)
+                string interfaceName = $"With{memberVariable.FromParameter.Name.ToPascalCase()}";
+                FluentDefinitionOrUpdateStage stage = new FluentDefinitionOrUpdateStage("", interfaceName);
+                this.updateStages.Add(stage);
+
+                stage.Methods.Add(method);
+                stage.Methods.ForEach(m =>
                 {
-                    return this.updateStages;
-                }
+                    m.NextStage = updateGrouping;
+                });
+            }
 
-                var dmvs = this.disambiguatedMemberVariables ?? throw new ArgumentNullException("dMemberVariables");
+            var payloadInnerModelVariable = this.PayloadInnerModelVariable;
+            if (payloadInnerModelVariable != null)
+            {
+                string payloadInnerModelVariableName = payloadInnerModelVariable.VariableName;
 
-                FluentDefinitionOrUpdateStage updateGrouping = new FluentDefinitionOrUpdateStage("", "Update");
+                CompositeTypeJvaf payloadType = (CompositeTypeJvaf)payloadInnerModelVariable.FromParameter.ClientType;
 
-                // During resource update changing parent ref properties and other path properties are not allowed
-                //
-                IEnumerable<FluentModelMemberVariable> nonExpandableUpdatableMemberVariables = this.NotParentRefNotPositionalPathAndNotPayloadInnerMemberVariables;
-                foreach (var memberVariable in nonExpandableUpdatableMemberVariables)
+                var payloadOptionalProperties = payloadType
+                    .ComposedProperties
+                    .Where(p => !p.IsReadOnly && !p.IsRequired)
+                    .OrderBy(p => p.Name.ToLowerInvariant());
+
+                foreach (Property pro in payloadOptionalProperties)
                 {
-                    string methodName = $"with{memberVariable.FromParameter.Name.ToPascalCase()}";
-                    string parameterName = memberVariable.VariableName;
-                    string methodParameterDecl = $"{memberVariable.VariableTypeName} {parameterName}";
-                    FluentDefinitionOrUpdateStageMethod method = new FluentDefinitionOrUpdateStageMethod(methodName, methodParameterDecl, memberVariable.VariableTypeName)
+
+                    string methodName = $"with{pro.Name.ToPascalCase()}";
+                    string parameterName = pro.Name;
+                    string methodParameterDecl = $"{pro.ModelTypeName} {parameterName}";
+                    FluentDefinitionOrUpdateStageMethod method = new FluentDefinitionOrUpdateStageMethod(methodName, methodParameterDecl, pro.ModelTypeName)
                     {
                         CommentFor = parameterName,
-                        Body = $"{(dmvs.MemeberVariablesForUpdate[memberVariable.VariableName]).VariableAccessor} = {parameterName};"
+                        Body = $"{(dmvs.MemeberVariablesForUpdate[payloadInnerModelVariableName]).VariableAccessor}.{methodName}({parameterName});"
                     };
 
-                    string interfaceName = $"With{memberVariable.FromParameter.Name.ToPascalCase()}";
+                    string interfaceName = $"With{pro.Name.ToPascalCase()}";
                     FluentDefinitionOrUpdateStage stage = new FluentDefinitionOrUpdateStage("", interfaceName);
                     this.updateStages.Add(stage);
 
@@ -127,44 +187,8 @@ namespace AutoRest.Java.Azure.Fluent.Model
                         m.NextStage = updateGrouping;
                     });
                 }
-
-                var payloadInnerModelVariable = this.PayloadInnerModelVariable;
-                if (payloadInnerModelVariable != null)
-                {
-                    string payloadInnerModelVariableName = payloadInnerModelVariable.VariableName;
-
-                    CompositeTypeJvaf payloadType = (CompositeTypeJvaf)payloadInnerModelVariable.FromParameter.ClientType;
-
-                    var payloadOptionalProperties = payloadType
-                        .ComposedProperties
-                        .Where(p => !p.IsReadOnly && !p.IsRequired)
-                        .OrderBy(p => p.Name.ToLowerInvariant());
-
-                    foreach (Property pro in payloadOptionalProperties)
-                    {
-
-                        string methodName = $"with{pro.Name.ToPascalCase()}";
-                        string parameterName = pro.Name;
-                        string methodParameterDecl = $"{pro.ModelTypeName} {parameterName}";
-                        FluentDefinitionOrUpdateStageMethod method = new FluentDefinitionOrUpdateStageMethod(methodName, methodParameterDecl, pro.ModelTypeName)
-                        {
-                            CommentFor = parameterName,
-                            Body = $"{(dmvs.MemeberVariablesForUpdate[payloadInnerModelVariableName]).VariableAccessor}.{methodName}({parameterName});"
-                        };
-
-                        string interfaceName = $"With{pro.Name.ToPascalCase()}";
-                        FluentDefinitionOrUpdateStage stage = new FluentDefinitionOrUpdateStage("", interfaceName);
-                        this.updateStages.Add(stage);
-
-                        stage.Methods.Add(method);
-                        stage.Methods.ForEach(m =>
-                        {
-                            m.NextStage = updateGrouping;
-                        });
-                    }
-                }
-                return this.updateStages;
             }
+            return this.updateStages;
         }
 
         private bool SupportsUpdating
@@ -174,6 +198,5 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 return this.FluentMethodGroup.ResourceUpdateDescription.SupportsUpdating;
             }
         }
-
     }
 }

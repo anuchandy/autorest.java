@@ -1,4 +1,5 @@
-﻿using AutoRest.Core.Model;
+﻿using AutoRest.Core;
+using AutoRest.Core.Model;
 using AutoRest.Core.Utilities;
 using System;
 using System.Collections.Generic;
@@ -15,7 +16,8 @@ namespace AutoRest.Java.Azure.Fluent.Model
         private readonly FluentModel rawFluentModel;
         private readonly NestedFluentModelMemberVariablesForCreate createMemberVariables;
         private readonly NestedFluentModelMemberVariablesForUpdate updateMemberVariables;
-        private readonly NestedFluentModelMemeberVariablesForGet getMemberVariables;
+        private readonly FluentModelMemeberVariablesForGet getMemberVariables;
+        private readonly string package = Settings.Instance.Namespace.ToLower();
 
         private NestedFluentModelImpl impl;
 
@@ -31,7 +33,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
 
             this.createMemberVariables = new NestedFluentModelMemberVariablesForCreate(fluentMethodGroup);
             this.updateMemberVariables = new NestedFluentModelMemberVariablesForUpdate(fluentMethodGroup);
-            this.getMemberVariables = new NestedFluentModelMemeberVariablesForGet(fluentMethodGroup);
+            this.getMemberVariables = new FluentModelMemeberVariablesForGet(fluentMethodGroup);
 
             this.DisambiguatedMemberVariables = new FluentModelDisambiguatedMemberVariables()
                 .WithCreateMemberVariable(this.createMemberVariables)
@@ -178,13 +180,51 @@ namespace AutoRest.Java.Azure.Fluent.Model
         /// <summary>
         /// Imports required by create member variables (= def stages imports).
         /// </summary>
-        public HashSet<string> CreateMemberVariablesImports
+        public HashSet<string> CreateImportsForInterface
         {
             get
             {
                 if (this.SupportsCreating)
                 {
-                    return this.createMemberVariables.Imports;
+                    return this.createMemberVariables.ImportsForInterface;
+                }
+                else
+                {
+                    return new HashSet<string>();
+                }
+            }
+        }
+
+
+        /// <summary>
+        /// Imports required by create member variables (= def stages imports).
+        /// </summary>
+        public HashSet<string> CreateImportsForImpl
+        {
+            get
+            {
+                if (this.SupportsCreating)
+                {
+                    return this.createMemberVariables.ImportsForImpl;
+                }
+                else
+                {
+                    return new HashSet<string>();
+                }
+            }
+        }
+
+
+        /// <summary>
+        /// The imports needed by various update stage interfaces methods.
+        /// </summary>
+        public HashSet<string> UpdateImportsForInterface
+        {
+            get
+            {
+                if (this.SupportsUpdating)
+                {
+                    return this.updateMemberVariables.ImportsForInterface;
                 }
                 else
                 {
@@ -194,15 +234,15 @@ namespace AutoRest.Java.Azure.Fluent.Model
         }
 
         /// <summary>
-        /// Imports required by update member variables (= update stages imports).
+        /// The imports needed by various update stage implementation methods.
         /// </summary>
-        public HashSet<string> UpdateMemberVariablesImports
+        public HashSet<string> UpdateImportsForImpl
         {
             get
             {
                 if (this.SupportsUpdating)
                 {
-                    return this.updateMemberVariables.Imports;
+                    return this.updateMemberVariables.ImportsForImpl;
                 }
                 else
                 {
@@ -211,7 +251,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        public HashSet<string> LocalPropertiesImports
+        public HashSet<string> PropertiesImportsForInterface
         {
             get
             {
@@ -219,7 +259,22 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 string thisPackage = this.Package;
                 foreach (PropertyJvaf property in this.LocalProperties)
                 {
-                    var propertyImports = Utils.PropertyImports(property, InnerModel.Package);
+                    var propertyImports = Utils.PropertyImportsForInterface(property, this.package);
+                    imports.AddRange(propertyImports);
+                }
+                return imports;
+            }
+        }
+
+        public HashSet<string> PropertiesImportsForImpl
+        {
+            get
+            {
+                HashSet<string> imports = new HashSet<string>();
+                string thisPackage = this.Package;
+                foreach (PropertyJvaf property in this.LocalProperties)
+                {
+                    var propertyImports = Utils.PropertyImportsForImpl(property, this.package);
                     imports.AddRange(propertyImports);
                 }
                 return imports;
@@ -253,9 +308,9 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 imports.Add("com.microsoft.azure.management.resources.fluentcore.arm.models.HasManager");
                 imports.Add($"{this.Package}.implementation.{this.FluentMethodGroup.ManagerTypeName}");
 
-                imports.AddRange(this.UpdateMemberVariablesImports);
-                imports.AddRange(this.CreateMemberVariablesImports);
-                imports.AddRange(LocalPropertiesImports);
+                imports.AddRange(this.UpdateImportsForInterface);
+                imports.AddRange(this.CreateImportsForInterface);
+                imports.AddRange(this.PropertiesImportsForInterface);
 
                 return imports;
             }
@@ -463,7 +518,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 }
                 else
                 {
-                    return this.updateMemberVariables.UpdateStages;
+                    return this.updateMemberVariables.UpdateStages();
                 }
             }
         }
@@ -503,7 +558,6 @@ namespace AutoRest.Java.Azure.Fluent.Model
         {
             return new NFMComparerBasedOnJvaInterfaceName();
         }
-
     }
 
     class NFMComparerBasedOnJvaInterfaceName : IEqualityComparer<NestedFluentModelInterface>

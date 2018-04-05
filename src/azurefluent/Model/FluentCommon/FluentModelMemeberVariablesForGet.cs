@@ -1,13 +1,13 @@
 ﻿namespace AutoRest.Java.Azure.Fluent.Model
 {
-    public class NestedFluentModelMemeberVariablesForGet : FluentModelMemberVariables
+    public class FluentModelMemeberVariablesForGet : FluentModelMemberVariables
     {
-        public NestedFluentModelMemeberVariablesForGet() : base(null)
+        public FluentModelMemeberVariablesForGet() : base(null)
         {
             this.FluentMethodGroup = null;
         }
 
-        public NestedFluentModelMemeberVariablesForGet(FluentMethodGroup fluentMethodGroup) :
+        public FluentModelMemeberVariablesForGet(FluentMethodGroup fluentMethodGroup) :
             base(fluentMethodGroup.ResourceGetDescription.SupportsGetByImmediateParent ? fluentMethodGroup.ResourceGetDescription.GetByImmediateParentMethod : null)
         {
             this.FluentMethodGroup = fluentMethodGroup;

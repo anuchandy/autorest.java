@@ -143,9 +143,9 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     imports.Add("rx.functions.Func1");
                 }
 
-                imports.AddRange(this.Interface.UpdateMemberVariablesImports.Where(impl => !impl.EndsWith("Inner")));
-                imports.AddRange(this.Interface.CreateMemberVariablesImports.Where(impl => !impl.EndsWith("Inner")));
-                imports.AddRange(this.Interface.LocalPropertiesImports.Where(imp => !imp.EndsWith("Inner")));
+                imports.AddRange(this.Interface.UpdateImportsForImpl);
+                imports.AddRange(this.Interface.CreateImportsForImpl);
+                imports.AddRange(this.Interface.PropertiesImportsForImpl);
 
                 return imports;
             }
