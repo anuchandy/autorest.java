@@ -6,19 +6,19 @@ using System.Linq;
 
 namespace AutoRest.Java.Azure.Fluent.Model
 {
-    public class NestedFluentModelUpdateMemberVariables : FluentModelMemberVariables
+    public class FluentModelMemberVariablesForUpdate : FluentModelMemberVariables
     {
         private List<FluentDefinitionOrUpdateStage> updateStages;
         private FluentModelDisambiguatedMemberVariables disambiguatedMemberVariables;
 
-        public NestedFluentModelUpdateMemberVariables() : base(null)
+        public FluentModelMemberVariablesForUpdate() : base(null)
         {
             this.FluentMethodGroup = null;
             this.updateStages = null;
         }
 
-        public NestedFluentModelUpdateMemberVariables(FluentMethodGroup fluentMethodGroup) : 
-            base (fluentMethodGroup.ResourceUpdateDescription.SupportsUpdating ? fluentMethodGroup.ResourceUpdateDescription .UpdateMethod : null)
+        public FluentModelMemberVariablesForUpdate(FluentMethodGroup fluentMethodGroup) :
+            base(fluentMethodGroup.ResourceUpdateDescription.SupportsUpdating ? fluentMethodGroup.ResourceUpdateDescription.UpdateMethod : null)
         {
             this.FluentMethodGroup = fluentMethodGroup;
             this.updateStages = null;
@@ -59,6 +59,30 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 return imports;
             }
         }
+
+        /// <summary>
+        /// The imports required for the types used in the nested resource interface and it's
+        /// definition and update stages.
+        /// </summary>
+        public HashSet<string> InterfaceImports
+        {
+            get
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// The imports required for the types used in the nested resource implementation.
+        /// </summary>
+        public HashSet<string> ImplImports
+        {
+            get
+            {
+                return null;
+            }
+        }
+
 
         public List<FluentDefinitionOrUpdateStage> UpdateStages
         {

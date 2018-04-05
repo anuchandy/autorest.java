@@ -13,9 +13,9 @@ namespace AutoRest.Java.Azure.Fluent.Model
     public class NestedFluentModelInterface
     {
         private readonly FluentModel rawFluentModel;
-        private readonly NestedFluentModelCreateMemberVariables createMemberVariables;
-        private readonly NestedFluentModelUpdateMemberVariables updateMemberVariables;
-        private readonly NestedFluentModelGetMemeberVariables getMemberVariables;
+        private readonly NestedFluentModelMemberVariablesForCreate createMemberVariables;
+        private readonly NestedFluentModelMemberVariablesForUpdate updateMemberVariables;
+        private readonly NestedFluentModelMemeberVariablesForGet getMemberVariables;
 
         private NestedFluentModelImpl impl;
 
@@ -29,9 +29,9 @@ namespace AutoRest.Java.Azure.Fluent.Model
             this.rawFluentModel = rawFluentModel;
             this.FluentMethodGroup = fluentMethodGroup;
 
-            this.createMemberVariables = new NestedFluentModelCreateMemberVariables(fluentMethodGroup);
-            this.updateMemberVariables = new NestedFluentModelUpdateMemberVariables(fluentMethodGroup);
-            this.getMemberVariables = new NestedFluentModelGetMemeberVariables(fluentMethodGroup);
+            this.createMemberVariables = new NestedFluentModelMemberVariablesForCreate(fluentMethodGroup);
+            this.updateMemberVariables = new NestedFluentModelMemberVariablesForUpdate(fluentMethodGroup);
+            this.getMemberVariables = new NestedFluentModelMemeberVariablesForGet(fluentMethodGroup);
 
             this.DisambiguatedMemberVariables = new FluentModelDisambiguatedMemberVariables()
                 .WithCreateMemberVariable(this.createMemberVariables)
@@ -355,7 +355,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
         {
             get
             {
-                var requiredDefStages = this.createMemberVariables.RequiredDefinitionStages;
+                var requiredDefStages = this.createMemberVariables.RequiredDefinitionStages();
                 if (requiredDefStages.Any())
                 {
                     return $" extends {requiredDefStages.First().Name}";
@@ -435,7 +435,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
         {
             get
             {
-                return this.createMemberVariables.RequiredDefinitionStages;
+                return this.createMemberVariables.RequiredDefinitionStages();
             }
         }
 
@@ -446,7 +446,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
         {
             get
             {
-                return this.createMemberVariables.OptionalDefinitionStages;
+                return this.createMemberVariables.OptionalDefinitionStages();
             }
         }
 

@@ -9,7 +9,10 @@ using System.Linq;
 namespace AutoRest.Java.Azure.Fluent.Model
 {
     /// <summary>
-    /// Type representing memeber variables required to declare in a model in-order to invoke an API method.
+    /// Type that provide a view of parameters of an API method as model variables. That way when needed this
+    /// type can be used to declare those member variables in a model, intialize and access them. 
+    /// This is useful for models that need to expand scope of a method parameters in class level in  inorder
+    /// to support resource updation, refresh 
     /// </summary>
     public class FluentModelMemberVariables : Dictionary<string, FluentModelMemberVariable>
     {
