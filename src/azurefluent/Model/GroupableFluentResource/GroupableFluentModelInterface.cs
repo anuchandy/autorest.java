@@ -351,17 +351,6 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        /// <summary>
-        /// The java package this groupable model inteface belongs to.
-        /// </summary>
-        public string Package
-        {
-            get
-            {
-                return this.package;
-            }
-        }
-
         private static List<string> ARMTrackedResourceProperties
         {
             get

@@ -28,9 +28,6 @@ namespace AutoRest.Java.Azure.Fluent.Model
             this.rawFluentModel = rawFluentModel;
         }
 
-        /// <summary>
-        /// Name of the Java interface this interface-metadata nested model generates.
-        /// </summary>
         public string JavaInterfaceName
         {
             get
@@ -39,10 +36,6 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        /// <summary>
-        /// Returns the impl-metadata model that generates the Java implementation that
-        /// this nested model interface implements.
-        /// </summary>
         public NestedFluentModelImpl Impl
         {
             get
@@ -113,9 +106,6 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        /// <summary>
-        /// The interfaces that the nested model interface extends from.
-        /// </summary>
         public string ExtendsFrom
         {
             get
@@ -149,9 +139,6 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        /// <summary>
-        /// The comma seperated interfaces that defintion interface extednds from.
-        /// </summary>
         public string DefinitionExtendsFrom
         {
             get
@@ -184,9 +171,6 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        /// <summary>
-        /// The metadata of inner model that the nested model interface wraps.
-        /// </summary>
         public CompositeTypeJvaf InnerModel
         {
             get
@@ -195,9 +179,6 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        /// <summary>
-        /// The name of the interface from which blank derives.
-        /// </summary>
         public string BlankExtendsFrom
         {
             get
@@ -214,9 +195,6 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        /// <summary>
-        /// The comma seperated interfaces that WithCreate interface extednds from.
-        /// </summary>
         public string WithCreateExtendsFrom
         {
             get
@@ -240,9 +218,6 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        /// <summary>
-        /// The comma seperated interfaces that update interface extednds from.
-        /// </summary>
         public string UpdateExtendsFrom
         {
             get
@@ -271,18 +246,6 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 {
                     return String.Empty;
                 }
-            }
-        }
-
-        /// <summary>
-        /// The java package this nested model inteface belongs to.
-        /// //TODO: Get rid of this
-        /// </summary>
-        public string Package
-        {
-            get
-            {
-                return package;
             }
         }
 

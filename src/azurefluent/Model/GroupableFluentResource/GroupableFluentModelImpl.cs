@@ -1,4 +1,5 @@
-﻿using AutoRest.Core.Utilities;
+﻿using AutoRest.Core;
+using AutoRest.Core.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,6 +12,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
     /// </summary>
     public class GroupableFluentModelImpl
     {
+        private readonly string package = Settings.Instance.Namespace.ToLower();
 
         public GroupableFluentModelImpl(GroupableFluentModelInterface mInterface)
         {
@@ -108,7 +110,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
             {
                 HashSet<string> imports = new HashSet<string>();
                 imports.Add("com.microsoft.azure.management.resources.fluentcore.arm.models.implementation.GroupableResourceImpl");
-                imports.Add($"{this.Interface.Package}.{this.Interface.JavaInterfaceName}");
+                imports.Add($"{this.package}.{this.Interface.JavaInterfaceName}");
                 imports.Add("rx.Observable");
                 if (this.RequireFlatmapAfterUpdate || this.RequireFlatmapAfterCreate || this.Interface.RequirePayloadReset)
                 {

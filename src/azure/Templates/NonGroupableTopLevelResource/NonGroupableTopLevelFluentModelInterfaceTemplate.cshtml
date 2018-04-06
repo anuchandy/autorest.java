@@ -7,6 +7,7 @@
 @using AutoRest.Java.Model
 @using AutoRest.Java.Azure.Model
 @inherits AutoRest.Core.Template<AutoRest.Java.Azure.Fluent.Model.NonGroupableTopLevelFluentModelInterface>
+
 /**
 @Header(" * ").TrimMultilineHeader()
  */
@@ -35,5 +36,124 @@ public interface @(Model.JavaInterfaceName)@(Model.ExtendsFrom) {
     </text>
 @:    @(((IModelTypeJv)property.ModelType).ResponseVariant.Name) @(property.Name.ToCamelCase())();
 @EmptyLine
+}
+
+@if (Model.SupportsCreating)
+{
+    <text>
+    /**
+     * The entirety of the @(Model.JavaInterfaceName) definition.
+     */
+    </text>
+@:    interface Definition@(Model.DefinitionExtendsFrom) {
+@:    }
+
+@EmptyLine
+
+    <text>
+    /**
+     * Grouping of @(Model.JavaInterfaceName) definition stages.
+     */
+    </text>
+@:    interface DefinitionStages {
+    <text>
+        /**
+         * The first stage of a @(Model.JavaInterfaceName) definition.
+         */
+        interface Blank@(Model.BlankExtendsFrom) {
+        }
+    </text>
+@EmptyLine
+@foreach (var stage in Model.RequiredDefinitionStages)
+{
+        <text>
+        /**
+         * @(String.Format(stage.Comment, "definition"))
+         */
+        </text>
+        @:interface @(stage.Name) {
+@foreach (var method in stage.Methods)
+{
+           <text>
+           /**
+            * @(method.Comment)
+            */
+           </text>
+            @:@(method.NextStage.Name) @(method.Name)(@(method.ParameterDeclaration));
+}
+@:        }
+@EmptyLine
+}
+
+@foreach (var stage in Model.OptionalDefinitionStages)
+{
+        <text>
+        /**
+         * @(String.Format(stage.Comment, "update"))
+         */
+        </text>
+        @:interface @(stage.Name) {
+@foreach (var method in stage.Methods)
+{
+            <text>
+            /**
+             * @(method.Comment)
+             */
+            </text>
+            @:@(method.NextStage.Name) @(method.Name)(@(method.ParameterDeclaration));
+}
+@:        }
+@EmptyLine
+}
+       <text>
+        /**
+         * The stage of the definition which contains all the minimum required inputs for
+         * the resource to be created (via {@@link WithCreate#create()}), but also allows
+         * for any other optional settings to be specified.
+         */
+        </text>
+        @:interface WithCreate@(Model.WithCreateExtendsFrom) {
+        @:}
+@:    }
+}
+@if (Model.SupportsUpdating)
+{
+    <text>
+    /**
+     * The template for a @(Model.JavaInterfaceName) update operation, containing all the settings that can be modified.
+     */
+    </text>
+@:    interface Update@(Model.UpdateExtendsFrom) {
+@:    }
+
+@EmptyLine
+
+    <text>
+    /**
+     * Grouping of @(Model.JavaInterfaceName) update stages.
+     */
+    </text>
+@:    interface UpdateStages {
+@foreach (var stage in Model.UpdateStages)
+{
+        <text>
+        /**
+         * @(stage.Comment)
+         */
+        </text>
+@:        interface @(stage.Name) {
+@foreach (var method in stage.Methods)
+{
+            <text>
+            /**
+             * @(method.Comment)
+             */
+            </text>
+            @:@(method.NextStage.Name) @(method.Name)(@(method.ParameterDeclaration));
+}
+@:        }
+@EmptyLine
+}
+@:    }
 }
 }

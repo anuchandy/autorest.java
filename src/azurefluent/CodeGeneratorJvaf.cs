@@ -22,6 +22,7 @@ using AutoRest.Java.azure.Templates.FluentCommon;
 using AutoRest.Java.azure.Templates.ReadOnlyFluentResource;
 using AutoRest.Java.azure.Templates.NestedFluentResource;
 using AutoRest.Java.azure.Templates.GroupableFluentResource;
+using AutoRest.Java.azure.Templates.NonGroupableTopLevelResource;
 
 namespace AutoRest.Java.Azure.Fluent
 {
@@ -118,13 +119,25 @@ namespace AutoRest.Java.Azure.Fluent
 
             foreach (NonGroupableTopLevelFluentModelInterface fluentModel in innerMGroupToFluentMGroup.NonGroupableTopLevelFluentModels)
             {
+                var modelInterfaceTemplate = new NonGroupableTopLevelFluentModelInterfaceTemplate { Model = fluentModel };
+                await Write(modelInterfaceTemplate, $"{packagePath}/{fluentModel.JavaInterfaceName.ToPascalCase()}{ImplementationFileExtension}");
+
+                //
+                var modelImplTemplate = new NonGroupableTopLevelFluentModelImplTemplate { Model = fluentModel.Impl };
+                await Write(modelImplTemplate, $"{packagePath}/implementation/{fluentModel.Impl.JvaClassName.ToPascalCase()}{ImplementationFileExtension}");
+
+                //
+                NonGroupableTopLevelMethodGroupImpl methodGroupImpl = new NonGroupableTopLevelMethodGroupImpl(fluentModel.Impl);
+                var methodGroupTemplate = new NonGroupableTopLevelMethodGroupImplTemplate { Model = methodGroupImpl };
+                await Write(methodGroupTemplate, $"{packagePath}/implementation/{methodGroupImpl.JvaClassName.ToPascalCase()}{ImplementationFileExtension}");
+
             }
 
             #endregion
 
-                #region  Produce all method group interfaces
-                // 
-                foreach (FluentMethodGroup fmg in innerMGroupToFluentMGroup.SelectMany(m => m.Value))
+            #region  Produce all method group interfaces
+            // 
+            foreach (FluentMethodGroup fmg in innerMGroupToFluentMGroup.SelectMany(m => m.Value))
             {
                 var methodGroupInterfaceTemplate = new FluentMethodGroupInterfaceTemplate { Model = fmg };
                 await Write(methodGroupInterfaceTemplate, $"{packagePath}/{fmg.JavaInterfaceName.ToPascalCase()}{ImplementationFileExtension}");

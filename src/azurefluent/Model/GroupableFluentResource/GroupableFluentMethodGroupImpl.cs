@@ -1,4 +1,5 @@
-﻿using AutoRest.Core.Utilities;
+﻿using AutoRest.Core;
+using AutoRest.Core.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,6 +11,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
     {
         private readonly GroupableFluentModelImpl fluentModelImpl;
         private readonly FluentMethodGroup Interface;
+        private readonly string package = Settings.Instance.Namespace.ToLower();
 
         public GroupableFluentMethodGroupImpl(GroupableFluentModelImpl fluentModelImpl)
         {
@@ -67,8 +69,8 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 {
                     //
                     $"com.microsoft.azure.management.resources.fluentcore.arm.collection.implementation.GroupableResourcesImpl",
-                    $"{this.fluentModelImpl.Interface.Package}.{MethodGroupInterfaceName}",
-                    $"{this.fluentModelImpl.Interface.Package}.{GroupableModelInterfaceName}",
+                    $"{this.package}.{MethodGroupInterfaceName}",
+                    $"{this.package}.{GroupableModelInterfaceName}",
                     $"rx.Observable",
                     $"rx.Completable"
                 };

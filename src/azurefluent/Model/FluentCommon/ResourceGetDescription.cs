@@ -12,14 +12,28 @@ namespace AutoRest.Java.Azure.Fluent.Model
         private readonly FluentMethodGroup fluentMethodGroup;
         private bool isProcessed;
 
+        private bool supportsGetBySubscription;
         private bool supportsGetByResourceGroup;
         private bool supportsGetByImmediateParent;
+        private FluentMethod getBySubscriptionMethod;
         private FluentMethod getByResourceGroupMethod;
         private FluentMethod getByImmediateParentMethod;
 
         public ResourceGetDescription(FluentMethodGroup fluentMethodGroup)
         {
             this.fluentMethodGroup = fluentMethodGroup;
+        }
+
+        public bool SupportsGetBySubscription
+        {
+            get
+            {
+                if (!isProcessed)
+                {
+                    Process();
+                }
+                return this.supportsGetBySubscription;
+            }
         }
 
         public bool SupportsGetByResourceGroup
@@ -43,6 +57,18 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     Process();
                 }
                 return this.supportsGetByImmediateParent;
+            }
+        }
+
+        public FluentMethod GetBySubscriptionMethod
+        {
+            get
+            {
+                if (!isProcessed)
+                {
+                    Process();
+                }
+                return this.getBySubscriptionMethod;
             }
         }
 
@@ -118,6 +144,11 @@ namespace AutoRest.Java.Azure.Fluent.Model
                                                 this.supportsGetByResourceGroup = true;
                                                 this.getByResourceGroupMethod = new FluentMethod(true, innerMethod, this.fluentMethodGroup);
                                             }
+                                        }
+                                        else
+                                        {
+                                            this.supportsGetBySubscription = true;
+                                            this.getBySubscriptionMethod = new FluentMethod(true, innerMethod, this.fluentMethodGroup);
                                         }
                                     }
                                 }

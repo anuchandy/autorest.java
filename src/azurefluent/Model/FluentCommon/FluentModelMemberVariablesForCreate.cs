@@ -41,14 +41,19 @@ namespace AutoRest.Java.Azure.Fluent.Model
         {
         }
 
-        /// <summary>
-        /// The fluent method group containing the create API method.
-        /// </summary>
         public FluentMethodGroup FluentMethodGroup { get; private set; }
 
         public virtual void SetDisambiguatedMemberVariables(FluentModelDisambiguatedMemberVariables dMemberVariables)
         {
             this.disambiguatedMemberVariables = dMemberVariables;
+        }
+
+        public FluentModelDisambiguatedMemberVariables DisambiguatedMemberVariables
+        {
+            get
+            {
+                return this.disambiguatedMemberVariables;
+            }
         }
 
         /// <summary>
