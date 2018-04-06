@@ -34,19 +34,17 @@ class @(Model.JvaClassName)@(Model.ExtendsFrom)@(Model.Implements) {
 @:    @jvaMethod
 @:    @EmptyLine
 }
-
 @foreach (PropertyJv property in Model.Interface.LocalProperties)
 {
-@EmptyLine
 @:    @@Override
 @:    public @(((IModelTypeJv)property.ModelType).ResponseVariant.Name) @(property.Name.ToCamelCase())() {
 @:        return this.inner().@(property.Name.ToCamelCase())();
 @:    }
+@EmptyLine
 }
 
 @foreach (FluentDefinitionOrUpdateStageMethod createWither in Model.Interface.CreateOnlyWither)
 {
-@EmptyLine
     var methodSignature = $"{Model.JvaClassName} {createWither.Name}({createWither.ParameterDeclaration})";
 @:    @@Override
 @:    public @(methodSignature) {
@@ -55,11 +53,11 @@ class @(Model.JvaClassName)@(Model.ExtendsFrom)@(Model.Implements) {
         return this;
 </text>
 @:    }
+@EmptyLine
 }
 
 @foreach (FluentDefinitionOrUpdateStageMethod updateWither in Model.Interface.UpdateOnlyWithers)
 {
-@EmptyLine
     var methodSignature = $"{Model.JvaClassName} {updateWither.Name}({updateWither.ParameterDeclaration})";
 @:    @@Override
 @:    public @(methodSignature) {
@@ -68,11 +66,11 @@ class @(Model.JvaClassName)@(Model.ExtendsFrom)@(Model.Implements) {
         return this;
 </text>
 @:    }
+@EmptyLine
 }
 
 @foreach (FluentDefinitionOrUpdateStageMethod cuWither in Model.Interface.CreateAndUpdateWithers)
 {
-@EmptyLine
     var methodSignature = $"{Model.JvaClassName} {cuWither.Name}({cuWither.ParameterDeclaration})";
 @:    @@Override
 @:    public @(methodSignature) {
@@ -81,5 +79,6 @@ class @(Model.JvaClassName)@(Model.ExtendsFrom)@(Model.Implements) {
         return this;
 </text>
 @:    }
+@EmptyLine
 }
 }

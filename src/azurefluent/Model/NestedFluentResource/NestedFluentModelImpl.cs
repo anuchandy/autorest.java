@@ -192,18 +192,16 @@ namespace AutoRest.Java.Azure.Fluent.Model
         {
             get
             {
-                yield return this.CtrImplementation;
-                yield return this.ManagerGetterImplementation;
-                yield return AbstractMethodsImplementation;
-                if (this.Interface.IsCreatableOrUpdatable)
+                foreach (string method in CtrImplementations)
                 {
-                    StringBuilder methodsBuilder = new StringBuilder();
-                    methodsBuilder.AppendLine("@Override");
-                    methodsBuilder.AppendLine("public boolean isInCreateMode() {");
-                    methodsBuilder.AppendLine("    return this.inner().id() == null;");
-                    methodsBuilder.AppendLine("}");
-                    yield return methodsBuilder.ToString();
+                    yield return method;
                 }
+                yield return this.ManagerGetterImplementation;
+                foreach (string method in AbstractMethodsImplementation)
+                {
+                    yield return method;
+                }
+                yield return this.Interface.IsInCreateModeMethodImplementation;
                 yield return this.Interface.ResetRquestPayloadVariablesMethodImplementation;
             }
         }
@@ -258,7 +256,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        private string CtrImplementation
+        private IEnumerable<string> CtrImplementations
         {
             get
             {
@@ -282,8 +280,9 @@ namespace AutoRest.Java.Azure.Fluent.Model
                         methodBuilder.AppendLine($"    {initMemberVariable}");
                     }
                     methodBuilder.AppendLine($"}}");
-                    //
-                    methodBuilder.AppendLine("");
+                    yield return methodBuilder.ToString();
+                    methodBuilder.Clear();
+
                     //
                     // Ctr2 FooImpl(FooInner inner, Manager manager): The ctr invoked to wrap inner model retrieved from "Collection.Get() and Collection.List()"
                     //
@@ -313,9 +312,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     //
                     methodBuilder.AppendLine($"}}");
                     //
-                    methodBuilder.AppendLine("");
-                    //
-                    return methodBuilder.ToString();
+                    yield return methodBuilder.ToString();
                 }
                 else if (this.IsIndexableRefreshable)
                 {
@@ -338,7 +335,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     //
                     methodBuilder.AppendLine($"}}");
                     //
-                    return methodBuilder.ToString();
+                    yield return methodBuilder.ToString();
                 }
                 else
                 {
@@ -348,7 +345,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     methodBuilder.AppendLine($"    this.manager = manager;");
                     methodBuilder.AppendLine($"}}");
                     //
-                    return methodBuilder.ToString();
+                    yield return methodBuilder.ToString();
                 }
             }
         }
@@ -381,21 +378,20 @@ namespace AutoRest.Java.Azure.Fluent.Model
         /// <summary>
         /// Implements the abstract methods from the super class.
         /// </summary>
-        private string AbstractMethodsImplementation
+        private IEnumerable<string> AbstractMethodsImplementation
         {
             get
             {
                 if (this.Interface.IsCreatableOrUpdatable)
                 {
-                    return CreatableUpdatableAbstractMethodsImplementation;
+                    foreach (string method in CreatableUpdatableAbstractMethodsImplementation)
+                    {
+                        yield return method;
+                    }
                 }
                 else if (this.IsIndexableRefreshable)
                 {
-                    return IndexableRefreshableAbstractMethodImplementation;
-                }
-                else
-                {
-                    return String.Empty;
+                    yield return IndexableRefreshableAbstractMethodImplementation;
                 }
             }
         }
@@ -403,15 +399,13 @@ namespace AutoRest.Java.Azure.Fluent.Model
         /// <summary>
         /// Implements the abstract methods in CreatableUpdatableImpl.
         /// </summary>
-        private string CreatableUpdatableAbstractMethodsImplementation
+        private IEnumerable<string> CreatableUpdatableAbstractMethodsImplementation
         {
             get
             {
-                var createResourceAsyncMethod = this.CreateResourceAsyncMethodImplementation;
-                var updateResourceAsyncMethod = this.UpdateResourceAsyncMethodImplementation;
-                var getInnerAsyncMethod = this.GetInnerAsyncMethodImplementation;
-                //
-                return $"\n{createResourceAsyncMethod}\n\n{updateResourceAsyncMethod}\n\n{getInnerAsyncMethod}\n";
+                yield return this.CreateResourceAsyncMethodImplementation;
+                yield return this.UpdateResourceAsyncMethodImplementation;
+                yield return this.GetInnerAsyncMethodImplementation;
             }
         }
 
@@ -461,7 +455,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                                                     .Select(v => v.VariableAccessor);
                     var updateMethodParametersCombined = String.Join(", ", updateMethodParameters);
 
-                    return this.Interface.CreateResourceAsyncMethodImplementation(updateMethod,
+                    return this.Interface.UpdateResourceAsyncMethodImplementation(updateMethod,
                         updateMethodParametersCombined,
                         this.Interface.JavaInterfaceName,
                         Interface.FluentMethodGroup.InnerMethodGroup.MethodGroupImplType);
@@ -469,34 +463,28 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        /// <summary>
-        /// Return Java code that implements IndexableRefreshableWrapperImpl::getInnerAsync() abstract method.
-        /// </summary>
         private string GetInnerAsyncMethodImplementation
         {
             get
             {
-                StringBuilder methodBuilder = new StringBuilder();
-                methodBuilder.AppendLine("@Override");
-                methodBuilder.AppendLine($"protected Observable<{InnerModelTypeName}> getInnerAsync() {{");
-                methodBuilder.AppendLine($"    {Interface.FluentMethodGroup.InnerMethodGroup.MethodGroupImplType} client = this.manager.inner().{this.Interface.FluentMethodGroup.InnerMethodGroup.Name}();");
                 if (!this.Interface.SupportsGetting)
                 {
-                    methodBuilder.AppendLine("    return null; // NOP getInnerAsync implementation as get is not supported");
+                    return this.Interface.GetInnerAsyncNOPMethodImplementation(Interface.FluentMethodGroup.InnerMethodGroup.MethodGroupImplType);
                 }
                 else
                 {
+                    FluentMethod getMethod = this.Interface.FluentMethodGroup.ResourceGetDescription.GetByImmediateParentMethod;
+
                     var getMethodParameters = this.Interface.DisambiguatedMemberVariables.MemeberVariablesForGet
                         .OrderBy(v => v.Index)
                         .Select(v => v.VariableAccessor);
 
                     var getMethodParametersCombined = String.Join(", ", getMethodParameters);
 
-                    FluentMethod getMethod = this.Interface.FluentMethodGroup.ResourceGetDescription.GetByImmediateParentMethod;
-                    methodBuilder.AppendLine($"    return client.{getMethod.InnerMethod.Name}Async({getMethodParametersCombined});");
+                    return this.Interface.GetInnerAsyncMethodImplementation(getMethod, 
+                        getMethodParametersCombined, 
+                        Interface.FluentMethodGroup.InnerMethodGroup.MethodGroupImplType);
                 }
-                methodBuilder.AppendLine("}");
-                return methodBuilder.ToString();
             }
         }
 

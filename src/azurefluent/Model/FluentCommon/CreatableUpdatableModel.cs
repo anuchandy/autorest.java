@@ -431,7 +431,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
             StringBuilder methodBuilder = new StringBuilder();
             methodBuilder.AppendLine("@Override");
             methodBuilder.AppendLine($"public Observable<{createdResourceInterfaceName}> createResourceAsync() {{");
-            methodBuilder.AppendLine($"    {innerMethodGroupTypeName} client = this.manager.inner().{this.FluentMethodGroup.InnerMethodGroup.Name}();");
+            methodBuilder.AppendLine($"    {innerMethodGroupTypeName} client = this.manager().inner().{this.FluentMethodGroup.InnerMethodGroup.Name}();");
             if (!this.SupportsCreating)
             {
                 methodBuilder.AppendLine("    return null; // NOP createResourceAsync implementation as create is not supported");
@@ -496,7 +496,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
             StringBuilder methodBuilder = new StringBuilder();
             methodBuilder.AppendLine("@Override");
             methodBuilder.AppendLine($"public Observable<{updatedResourceInterfaceName}> updateResourceAsync() {{");
-            methodBuilder.AppendLine($"    {innerMethodGroupTypeName} client = this.manager.inner().{this.FluentMethodGroup.InnerMethodGroup.Name}();");
+            methodBuilder.AppendLine($"    {innerMethodGroupTypeName} client = this.manager().inner().{this.FluentMethodGroup.InnerMethodGroup.Name}();");
             if (!this.SupportsUpdating)
             {
                 methodBuilder.AppendLine("    return null; // NOP updateResourceAsync implementation as update is not supported");
@@ -540,6 +540,60 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
             methodBuilder.AppendLine("}");
             return methodBuilder.ToString();
+        }
+
+        public string GetInnerAsyncNOPMethodImplementation(string innerMethodGroupTypeName)
+        {
+            StringBuilder methodBuilder = new StringBuilder();
+            methodBuilder.AppendLine("@Override");
+            methodBuilder.AppendLine($"protected Observable<{innerModelTypeName}> getInnerAsync() {{");
+            methodBuilder.AppendLine($"    {innerMethodGroupTypeName} client = this.manager().inner().{this.FluentMethodGroup.InnerMethodGroup.Name}();");
+            if (!this.SupportsGetting)
+            {
+                methodBuilder.AppendLine("    return null; // NOP getInnerAsync implementation as get is not supported");
+            }
+            methodBuilder.AppendLine("}");
+            return methodBuilder.ToString();
+        }
+
+        public string GetInnerAsyncMethodImplementation(FluentMethod getMethod,
+            string getMethodParameters,
+            string innerMethodGroupTypeName)
+        {
+            StringBuilder methodBuilder = new StringBuilder();
+            methodBuilder.AppendLine("@Override");
+            methodBuilder.AppendLine($"protected Observable<{innerModelTypeName}> getInnerAsync() {{");
+            methodBuilder.AppendLine($"    {innerMethodGroupTypeName} client = this.manager().inner().{this.FluentMethodGroup.InnerMethodGroup.Name}();");
+            if (!this.SupportsGetting)
+            {
+                methodBuilder.AppendLine("    return null; // NOP getInnerAsync implementation as get is not supported");
+            }
+            else
+            {
+                methodBuilder.AppendLine($"    return client.{getMethod.InnerMethod.Name}Async({getMethodParameters});");
+            }
+            methodBuilder.AppendLine("}");
+            return methodBuilder.ToString();
+        }
+
+        public string IsInCreateModeMethodImplementation
+        {
+            get
+            {
+                if (this.IsCreatableOrUpdatable)
+                {
+                    StringBuilder methodsBuilder = new StringBuilder();
+                    methodsBuilder.AppendLine("@Override");
+                    methodsBuilder.AppendLine("public boolean isInCreateMode() {");
+                    methodsBuilder.AppendLine("    return this.inner().id() == null;");
+                    methodsBuilder.AppendLine("}");
+                    return methodsBuilder.ToString();
+                }
+                else
+                {
+                    return String.Empty;
+                }
+            }
         }
     }
 }
