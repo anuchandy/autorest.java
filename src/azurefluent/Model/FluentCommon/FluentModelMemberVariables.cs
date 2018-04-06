@@ -263,7 +263,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
         /// <summary>
         /// Gets the inner model representing the method payload.
         /// </summary>
-        protected CompositeTypeJvaf MethodPayloadInnerModel
+        private CompositeTypeJvaf MethodPayloadInnerModel
         {
             get
             {
@@ -285,7 +285,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        protected bool IsVariableOfTypePayloadInnerModel(FluentModelMemberVariable variable)
+        private bool IsVariableOfTypePayloadInnerModel(FluentModelMemberVariable variable)
         {
             if (variable.FromParameter.ClientType is CompositeTypeJvaf ctjv)
             {

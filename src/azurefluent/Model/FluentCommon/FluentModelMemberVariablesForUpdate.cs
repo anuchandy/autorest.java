@@ -12,19 +12,27 @@ namespace AutoRest.Java.Azure.Fluent.Model
     {
         private List<FluentDefinitionOrUpdateStage> updateStages;
         private FluentModelDisambiguatedMemberVariables disambiguatedMemberVariables;
+        private List<string> propertiesOfPayloadToSkip;
+
         private readonly string package = Settings.Instance.Namespace.ToLower();
 
         public FluentModelMemberVariablesForUpdate() : base(null)
         {
             this.FluentMethodGroup = null;
             this.updateStages = null;
+            this.propertiesOfPayloadToSkip = null;
         }
 
-        public FluentModelMemberVariablesForUpdate(FluentMethodGroup fluentMethodGroup) :
+        public FluentModelMemberVariablesForUpdate(FluentMethodGroup fluentMethodGroup, List<string> propertiesOfPayloadToSkip) :
             base(fluentMethodGroup.ResourceUpdateDescription.SupportsUpdating ? fluentMethodGroup.ResourceUpdateDescription.UpdateMethod : null)
         {
             this.FluentMethodGroup = fluentMethodGroup;
             this.updateStages = null;
+            this.propertiesOfPayloadToSkip = propertiesOfPayloadToSkip;
+        }
+
+        public FluentModelMemberVariablesForUpdate(FluentMethodGroup fluentMethodGroup) : this(fluentMethodGroup, new List<string>())
+        {
         }
 
         public void SetDisambiguatedMemberVariables(FluentModelDisambiguatedMemberVariables dMemberVariables)
@@ -163,6 +171,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 var payloadOptionalProperties = payloadType
                     .ComposedProperties
                     .Where(p => !p.IsReadOnly && !p.IsRequired)
+                    .Where(p => !propertiesOfPayloadToSkip.Contains(p.Name.ToString(), StringComparer.OrdinalIgnoreCase))
                     .OrderBy(p => p.Name.ToLowerInvariant());
 
                 foreach (Property pro in payloadOptionalProperties)

@@ -22,7 +22,8 @@ namespace AutoRest.Java.Azure.Fluent.Model
             base(fluentMethodGroup, 
                 new NestedFluentModelMemberVariablesForCreate(fluentMethodGroup), 
                 new NestedFluentModelMemberVariablesForUpdate(fluentMethodGroup), 
-                new FluentModelMemberVariablesForGet(fluentMethodGroup))
+                new FluentModelMemberVariablesForGet(fluentMethodGroup), 
+                rawFluentModel.InnerModel.Name)
         {
             this.rawFluentModel = rawFluentModel;
         }
@@ -79,34 +80,6 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        public HashSet<string> PropertiesImportsForInterface
-        {
-            get
-            {
-                HashSet<string> imports = new HashSet<string>();
-                foreach (PropertyJvaf property in this.LocalProperties)
-                {
-                    var propertyImports = Utils.PropertyImportsForInterface(property, this.package);
-                    imports.AddRange(propertyImports);
-                }
-                return imports;
-            }
-        }
-
-        public HashSet<string> PropertiesImportsForImpl
-        {
-            get
-            {
-                HashSet<string> imports = new HashSet<string>();
-                foreach (PropertyJvaf property in this.LocalProperties)
-                {
-                    var propertyImports = Utils.PropertyImportsForImpl(property, this.package);
-                    imports.AddRange(propertyImports);
-                }
-                return imports;
-            }
-        }
-
         public HashSet<string> Imports
         {
             get
@@ -134,9 +107,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 imports.Add("com.microsoft.azure.management.resources.fluentcore.arm.models.HasManager");
                 imports.Add($"{this.package}.implementation.{this.FluentMethodGroup.ManagerTypeName}");
 
-                imports.AddRange(this.UpdateImportsForInterface);
-                imports.AddRange(this.CreateImportsForInterface);
-                imports.AddRange(this.PropertiesImportsForInterface);
+                imports.AddRange(this.ImportsForInterface);
 
                 return imports;
             }
@@ -315,10 +286,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        /// <summary>
-        /// The properties exposed by the nested model interface.
-        /// </summary>
-        public IEnumerable<Property> LocalProperties
+        public override IEnumerable<Property> LocalProperties
         {
             get
             {

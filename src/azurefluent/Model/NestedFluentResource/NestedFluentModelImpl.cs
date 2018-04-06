@@ -56,7 +56,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
         }
 
         /// <summary>
-        /// Collection of strings where each string represents declaration of a memeber variable.
+        /// Collection of strings where each string represents declaration of a member variable.
         /// </summary>
         public IEnumerable<string> DeclareMemberVariables
         {
@@ -122,7 +122,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 HashSet<string> imports = new HashSet<string>();
 
                 imports.Add($"{this.Interface.Package}.{this.Interface.JavaInterfaceName}");     // The nested model interface
-                if (this.IsCreatableOrUpdatable)
+                if (this.Interface.IsCreatableOrUpdatable)
                 {
                     imports.Add("com.microsoft.azure.management.resources.fluentcore.model.implementation.CreatableUpdatableImpl");
                 }
@@ -136,26 +136,17 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 }
 
                 imports.Add("rx.Observable");
-                if (this.RequireFlatmapAfterUpdate || this.RequireFlatmapAfterCreate || this.Interface.RequirePayloadReset)
-                {
-                    imports.Add("rx.functions.Func1");
-                }
-
                 imports.AddRange(this.Interface.ImportsForImpl);
-                imports.AddRange(this.Interface.PropertiesImportsForImpl);
 
                 return imports;
             }
         }
 
-        /// <summary>
-        /// The base type that the nested model impl extends from.
-        /// </summary>
         public string ExtendsFrom
         {
             get
             {
-                if (this.IsCreatableOrUpdatable)
+                if (this.Interface.IsCreatableOrUpdatable)
                 {
                     return $" extends CreatableUpdatableImpl<{this.Interface.JavaInterfaceName}, {this.InnerModelTypeName}, {this.JvaClassName}>";
                 }
@@ -204,7 +195,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 yield return this.CtrImplementation;
                 yield return this.ManagerGetterImplementation;
                 yield return AbstractMethodsImplementation;
-                if (this.IsCreatableOrUpdatable)
+                if (this.Interface.IsCreatableOrUpdatable)
                 {
                     StringBuilder methodsBuilder = new StringBuilder();
                     methodsBuilder.AppendLine("@Override");
@@ -213,7 +204,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     methodsBuilder.AppendLine("}");
                     yield return methodsBuilder.ToString();
                 }
-                yield return this.Interface.MethodToResetRquestPayload;
+                yield return this.Interface.ResetRquestPayloadVariablesMethodImplementation;
             }
         }
 
@@ -236,7 +227,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
         {
             get
             {
-                if (this.IsCreatableOrUpdatable)
+                if (this.Interface.IsCreatableOrUpdatable)
                 {
                     return $" new {this.JvaClassName}(inner, this.manager());";
                 }
@@ -272,7 +263,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
             get
             {
                 string managerTypeName = this.Interface.FluentMethodGroup.ManagerTypeName;
-                if (this.IsCreatableOrUpdatable)
+                if (this.Interface.IsCreatableOrUpdatable)
                 {
                     StringBuilder methodBuilder = new StringBuilder();
                     //
@@ -394,7 +385,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
         {
             get
             {
-                if (this.IsCreatableOrUpdatable)
+                if (this.Interface.IsCreatableOrUpdatable)
                 {
                     return CreatableUpdatableAbstractMethodsImplementation;
                 }
@@ -424,174 +415,57 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        /// <summary>
-        /// Return Java code that implements CreatableUpdatableImpl::createResourceAsync() abstract method.
-        /// </summary>
         private string CreateResourceAsyncMethodImplementation
         {
             get
             {
-                StringBuilder methodBuilder = new StringBuilder();
-                methodBuilder.AppendLine("@Override");
-                methodBuilder.AppendLine($"public Observable<{this.Interface.JavaInterfaceName}> createResourceAsync() {{");
-                methodBuilder.AppendLine($"    {Interface.FluentMethodGroup.InnerMethodGroup.MethodGroupImplType} client = this.manager.inner().{this.Interface.FluentMethodGroup.InnerMethodGroup.Name}();");
                 if (!this.Interface.SupportsCreating)
                 {
-                    methodBuilder.AppendLine("    return null; // NOP createResourceAsync implementation as create is not supported");
+                    return this.Interface.CreateResourceAsyncNOPMethodImplementation(this.Interface.JavaInterfaceName, 
+                        Interface.FluentMethodGroup.InnerMethodGroup.MethodGroupImplType);
                 }
                 else
                 {
+                    FluentMethod createMethod = this.Interface.FluentMethodGroup.ResourceCreateDescription.CreateMethod;
+
                     var createMethodParameters = this.Interface.DisambiguatedMemberVariables.MemeberVariablesForCreate
-                        .Values
-                        .OrderBy(v => v.Index)
-                        .Select(v => v.VariableAccessor);
+                                                    .Values
+                                                    .OrderBy(v => v.Index)
+                                                    .Select(v => v.VariableAccessor);
                     var createMethodParametersCombined = String.Join(", ", createMethodParameters);
 
-                    FluentMethod createMethod = this.Interface.FluentMethodGroup.ResourceCreateDescription.CreateMethod;
-                    if (this.RequireFlatmapAfterCreate)
-                    {
-                        string createReturnTypeName = createMethod.ReturnModel.InnerModel.Name;
-                        string innerModelTypeName = this.InnerModelTypeName;
-
-                        methodBuilder.AppendLine($"return client.{createMethod.InnerMethod.Name}Async({createMethodParametersCombined})");
-                        methodBuilder.AppendLine($"        .flatMap(new Func1<{createReturnTypeName}, Observable<{innerModelTypeName}>>() {{");
-                        methodBuilder.AppendLine($"           @Override");
-                        methodBuilder.AppendLine($"           public Observable<{innerModelTypeName}> call({createReturnTypeName} resource) {{");
-                        if (this.Interface.RequirePayloadReset)
-                        {
-                            methodBuilder.AppendLine($"               {CreatableUpdatableModel.ResetCreateUpdateParametersMethodName}(); ");
-                        }
-                        methodBuilder.AppendLine($"               return getInnerAsync(); ");
-                        methodBuilder.AppendLine($"           }} ");
-                        methodBuilder.AppendLine($"        }})");
-                        methodBuilder.AppendLine($"        .map(innerToFluentMap(this));");
-                    }
-                    else
-                    {
-                        string createReturnTypeName = createMethod.ReturnModel.InnerModel.Name;
-                        string innerModelTypeName = this.InnerModelTypeName;
-
-                        methodBuilder.AppendLine($"    return client.{createMethod.InnerMethod.Name}Async({createMethodParametersCombined})");
-                        if (this.Interface.RequirePayloadReset)
-                        {
-                            methodBuilder.AppendLine($"        .map(new Func1<{innerModelTypeName}, {innerModelTypeName}>() {{");
-                            methodBuilder.AppendLine($"           @Override");
-                            methodBuilder.AppendLine($"           public {createReturnTypeName} call({createReturnTypeName} resource) {{");
-                            methodBuilder.AppendLine($"               {CreatableUpdatableModel.ResetCreateUpdateParametersMethodName}(); ");
-                            methodBuilder.AppendLine($"               return resource; ");
-                            methodBuilder.AppendLine($"           }} ");
-                            methodBuilder.AppendLine($"        }})");
-                        }
-                        methodBuilder.AppendLine($"        .map(innerToFluentMap(this));");
-                    }
+                    return this.Interface.CreateResourceAsyncMethodImplementation(createMethod,
+                        createMethodParametersCombined,
+                        this.Interface.JavaInterfaceName,
+                        Interface.FluentMethodGroup.InnerMethodGroup.MethodGroupImplType);
                 }
-                methodBuilder.AppendLine("}");
-                return methodBuilder.ToString();
             }
         }
 
-        /// <summary>
-        /// Checks a flatmap is needed after inner create call, this is needed if the return type of inner create
-        /// and inner model are different.
-        /// </summary>
-        private bool RequireFlatmapAfterCreate
-        {
-            get
-            {
-                if (!this.Interface.SupportsCreating)
-                {
-                    return false;
-                }
-                FluentMethod createMethod = this.Interface.FluentMethodGroup.ResourceCreateDescription.CreateMethod;
-                string createReturnTypeName = createMethod.ReturnModel.InnerModel.Name;
-                string innerModelTypeName = this.InnerModelTypeName;
-                return !createReturnTypeName.Equals(this.InnerModelTypeName);
-            }
-        }
-
-        /// <summary>
-        /// Return Java code that implements CreatableUpdatableImpl::updateResourceAsync() abstract method.
-        /// </summary>
         private string UpdateResourceAsyncMethodImplementation
         {
             get
             {
-                StringBuilder methodBuilder = new StringBuilder();
-                methodBuilder.AppendLine("@Override");
-                methodBuilder.AppendLine($"public Observable<{this.Interface.JavaInterfaceName}> updateResourceAsync() {{");
-                methodBuilder.AppendLine($"    {Interface.FluentMethodGroup.InnerMethodGroup.MethodGroupImplType} client = this.manager.inner().{this.Interface.FluentMethodGroup.InnerMethodGroup.Name}();");
                 if (!this.Interface.SupportsUpdating)
                 {
-                    methodBuilder.AppendLine("    return null; // NOP updateResourceAsync implementation as update is not supported");
+                    return this.Interface.UpdateResourceAsyncNOPMethodImplementation(this.Interface.JavaInterfaceName, 
+                        Interface.FluentMethodGroup.InnerMethodGroup.MethodGroupImplType);
                 }
                 else
                 {
+                    FluentMethod updateMethod = this.Interface.FluentMethodGroup.ResourceUpdateDescription.UpdateMethod;
+
                     var updateMethodParameters = this.Interface.DisambiguatedMemberVariables.MemeberVariablesForUpdate
-                        .Values
-                        .OrderBy(v => v.Index)
-                        .Select(v => v.VariableAccessor);
+                                                    .Values
+                                                    .OrderBy(v => v.Index)
+                                                    .Select(v => v.VariableAccessor);
                     var updateMethodParametersCombined = String.Join(", ", updateMethodParameters);
 
-                    FluentMethod updateMethod = this.Interface.FluentMethodGroup.ResourceUpdateDescription.UpdateMethod;
-                    if (this.RequireFlatmapAfterCreate)
-                    {
-                        string updateReturnTypeName = updateMethod.ReturnModel.InnerModel.Name;
-                        string innerModelTypeName = this.InnerModelTypeName;
-
-                        methodBuilder.AppendLine($"return client.{updateMethod.InnerMethod.Name}Async({updateMethodParametersCombined})");
-                        methodBuilder.AppendLine($"        .flatMap(new Func1<{updateReturnTypeName}, Observable<{innerModelTypeName}>>() {{");
-                        methodBuilder.AppendLine($"           @Override");
-                        methodBuilder.AppendLine($"           public Observable<{innerModelTypeName}> call({updateReturnTypeName} r) {{");
-                        if (this.Interface.RequirePayloadReset)
-                        {
-                            methodBuilder.AppendLine($"               {CreatableUpdatableModel.ResetCreateUpdateParametersMethodName}(); ");
-                        }
-                        methodBuilder.AppendLine($"               return getInnerAsync(); ");
-                        methodBuilder.AppendLine($"           }} ");
-                        methodBuilder.AppendLine($"        }})");
-                        methodBuilder.AppendLine($"        .map(innerToFluentMap(this));");
-                    }
-                    else
-                    {
-                        string updateReturnTypeName = updateMethod.ReturnModel.InnerModel.Name;
-                        string innerModelTypeName = this.InnerModelTypeName;
-
-                        methodBuilder.AppendLine($"    return client.{updateMethod.InnerMethod.Name}Async({updateMethodParametersCombined})");
-                        if (this.Interface.RequirePayloadReset)
-                        {
-                            methodBuilder.AppendLine($"        .map(new Func1<{innerModelTypeName}, {innerModelTypeName}>() {{");
-                            methodBuilder.AppendLine($"           @Override");
-                            methodBuilder.AppendLine($"           public {updateReturnTypeName} call({updateReturnTypeName} resource) {{");
-                            methodBuilder.AppendLine($"               {CreatableUpdatableModel.ResetCreateUpdateParametersMethodName}(); ");
-                            methodBuilder.AppendLine($"               return resource; ");
-                            methodBuilder.AppendLine($"           }} ");
-                            methodBuilder.AppendLine($"        }})");
-                        }
-                        methodBuilder.AppendLine($"        .map(innerToFluentMap(this));");
-                    }
+                    return this.Interface.CreateResourceAsyncMethodImplementation(updateMethod,
+                        updateMethodParametersCombined,
+                        this.Interface.JavaInterfaceName,
+                        Interface.FluentMethodGroup.InnerMethodGroup.MethodGroupImplType);
                 }
-                methodBuilder.AppendLine("}");
-                return methodBuilder.ToString();
-            }
-        }
-
-        /// <summary>
-        /// Checks a flatmap is needed after inner update call, this is needed if the return type of inner update
-        /// and inner model are different.
-        /// </summary>
-        private bool RequireFlatmapAfterUpdate
-        {
-            get
-            {
-                if (!this.Interface.SupportsUpdating)
-                {
-                    return false;
-                }
-                FluentMethod updateMethod = this.Interface.FluentMethodGroup.ResourceUpdateDescription.UpdateMethod;
-                string updateReturnTypeName = updateMethod.ReturnModel.InnerModel.Name;
-                string innerModelTypeName = this.InnerModelTypeName;
-
-                return !updateReturnTypeName.Equals(this.InnerModelTypeName);
             }
         }
 
@@ -634,17 +508,6 @@ namespace AutoRest.Java.Azure.Fluent.Model
             get
             {
                 return GetInnerAsyncMethodImplementation;
-            }
-        }
-
-        /// <summary>
-        /// Check the nested model is creatable or updatable.
-        /// </summary>
-        private bool IsCreatableOrUpdatable
-        {
-            get
-            {
-                return (this.Interface.SupportsCreating || this.Interface.SupportsUpdating);
             }
         }
 

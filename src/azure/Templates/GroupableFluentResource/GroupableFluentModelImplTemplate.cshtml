@@ -24,12 +24,16 @@ package @(Settings.Namespace.ToLower()).implementation;
 @EmptyLine
 
 class @(Model.JvaClassName)@(Model.ExtendsFrom)@(Model.Implements) {
-@foreach (string declareVariable in Model.DeclareCreateAndUpdateVariables)
-{
-@:    @declareVariable
-}
 
-    @(Model.CtrImplementation)
+@foreach (var varDecl in Model.DeclareMemberVariables)
+{
+    @:@varDecl
+}
+@foreach (var jvaMethod in Model.JavaMethods)
+{
+@:    @jvaMethod
+@:    @EmptyLine
+}
 
 @foreach (PropertyJv property in Model.Interface.LocalProperties)
 {
@@ -40,86 +44,42 @@ class @(Model.JvaClassName)@(Model.ExtendsFrom)@(Model.Implements) {
 @:    }
 }
 
-@foreach (FluentDefinitionOrUpdateStageMethod createWither in Model.CreateOnlyWither)
+@foreach (FluentDefinitionOrUpdateStageMethod createWither in Model.Interface.CreateOnlyWither)
 {
 @EmptyLine
     var methodSignature = $"{Model.JvaClassName} {createWither.Name}({createWither.ParameterDeclaration})";
 @:    @@Override
 @:    public @(methodSignature) {
 <text>
-        @(Model.CreateParameter).@(createWither.Name)(@(createWither.CommentFor));
+        @(createWither.Body)
         return this;
 </text>
 @:    }
 }
 
-@foreach (FluentDefinitionOrUpdateStageMethod updateWither in Model.UpdateOnlyWithers)
+@foreach (FluentDefinitionOrUpdateStageMethod updateWither in Model.Interface.UpdateOnlyWithers)
 {
 @EmptyLine
     var methodSignature = $"{Model.JvaClassName} {updateWither.Name}({updateWither.ParameterDeclaration})";
 @:    @@Override
 @:    public @(methodSignature) {
 <text>
-        @(Model.UpdateParameter).@(updateWither.Name)(@(updateWither.CommentFor));
+        @(updateWither.Body)
         return this;
 </text>
 @:    }
 }
 
-@foreach (FluentDefinitionOrUpdateStageMethod cuWither in Model.CreateAndUpdateWithers)
+@foreach (FluentDefinitionOrUpdateStageMethod cuWither in Model.Interface.CreateAndUpdateWithers)
 {
 @EmptyLine
     var methodSignature = $"{Model.JvaClassName} {cuWither.Name}({cuWither.ParameterDeclaration})";
 @:    @@Override
 @:    public @(methodSignature) {
-@:        @if (Model.IsCreateUpdateInnerTypeSame)
-{
 <text>
-        @(Model.CreateParameter).@(cuWither.Name)(@(cuWither.CommentFor));
+        @(cuWither.Body)
+        return this;
 </text>
-          }
-          else
-          {
-<text>
-        if (isInCreateMode()) {
-            @(Model.CreateParameter).@(cuWither.Name)(@(cuWither.CommentFor));
-        } else {
-            @(Model.UpdateParameter).@(cuWither.Name)(@(cuWither.CommentFor));
-        }
-</text>
-          }
-@:        return this;
 @:    }
 }
-@EmptyLine
-    @@Override
-    public Observable<@(Model.Interface.JavaInterfaceName)> createResourceAsync() {
-        final @(Model.InnerMethodGroupTypeName) client = this.manager().inner().@(Model.Interface.FluentMethodGroup.InnerMethodGroup.Name)();
-        @if(Model.Interface.SupportsCreating) {
-@:        return @(Model.CreateInvocation);
-        } else {
-@:        return null;
-        }
-    }
-    @if (Model.NeedUpdateResourceAsyncMethod)
-    {
-<text>
-@EmptyLine
-    @@Override
-    public Observable<@(Model.Interface.JavaInterfaceName)> updateResourceAsync() {
-        final @(Model.Interface.FluentMethodGroup.InnerMethodGroup.MethodGroupImplType) client = this.manager().inner().@(Model.Interface.FluentMethodGroup.InnerMethodGroup.Name)();
-        return @(Model.UpdateInvocation);
-    }
-</text>
-    }
-@EmptyLine
-    @@Override
-    protected Observable<@(Model.InnerModelTypeName)> getInnerAsync() {
-        final @(Model.InnerMethodGroupTypeName) client = this.manager().inner().@(Model.Interface.FluentMethodGroup.InnerMethodGroup.Name)();
-        @if(Model.Interface.SupportsGetting) {
-@:        return @(Model.GetInnerInvocation);
-        } else {
-@:        return null;
-        }
-    }
 }

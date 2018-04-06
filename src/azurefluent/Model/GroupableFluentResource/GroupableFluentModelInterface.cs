@@ -1,39 +1,31 @@
-﻿using AutoRest.Core.Model;
+﻿using AutoRest.Core;
+using AutoRest.Core.Model;
 using AutoRest.Core.Utilities;
 using AutoRest.Java.Azure.Model;
 using AutoRest.Java.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace AutoRest.Java.Azure.Fluent.Model
 {
-    /// <summary>
-    /// The interface-metadata model that can generate a groupable model interface.
-    /// </summary>
-    public class GroupableFluentModelInterface
+    public class GroupableFluentModelInterface : CreatableUpdatableModel
     {
         private readonly FluentModel rawFluentModel;
         private GroupableFluentModelImpl impl;
 
-        public GroupableFluentModelInterface(FluentModel rawFluentModel, FluentMethodGroup fluentMethodGroup)
+        private readonly string package = Settings.Instance.Namespace.ToLower();
+
+        public GroupableFluentModelInterface(FluentModel rawFluentModel, FluentMethodGroup fluentMethodGroup) : 
+            base(fluentMethodGroup, 
+                new GroupableFluentModelMemberVariablesForCreate(fluentMethodGroup), 
+                new GroupableFluentModelMemberVariablesForUpdate(fluentMethodGroup), 
+                new FluentModelMemberVariablesForGet(fluentMethodGroup), 
+                rawFluentModel.InnerModel.Name)
         {
             this.rawFluentModel = rawFluentModel;
-            this.FluentMethodGroup = fluentMethodGroup;
         }
 
-        /// <summary>
-        /// The fluent method group that this groupable model interface belongs to.
-        /// </summary>
-        public FluentMethodGroup FluentMethodGroup
-        {
-            get; private set;
-        }
-
-        /// <summary>
-        /// Name of the Java interface this interface-metadata model generates.
-        /// </summary>
         public string JavaInterfaceName
         {
             get
@@ -42,10 +34,6 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        /// <summary>
-        /// Returns the impl-metadata model that generates the Java implementation that
-        /// this groupable model interface implements.
-        /// </summary>
         public GroupableFluentModelImpl Impl
         {
             get
@@ -58,10 +46,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        /// <summary>
-        /// Checks this groupable model interface represents an azure resource can be created under a resource group.
-        /// </summary>
-        public bool SupportsCreating
+        public override bool SupportsCreating
         {
             get
             {
@@ -70,21 +55,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        /// <summary>
-        /// Checks this groupable model interface represents an azure resource which supports listing in a resource group.
-        /// </summary>
-        private bool SupportsListing
-        {
-            get
-            {
-                return this.FluentMethodGroup.ResourceListingDescription.SupportsListByResourceGroup;
-            }
-        }
-
-        /// <summary>
-        /// Checks this groupable model interface represents an azure resource which supports getting in a resource group.
-        /// </summary>
-        public bool SupportsGetting
+        public override bool SupportsGetting
         {
             get
             {
@@ -92,14 +63,11 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        /// <summary>
-        /// Checks this groupable model interface represents an azure resource can updated in the context of a resource group.
-        /// </summary>
-        public bool SupportsUpdating
+        private bool SupportsListing
         {
             get
             {
-                return this.FluentMethodGroup.ResourceUpdateDescription.SupportsUpdating;
+                return this.FluentMethodGroup.ResourceListingDescription.SupportsListByResourceGroup;
             }
         }
 
@@ -251,173 +219,15 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 }
 
                 imports.Add("com.microsoft.azure.management.resources.fluentcore.arm.models.HasManager");
-                imports.Add($"{this.Package}.implementation.{this.FluentMethodGroup.ManagerTypeName}");
+                imports.Add($"{this.package}.implementation.{this.FluentMethodGroup.ManagerTypeName}");
 
-
-                imports.AddRange(this.PropertiesAndMethodImports);
-
-                imports.Add($"{InnerModel.Package}.{InnerModel.Name}");
+                imports.AddRange(this.ImportsForInterface);
+                imports.Add($"{this.package}.implementation.{InnerModel.Name}");
 
                 return imports;
             }
         }
 
-        /// <summary>
-        /// The import needed by the properties and methods exposed in the groupable resource group.
-        /// </summary>
-        public HashSet<string> PropertiesAndMethodImports
-        {
-            get
-            {
-                HashSet<string> imports = new HashSet<string>();
-                string thisPackage = this.Package;
-                IEnumerable<Property> properties = this.SettableLocalPropertiesOnCreate
-                    .Union(this.SettableLocalPropertiesOnUpdate)
-                    .Union(this.LocalProperties);
-
-                foreach (PropertyJvaf property in properties)
-                {
-                    var propertyImports = PropertyImports(property, InnerModel.Package);
-                    imports.AddRange(propertyImports);
-                }
-                return imports;
-            }
-        }
-
-        /// <summary>
-        /// Returns the defintion stages containing the methods setting required properties.
-        /// </summary>
-        public List<FluentDefinitionOrUpdateStage> RequiredDefinitionStages
-        {
-            get
-            {
-                List<FluentDefinitionOrUpdateStage> stages = new List<FluentDefinitionOrUpdateStage>();
-                if (!this.SupportsCreating)
-                {
-                    return stages;
-                }
-
-                IEnumerable<Property> properties = this.SettableLocalPropertiesOnCreate;
-                FluentDefinitionOrUpdateStage currentStage = null;
-                foreach (Property pro in properties.Where(p => p.IsRequired))
-                {
-                    string methodName = $"with{pro.Name.ToPascalCase()}";
-                    string parameterName = pro.Name;
-                    string methodParameterDecl = $"{pro.ModelTypeName} {pro.Name}";
-
-                    FluentDefinitionOrUpdateStageMethod method = new FluentDefinitionOrUpdateStageMethod(methodName, methodParameterDecl, pro.ModelTypeName)
-                    {
-                        CommentFor = parameterName
-                    };
-
-                    if (currentStage == null)
-                    {
-                        currentStage = new FluentDefinitionOrUpdateStage(this.JavaInterfaceName, $"With{pro.Name.ToPascalCase()}");
-                        currentStage.Methods.Add(method);
-                    }
-                    else
-                    {
-                        FluentDefinitionOrUpdateStage nextStage = new FluentDefinitionOrUpdateStage(this.JavaInterfaceName, $"With{pro.Name.ToPascalCase()}");
-                        nextStage.Methods.Add(method);
-
-                        currentStage.Methods.ForEach(m =>
-                        {
-                            m.NextStage = nextStage;
-                        });
-                        currentStage = nextStage;
-                    }
-                    stages.Add(currentStage);
-                }
-
-                if (currentStage != null)
-                {
-                    FluentDefinitionOrUpdateStage creatableStage = new FluentDefinitionOrUpdateStage(this.JavaInterfaceName, "WithCreate");
-                    currentStage.Methods.ForEach(m =>
-                    {
-                        m.NextStage = creatableStage;
-                    });
-                }
-                return stages;
-            }
-        }
-
-        /// <summary>
-        /// Returns the defintion stages containing the methods setting optional properties.
-        /// </summary>
-        public List<FluentDefinitionOrUpdateStage> OptionalDefinitionStages
-        {
-            get
-            {
-                List<FluentDefinitionOrUpdateStage> stages = new List<FluentDefinitionOrUpdateStage>();
-                if (!this.SupportsCreating)
-                {
-                    return stages;
-                }
-                FluentDefinitionOrUpdateStage creatableStage = new FluentDefinitionOrUpdateStage(this.JavaInterfaceName, "WithCreate");
-
-                IEnumerable<Property> properties = this.SettableLocalPropertiesOnCreate;
-                foreach (Property pro in properties.Where(p => !p.IsRequired))
-                {
-                    string methodName = $"with{pro.Name.ToPascalCase()}";
-                    string parameterName = pro.Name;
-                    string methodParameterDecl = $"{pro.ModelTypeName} {pro.Name}";
-
-                    FluentDefinitionOrUpdateStageMethod method = new FluentDefinitionOrUpdateStageMethod(methodName, methodParameterDecl, pro.ModelTypeName)
-                    {
-                        CommentFor = parameterName,
-                    };
-                    FluentDefinitionOrUpdateStage stage = new FluentDefinitionOrUpdateStage(this.JavaInterfaceName, $"With{pro.Name.ToPascalCase()}");
-                    stage.Methods.Add(method);
-                    stage.Methods.ForEach(m =>
-                    {
-                        m.NextStage = creatableStage;
-                    });
-                    stages.Add(stage);
-                }
-                return stages;
-            }
-        }
-
-        /// <summary>
-        /// Returns the update stages containing the methods to set update time properties.
-        /// </summary>
-        public List<FluentDefinitionOrUpdateStage> UpdateStages
-        {
-            get
-            {
-                List<FluentDefinitionOrUpdateStage> stages = new List<FluentDefinitionOrUpdateStage>();
-                if (!this.SupportsCreating)
-                {
-                    return stages;
-                }
-                FluentDefinitionOrUpdateStage updateGrouping = new FluentDefinitionOrUpdateStage(this.JavaInterfaceName, "Update");
-
-                IEnumerable<Property> properties = this.SettableLocalPropertiesOnUpdate;
-                foreach (Property pro in properties.Where(p => !p.IsRequired))
-                {
-                    string methodName = $"with{pro.Name.ToPascalCase()}";
-                    string parameterName = pro.Name;
-                    string methodParameterDecl = $"{pro.ModelTypeName} {pro.Name}";
-
-                    FluentDefinitionOrUpdateStageMethod method = new FluentDefinitionOrUpdateStageMethod(methodName, methodParameterDecl, pro.ModelTypeName)
-                    {
-                        CommentFor = parameterName,
-                    };
-                    FluentDefinitionOrUpdateStage stage = new FluentDefinitionOrUpdateStage(this.JavaInterfaceName, $"With{pro.Name.ToPascalCase()}");
-                    stage.Methods.Add(method);
-                    stage.Methods.ForEach(m =>
-                    {
-                        m.NextStage = updateGrouping;
-                    });
-                    stages.Add(stage);
-                }
-                return stages;
-            }
-        }
-
-        /// <summary>
-        /// The comma seperated interfaces that defintion interface extednds from.
-        /// </summary>
         public string DefinitionExtendsFrom
         {
             get
@@ -451,9 +261,6 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        /// <summary>
-        /// The comma seperated interfaces that WithCreate interface extednds from.
-        /// </summary>
         public string WithCreateExtendsFrom
         {
             get
@@ -478,9 +285,6 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        /// <summary>
-        /// Returns the name of the interface representing the next stage after resource group.
-        /// </summary>
         public string StageAfterResourceGroup
         {
             get
@@ -504,9 +308,6 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        /// <summary>
-        /// The comma seperated interfaces that update interface extednds from.
-        /// </summary>
         public string UpdateExtendsFrom
         {
             get
@@ -539,10 +340,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        /// <summary>
-        /// The properties exposed by the groupable model interface.
-        /// </summary>
-        public IEnumerable<Property> LocalProperties
+        public override IEnumerable<Property> LocalProperties
         {
             get
             {
@@ -554,49 +352,13 @@ namespace AutoRest.Java.Azure.Fluent.Model
         }
 
         /// <summary>
-        /// The properties of the create inner payload that are settable.
-        /// </summary>
-        private IEnumerable<Property> SettableLocalPropertiesOnCreate
-        {
-            get
-            {
-                CompositeTypeJvaf innerModel = this.CreatePayloadInnerModel;
-                return innerModel.ComposedProperties.OrderBy(p => p.IsRequired)
-                       .ThenBy(p => p.Name.ToLowerInvariant())
-                       .Where(p => !p.IsReadOnly)
-                       .Where(p => !ARMTrackedResourceProperties.Contains(p.Name.ToString(), StringComparer.OrdinalIgnoreCase));
-            }
-        }
-
-        /// <summary>
-        /// The properties of the update inner payload that are settable.
-        /// </summary>
-        private IEnumerable<Property> SettableLocalPropertiesOnUpdate
-        {
-            get
-            {
-                CompositeTypeJvaf innerModel = this.UpdatePayloadInnerModel;
-                return innerModel.ComposedProperties.OrderBy(p => p.Name.ToLowerInvariant())
-                       .Where(p => !p.IsReadOnly)
-                       .Where(p => !ARMTrackedResourceProperties.Contains(p.Name.ToString(), StringComparer.OrdinalIgnoreCase));
-            }
-        }
-
-        /// <summary>
         /// The java package this groupable model inteface belongs to.
         /// </summary>
         public string Package
         {
             get
             {
-                if (InnerModel.Package.EndsWith(".implementation"))
-                {
-                    return InnerModel.Package.Substring(0, InnerModel.Package.Length - 15);
-                }
-                else
-                {
-                    return InnerModel.Package;
-                }
+                return this.package;
             }
         }
 

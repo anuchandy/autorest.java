@@ -15,6 +15,8 @@ namespace AutoRest.Java.Azure.Fluent.Model
         private List<FluentDefinitionOrUpdateStage> reqDefStages;
         private List<FluentDefinitionOrUpdateStage> optDefStages;
         private FluentModelDisambiguatedMemberVariables disambiguatedMemberVariables;
+        private List<string> propertiesOfPayloadToSkip;
+
         private readonly string package = Settings.Instance.Namespace.ToLower();
 
         public FluentModelMemberVariablesForCreate() : base(null)
@@ -22,14 +24,21 @@ namespace AutoRest.Java.Azure.Fluent.Model
             this.FluentMethodGroup = null;
             this.reqDefStages = null;
             this.optDefStages = null;
+            this.propertiesOfPayloadToSkip = null;
         }
 
-        public FluentModelMemberVariablesForCreate(FluentMethodGroup fluentMethodGroup) :
+        public FluentModelMemberVariablesForCreate(FluentMethodGroup fluentMethodGroup, List<string> propertiesOfPayloadToSkip) :
         base(fluentMethodGroup.ResourceCreateDescription.SupportsCreating ? fluentMethodGroup.ResourceCreateDescription.CreateMethod : null)
         {
             this.FluentMethodGroup = fluentMethodGroup;
             this.reqDefStages = null;
             this.optDefStages = null;
+            this.propertiesOfPayloadToSkip = propertiesOfPayloadToSkip;
+        }
+
+        public FluentModelMemberVariablesForCreate(FluentMethodGroup fluentMethodGroup) :
+        this(fluentMethodGroup, new List<string>())
+        {
         }
 
         /// <summary>
@@ -141,10 +150,6 @@ namespace AutoRest.Java.Azure.Fluent.Model
             var dmvs = this.disambiguatedMemberVariables ?? throw new ArgumentNullException("dMemberVariables");
             FluentDefinitionOrUpdateStage currentStage = null;
 
-            // 1. first stage to set the ancestors (parents)
-            //
-            // currentStage = FirstDefintionStage(this.ParentRefMemberVariables);
-
             if (initialStages != null)
             {
                 this.reqDefStages.AddRange(initialStages);
@@ -190,6 +195,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
 
                 var payloadRequiredProperties = payloadType.ComposedProperties
                     .Where(p => !p.IsReadOnly && p.IsRequired)
+                    .Where(p => !propertiesOfPayloadToSkip.Contains(p.Name.ToString(), StringComparer.OrdinalIgnoreCase))
                     .OrderBy(p => p.Name.ToLowerInvariant());
 
                 foreach (Property pro in payloadRequiredProperties)
@@ -260,6 +266,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 var payloadOptinalProperties = payloadType
                     .ComposedProperties
                     .Where(p => !p.IsReadOnly && !p.IsRequired)
+                    .Where(p => !propertiesOfPayloadToSkip.Contains(p.Name.ToString(), StringComparer.OrdinalIgnoreCase))
                     .OrderBy(p => p.Name.ToLowerInvariant());
 
                 FluentDefinitionOrUpdateStage creatableStage = new FluentDefinitionOrUpdateStage("", "WithCreate");
