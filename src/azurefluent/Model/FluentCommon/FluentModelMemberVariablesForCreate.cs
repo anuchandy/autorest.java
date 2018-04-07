@@ -80,7 +80,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 FluentModelMemberVariable payloadInnerModel = this.PayloadInnerModelVariable;
                 if (payloadInnerModel != null)
                 {
-                    Utils.ParameterImportsForInterface(this.PayloadInnerModelVariable.FromParameter, this.package)
+                    Utils.ParameterImportsForInterface(this.PayloadInnerModelVariable.FromParameter, this.package, this.propertiesOfPayloadToSkip)
                         .ForEach(import =>
                         {
                             if (!import.EndsWith(payloadInnerModel.VariableTypeName))
@@ -116,7 +116,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
 
                 if (this.PayloadInnerModelVariable != null)
                 {
-                    Utils.ParameterImportsForImpl(this.PayloadInnerModelVariable.FromParameter, this.package)
+                    Utils.ParameterImportsForImpl(this.PayloadInnerModelVariable.FromParameter, this.package, this.propertiesOfPayloadToSkip)
                         .ForEach(import =>
                         {
                             imports.Add(import);

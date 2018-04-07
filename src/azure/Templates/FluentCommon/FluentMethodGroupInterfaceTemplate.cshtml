@@ -65,7 +65,7 @@ public interface @(Model.JavaInterfaceName)@(Model.ExtendsFrom) {
     * @@return the observable for the request
     */
     </text>
-    @:Observable<@(returnModel.JavaInterfaceName)> listBy@(Model.ParentFluentMethodGroup.LocalNameInPascalCase)Async(@innerMethod.MethodRequiredParameterDeclaration);
+    @:Observable<@(returnModel.JavaInterfaceName)> listBy@(Model.ParentFluentMethodGroup.LocalSingularNameInPascalCase)Async(@innerMethod.MethodRequiredParameterDeclaration);
 }
 @if (@Model.ResourceGetDescription.SupportsGetByImmediateParent)
 {

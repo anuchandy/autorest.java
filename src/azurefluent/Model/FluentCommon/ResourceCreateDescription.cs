@@ -64,7 +64,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        public HashSet<string> Imports
+        public HashSet<string> ImportsForInterface
         {
             get
             {
@@ -74,6 +74,14 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     imports.Add("com.microsoft.azure.management.resources.fluentcore.collection.SupportsCreating");
                 }
                 return imports;
+            }
+        }
+
+        public HashSet<String> ImportsForImpl
+        {
+            get
+            {
+                return new HashSet<string>();
             }
         }
 

@@ -69,7 +69,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        public HashSet<string> Imports
+        public HashSet<string> ImportsForInterface
         {
             get
             {
@@ -81,6 +81,31 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 }
                 if (this.supportsDeleteByImmediateParent)
                 {
+                    imports.Add("rx.Completable");
+                }
+                return imports;
+            }
+        }
+
+        public HashSet<String> ImportsForImpl
+        {
+            get
+            {
+                HashSet<string> imports = new HashSet<string>();
+                if (this.SupportsDeleteByResourceGroup)
+                {
+                    imports.Add("rx.Completable");
+                    // For SupportBatchDelete interface impl
+                    //
+                    imports.Add($"java.util.ArrayList");
+                    imports.Add($"java.util.Arrays");
+                    imports.Add($"java.util.Collection");
+                    imports.Add($"com.microsoft.azure.management.resources.fluentcore.arm.ResourceUtils");
+                    imports.Add($"com.microsoft.azure.management.resources.fluentcore.utils.RXMapper");
+                }
+                if (this.SupportsDeleteByImmediateParent)
+                {
+                    imports.Add("rx.Completable");
                 }
                 return imports;
             }

@@ -200,10 +200,11 @@ namespace AutoRest.Java.Azure.Fluent.Model
             get
             {
                 HashSet<string> imports = new HashSet<string>();
-                imports.AddRange(this.ResourceCreateDescription.Imports);
-                imports.AddRange(this.ResourceDeleteDescription.Imports);
-                imports.AddRange(this.ResourceGetDescription.Imports);
-                imports.AddRange(this.ResourceListingDescription.Imports);
+                imports.AddRange(this.ResourceCreateDescription.ImportsForInterface);
+                imports.AddRange(this.ResourceDeleteDescription.ImportsForInterface);
+                imports.AddRange(this.ResourceGetDescription.ImportsForInterface);
+                imports.AddRange(this.ResourceListingDescription.ImportsForInterface);
+                //
                 // imports.Add($"{Settings.Instance.Namespace.ToLower()}.implementation.{InnerMethodGroup.Name.ToPascalCase()}Inner");
                 imports.Add($"{this.ImplementationPackage}.{this.InnerMethodGroupTypeName}");
 
@@ -211,7 +212,6 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 {
                     imports.Add("rx.Completable");
                 }
-
                 if (this.OtherFluentModels.Where(m => m is PrimtiveFluentModel).Any())
                 {
                     imports.Add("rx.Completable");
@@ -221,9 +221,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     imports.Add("rx.Observable");
                 }
                 //
-
                 imports.Add("com.microsoft.azure.management.resources.fluentcore.model.HasInner");
-
                 return imports;
             }
         }

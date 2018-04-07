@@ -1,4 +1,5 @@
-﻿using AutoRest.Java.Azure.Model;
+﻿using AutoRest.Core.Utilities;
+using AutoRest.Java.Azure.Model;
 using AutoRest.Java.Model;
 using System;
 using System.Collections.Generic;
@@ -89,7 +90,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        public static IEnumerable<string> ParameterImports(ParameterJv parameter)
+        public static IEnumerable<string> ParameterImports(ParameterJv parameter, List<string> propertiesToSkip)
         {
             foreach (string import in parameter.InterfaceImports)
             {
@@ -109,6 +110,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 //
                 var composedPropertiesImports = composite.ComposedProperties
                     .OfType<PropertyJvaf>()
+                    .Where(p => !propertiesToSkip.Contains(p.Name.ToLowerInvariant()))
                     .SelectMany(p => p.Imports);
                 foreach (string import in composedPropertiesImports)
                 {
@@ -119,7 +121,12 @@ namespace AutoRest.Java.Azure.Fluent.Model
 
         public static IEnumerable<string> ParameterImportsForImpl(ParameterJv parameter, string package)
         {
-            foreach (string import in Utils.ParameterImports(parameter))
+            return ParameterImportsForImpl(parameter, package, new List<string>());
+        }
+
+        public static IEnumerable<string> ParameterImportsForImpl(ParameterJv parameter, string package, List<string> propertiesToSkip)
+        {
+            foreach (string import in Utils.ParameterImports(parameter, propertiesToSkip))
             {
                 if (!import.StartsWith(package))
                 {
@@ -134,7 +141,12 @@ namespace AutoRest.Java.Azure.Fluent.Model
 
         public static IEnumerable<string> ParameterImportsForInterface(ParameterJv parameter, string package)
         {
-            foreach (string import in Utils.ParameterImports(parameter))
+            return ParameterImportsForInterface(parameter, package, new List<string>());
+        }
+
+        public static IEnumerable<string> ParameterImportsForInterface(ParameterJv parameter, string package, List<string> propertiesToSkip)
+        {
+            foreach (string import in Utils.ParameterImports(parameter, propertiesToSkip))
             {
                 if (!import.StartsWith(package))
                 {

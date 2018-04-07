@@ -59,22 +59,19 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     $"{this.Interface.Package}.{this.Interface.JavaInterfaceName}",
                 };
                 //
-                HashSet<string> otherModelImports = new HashSet<string>();
                 foreach (var model in this.Interface.OtherFluentModels)
                 {
                     if (model is PrimtiveFluentModel)
                     {
-                        otherModelImports.Add("rx.Completable");
-                        continue;
+                        imports.Add("rx.Completable");
                     }
-                    otherModelImports.Add($"{this.Interface.Package}.{model.JavaInterfaceName}");
+                    else
+                    {
+                        imports.Add($"{this.Interface.Package}.{model.JavaInterfaceName}");
+                        imports.Add("rx.functions.Func1");
+                        imports.Add("rx.Observable");
+                    }
                 }
-                if (otherModelImports.Any())
-                {
-                    otherModelImports.Add("rx.Observable");
-                    otherModelImports.Add("rx.functions.Func1");
-                }
-                imports.AddRange(otherModelImports);
                 //
                 //
                 if (this.Interface.ResourceListingDescription.SupportsListBySubscription)

@@ -74,60 +74,23 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     $"rx.Observable",
                     $"rx.Completable"
                 };
-
                 //
-                HashSet<string> otherModelImports = new HashSet<string>();
                 foreach (var model in this.Interface.OtherFluentModels)
                 {
                     if (model is PrimtiveFluentModel)
                     {
-                        continue;
+                        imports.Add("rx.Completable");
                     }
-                    otherModelImports.Add($"{this.Interface.Package}.{model.JavaInterfaceName}");
+                    else
+                    {
+                        imports.Add($"{this.Interface.Package}.{model.JavaInterfaceName}");
+                        imports.Add("rx.functions.Func1");
+                        imports.Add("rx.Observable");
+                    }
                 }
-                if (otherModelImports.Any())
-                {
-                    otherModelImports.Add("rx.functions.Func1");
-                }
-                imports.AddRange(otherModelImports);
                 //
-
-                if (this.Interface.ResourceDeleteDescription.SupportsDeleteByResourceGroup)
-                {
-                    imports.Add($"java.util.ArrayList");
-                    imports.Add($"java.util.Arrays");
-                    imports.Add($"java.util.Collection");
-                    imports.Add($"com.microsoft.azure.management.resources.fluentcore.arm.ResourceUtils");
-                    imports.Add($"com.microsoft.azure.management.resources.fluentcore.utils.RXMapper");
-                }
-
-                if (this.Interface.ResourceListingDescription.SupportsListBySubscription ||
-                this.Interface.ResourceListingDescription.SupportsListByResourceGroup)
-                {
-                    imports.Add("rx.Observable");
-                    imports.Add("rx.functions.Func1");
-                    imports.Add("com.microsoft.azure.PagedList");
-                }
-
-
-                if (this.Interface.ResourceListingDescription.SupportsListBySubscription)
-                {
-                    FluentMethod method = this.Interface.ResourceListingDescription.ListBySubscriptionMethod;
-                    if (method.InnerMethod.IsPagingOperation)
-                    {
-                        imports.Add("com.microsoft.azure.Page");
-                        imports.Add("rx.functions.Func1");
-                    }
-                }
-                else if (this.Interface.ResourceListingDescription.SupportsListByResourceGroup)
-                {
-                    FluentMethod method = this.Interface.ResourceListingDescription.ListByResourceGroupMethod;
-                    if (method.InnerMethod.IsPagingOperation)
-                    {
-                        imports.Add("com.microsoft.azure.Page");
-                        imports.Add("rx.functions.Func1");
-                    }
-                }
+                imports.AddRange(this.Interface.ResourceDeleteDescription.ImportsForImpl);
+                imports.AddRange(this.Interface.ResourceListingDescription.ImportsForImpl);
 
                 if (this.Interface.OtherMethods.Any(m => m.InnerMethod.IsPagingOperation))
                 {

@@ -112,51 +112,8 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 imports.Add("com.microsoft.azure.management.resources.fluentcore.arm.models.implementation.GroupableResourceImpl");
                 imports.Add($"{this.package}.{this.Interface.JavaInterfaceName}");
                 imports.Add("rx.Observable");
-                if (this.RequireFlatmapAfterUpdate || this.RequireFlatmapAfterCreate || this.Interface.RequirePayloadReset)
-                {
-                    imports.Add("rx.functions.Func1");
-                }
                 imports.AddRange(this.Interface.ImportsForImpl);
                 return imports;
-            }
-        }
-
-        /// <summary>
-        /// Checks a flatmap is needed after inner update call, this is needed if the return type of inner update
-        /// and inner model are different.
-        /// </summary>
-        private bool RequireFlatmapAfterUpdate
-        {
-            get
-            {
-                if (!this.Interface.SupportsUpdating)
-                {
-                    return false;
-                }
-                FluentMethod updateMethod = this.Interface.FluentMethodGroup.ResourceUpdateDescription.UpdateMethod;
-                string updateReturnTypeName = updateMethod.ReturnModel.InnerModel.Name;
-                string innerModelTypeName = this.InnerModelTypeName;
-
-                return !updateReturnTypeName.Equals(this.InnerModelTypeName);
-            }
-        }
-
-        /// <summary>
-        /// Checks a flatmap is needed after inner create call, this is needed if the return type of inner create
-        /// and inner model are different.
-        /// </summary>
-        private bool RequireFlatmapAfterCreate
-        {
-            get
-            {
-                if (!this.Interface.SupportsCreating)
-                {
-                    return false;
-                }
-                FluentMethod createMethod = this.Interface.FluentMethodGroup.ResourceCreateDescription.CreateMethod;
-                string createReturnTypeName = createMethod.ReturnModel.InnerModel.Name;
-                string innerModelTypeName = this.InnerModelTypeName;
-                return !createReturnTypeName.Equals(this.InnerModelTypeName);
             }
         }
 

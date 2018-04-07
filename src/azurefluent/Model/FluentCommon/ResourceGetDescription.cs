@@ -96,7 +96,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        public HashSet<string> Imports
+        public HashSet<string> ImportsForInterface
         {
             get
             {
@@ -104,6 +104,23 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 if (this.SupportsGetByResourceGroup)
                 {
                     imports.Add("com.microsoft.azure.management.resources.fluentcore.arm.collection.SupportsGettingByResourceGroup");
+                }
+                if (this.SupportsGetByImmediateParent || this.SupportsGetBySubscription)
+                {
+                    imports.Add("rx.Observable");
+                }
+                return imports;
+            }
+        }
+
+        public HashSet<String> ImportsForImpl
+        {
+            get
+            {
+                HashSet<string> imports = new HashSet<string>();
+                if (this.SupportsGetByImmediateParent || this.SupportsGetBySubscription)
+                {
+                    imports.Add("rx.Observable");
                 }
                 return imports;
             }

@@ -95,7 +95,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        public HashSet<string> Imports
+        public HashSet<string> ImportsForInterface
         {
             get
             {
@@ -107,6 +107,55 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 if (this.SupportsListBySubscription)
                 {
                     imports.Add("com.microsoft.azure.management.resources.fluentcore.collection.SupportsListing");
+                }
+                if (this.SupportsListByImmediateParent)
+                {
+                    imports.Add("rx.Observable");
+                }
+                return imports;
+            }
+        }
+
+        public HashSet<string> ImportsForImpl
+        {
+            get
+            {
+                HashSet<string> imports = new HashSet<string>();
+                if (this.SupportsListByResourceGroup)
+                {
+                    imports.Add("rx.Observable");
+                    imports.Add("rx.functions.Func1");
+                    imports.Add("com.microsoft.azure.PagedList");
+                    FluentMethod method = this.ListByResourceGroupMethod;
+                    if (method.InnerMethod.IsPagingOperation)
+                    {
+                        imports.Add("com.microsoft.azure.Page");
+                        imports.Add("rx.functions.Func1");
+                    }
+
+                }
+                if (this.SupportsListBySubscription)
+                {
+                    imports.Add("rx.Observable");
+                    imports.Add("rx.functions.Func1");
+                    imports.Add("com.microsoft.azure.PagedList");
+                    FluentMethod method = this.ListBySubscriptionMethod;
+                    if (method.InnerMethod.IsPagingOperation)
+                    {
+                        imports.Add("com.microsoft.azure.Page");
+                        imports.Add("rx.functions.Func1");
+                    }
+                }
+                if (this.SupportsListByImmediateParent)
+                {
+                    imports.Add("rx.Observable");
+                    imports.Add("rx.functions.Func1");
+                    FluentMethod method = this.ListByImmediateParentMethod;
+                    if (method.InnerMethod.IsPagingOperation)
+                    {
+                        imports.Add("com.microsoft.azure.Page");
+                        imports.Add("rx.functions.Func1");
+                    }
                 }
                 return imports;
             }

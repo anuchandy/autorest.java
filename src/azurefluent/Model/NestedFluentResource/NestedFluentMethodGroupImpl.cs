@@ -36,46 +36,32 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     $"{this.Interface.Package}.{this.Interface.JavaInterfaceName}",
                 };
                 //
-                HashSet<string> otherModelImports = new HashSet<string>();
                 foreach (var model in this.Interface.OtherFluentModels)
                 {
                     if (model is PrimtiveFluentModel)
                     {
-                        otherModelImports.Add("rx.Completable");
-                        continue;
+                        imports.Add("rx.Completable");
                     }
-                    otherModelImports.Add($"{this.Interface.Package}.{model.JavaInterfaceName}");
+                    else
+                    {
+                        imports.Add($"{this.Interface.Package}.{model.JavaInterfaceName}");
+                        imports.Add("rx.functions.Func1");
+                        imports.Add("rx.Observable");
+                    }
                 }
-                if (otherModelImports.Any())
-                {
-                    otherModelImports.Add("rx.Observable");
-                    otherModelImports.Add("rx.functions.Func1");
-                }
-                imports.AddRange(otherModelImports);
                 //
-                //
+                imports.AddRange(this.Interface.ResourceCreateDescription.ImportsForImpl);
+                imports.AddRange(this.Interface.ResourceDeleteDescription.ImportsForImpl);
+                imports.AddRange(this.Interface.ResourceGetDescription.ImportsForImpl);
+                imports.AddRange(this.Interface.ResourceListingDescription.ImportsForImpl);
+
                 if (this.Interface.ResourceGetDescription.SupportsGetByImmediateParent 
                     || this.Interface.ResourceListingDescription.SupportsListByImmediateParent)
                 {
                     imports.Add($"{this.Interface.Package}.{this.fluentModelImpl.Interface.JavaInterfaceName}");
-                    imports.Add("rx.Observable");
-                    imports.Add("rx.functions.Func1");
                 }
-                if (this.Interface.ResourceListingDescription.SupportsListByImmediateParent)
-                {
-                    FluentMethod method = this.Interface.ResourceListingDescription.ListByImmediateParentMethod;
-                    if (method.InnerMethod.IsPagingOperation)
-                    {
-                        imports.Add("com.microsoft.azure.Page");
-                        imports.Add("rx.functions.Func1");
-                    }
-                }
-                if (this.Interface.ResourceDeleteDescription.SupportsDeleteByImmediateParent)
-                {
-                    imports.Add("rx.Completable");
-                }
+                //
                 string managerTypeName = this.fluentModelImpl.Interface.FluentMethodGroup.ManagerTypeName;
-
                 //
                 foreach (var nestedFluentMethodGroup in this.Interface.ChildFluentMethodGroups)
                 {
@@ -281,7 +267,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     {
                         FluentModel returnModel = method.ReturnModel;
                         //
-                        string methodName = $"listBy{ this.Interface.ParentFluentMethodGroup.LocalSingularNameInPascalCase}Async";
+                        string methodName = $"listBy{this.Interface.ParentFluentMethodGroup.LocalSingularNameInPascalCase}Async";
                         string parameterDecl = method.InnerMethod.MethodRequiredParameterDeclaration;
 
                         methodBuilder.AppendLine($"@Override");
@@ -298,7 +284,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     }
                     else
                     {
-                        string nextPageMethodName = $"listBy{ this.Interface.ParentFluentMethodGroup.LocalSingularNameInPascalCase}NextInnerPageAsync";
+                        string nextPageMethodName = $"listBy{this.Interface.ParentFluentMethodGroup.LocalSingularNameInPascalCase}NextInnerPageAsync";
 
                         methodBuilder.AppendLine($"private Observable<Page<{this.fluentModelImpl.Interface.InnerModel.ClassName}>> {nextPageMethodName}(String nextLink) {{");
                         methodBuilder.AppendLine($"    if (nextLink == null) {{");
@@ -314,7 +300,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                         methodBuilder.AppendLine($"    }});");
                         methodBuilder.AppendLine($"}}");
 
-                        var methodName = $"listBy{ this.Interface.ParentFluentMethodGroup.LocalSingularNameInPascalCase}Async";
+                        var methodName = $"listBy{this.Interface.ParentFluentMethodGroup.LocalSingularNameInPascalCase}Async";
                         string parameterDecl = method.InnerMethod.MethodRequiredParameterDeclaration;
 
                         methodBuilder.AppendLine($"@Override");
@@ -357,7 +343,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     FluentMethod method = this.Interface.ResourceGetDescription.GetByImmediateParentMethod;
                     FluentModel returnModel = method.ReturnModel;
                     //
-                    string methodName = $"getBy{ this.Interface.ParentFluentMethodGroup.LocalSingularNameInPascalCase}Async";
+                    string methodName = $"getBy{this.Interface.ParentFluentMethodGroup.LocalSingularNameInPascalCase}Async";
                     string parameterDecl = method.InnerMethod.MethodRequiredParameterDeclaration;
 
                     methodBuilder.AppendLine($"@Override");
