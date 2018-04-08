@@ -562,7 +562,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
             //
             this.ReadonlyFluentModels = this.Select(kv => kv.Value)
                 .SelectMany(fmg => fmg)
-                .SelectMany(fmg => fmg.OtherFluentModels)
+                .SelectMany(fmg => fmg.OtherMethods.OtherFluentModels)
                 .Where(m => !(m is PrimtiveFluentModel))
                 .Distinct(FluentModel.EqualityComparer())
                 .Where(fluentModel => !topLevelAndNestedModelNames.Contains(fluentModel.JavaInterfaceName))

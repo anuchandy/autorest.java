@@ -18,7 +18,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
         private ResourceListingDescription resourceListingDescription;
         private ResourceGetDescription resourceGetDescription;
         private ResourceDeleteDescription resourceDeleteDescription;
-        private List<FluentMethod> otherMethods;
+        private OtherMethods otherMethods;
         private FluentModel standardFluentModel;
         private Dictionary<string, CompositeTypeJvaf> innersRequireWrapping;
 
@@ -28,10 +28,11 @@ namespace AutoRest.Java.Azure.Fluent.Model
         public FluentMethodGroup(FluentMethodGroups fluentMethodGroups)
         {
             this.FluentMethodGroups = fluentMethodGroups;
-            Level = -1;
-            ParentMethodGroupNames = new List<String>();
-            InnerMethods = new List<MethodJvaf>();
-            ChildFluentMethodGroups = new List<FluentMethodGroup>();
+            this.Level = -1;
+            this.ParentMethodGroupNames = new List<String>();
+            this.InnerMethods = new List<MethodJvaf>();
+            this.ChildFluentMethodGroups = new List<FluentMethodGroup>();
+            this.otherMethods = null;
         }
 
         public FluentMethodGroups FluentMethodGroups { get; private set; }
@@ -204,29 +205,14 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 imports.AddRange(this.ResourceDeleteDescription.ImportsForInterface);
                 imports.AddRange(this.ResourceGetDescription.ImportsForInterface);
                 imports.AddRange(this.ResourceListingDescription.ImportsForInterface);
-                //
-                // imports.Add($"{Settings.Instance.Namespace.ToLower()}.implementation.{InnerMethodGroup.Name.ToPascalCase()}Inner");
+                imports.AddRange(this.OtherMethods.ImportsForInterface);
                 imports.Add($"{this.ImplementationPackage}.{this.InnerMethodGroupTypeName}");
-
-                if (OtherMethods.Any(m => m.InnerMethod.HttpMethod == HttpMethod.Delete))
-                {
-                    imports.Add("rx.Completable");
-                }
-                if (this.OtherFluentModels.Where(m => m is PrimtiveFluentModel).Any())
-                {
-                    imports.Add("rx.Completable");
-                }
-                if (this.OtherFluentModels.Where(m => !(m is PrimtiveFluentModel)).Any())
-                {
-                    imports.Add("rx.Observable");
-                }
-                //
                 imports.Add("com.microsoft.azure.management.resources.fluentcore.model.HasInner");
                 return imports;
             }
         }
 
-        public IEnumerable<FluentMethod> OtherMethods
+        public OtherMethods OtherMethods
         {
             get
             {
@@ -297,12 +283,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     {
                         knownMethodNames.Add(ResourceDeleteDescription.DeleteByResourceGroupMethod.Name.ToLowerInvariant());
                     }
-
-                    this.otherMethods = this.InnerMethods
-                        .Where(im => !knownMethodNames.Contains(im.Name.ToLowerInvariant()))
-                        .Select(im => new FluentMethod(false, im, this))
-                        .ToList();
-
+                    this.otherMethods = new OtherMethods(this, knownMethodNames);
                     return this.otherMethods;
                 }
             }
@@ -394,15 +375,6 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     throw new InvalidOperationException("DeriveFluentModelForMethodGroup requires to be invoked before InnersRequireWrapping");
                 }
                 return this.standardFluentModel;
-            }
-        }
-
-        public IEnumerable<FluentModel> OtherFluentModels
-        {
-            get
-            {
-                return this.OtherMethods
-                    .Select(om => om.ReturnModel);
             }
         }
 

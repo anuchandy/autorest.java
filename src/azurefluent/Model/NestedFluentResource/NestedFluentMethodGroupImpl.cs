@@ -18,14 +18,6 @@ namespace AutoRest.Java.Azure.Fluent.Model
             this.Interface = fluentModelImpl.Interface.FluentMethodGroup;
         }
 
-        public string Package
-        {
-            get
-            {
-                return $"{this.Interface.Package}.implementation";
-            }
-        }
-
         public HashSet<string> Imports
         {
             get
@@ -35,25 +27,11 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     "com.microsoft.azure.management.resources.fluentcore.model.implementation.WrapperImpl",
                     $"{this.Interface.Package}.{this.Interface.JavaInterfaceName}",
                 };
-                //
-                foreach (var model in this.Interface.OtherFluentModels)
-                {
-                    if (model is PrimtiveFluentModel)
-                    {
-                        imports.Add("rx.Completable");
-                    }
-                    else
-                    {
-                        imports.Add($"{this.Interface.Package}.{model.JavaInterfaceName}");
-                        imports.Add("rx.functions.Func1");
-                        imports.Add("rx.Observable");
-                    }
-                }
-                //
                 imports.AddRange(this.Interface.ResourceCreateDescription.ImportsForImpl);
                 imports.AddRange(this.Interface.ResourceDeleteDescription.ImportsForImpl);
                 imports.AddRange(this.Interface.ResourceGetDescription.ImportsForImpl);
                 imports.AddRange(this.Interface.ResourceListingDescription.ImportsForImpl);
+                imports.AddRange(this.Interface.OtherMethods.ImportsForImpl);
 
                 if (this.Interface.ResourceGetDescription.SupportsGetByImmediateParent 
                     || this.Interface.ResourceListingDescription.SupportsListByImmediateParent)
@@ -117,7 +95,10 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 yield return this.ManagerGetterImplementation;
                 yield return this.DefineMethodImplementation;
                 yield return this.WrapModelImplementation;
-                yield return this.OtherMethodImplementation;
+                foreach (string impl in this.Interface.OtherMethods.MethodsImplementation)
+                {
+                    yield return impl;
+                }
                 yield return this.ListByImmediateParentMethodImplementation;
                 yield return this.GetByImmediateParentMethodImplementation;
                 yield return this.DeleteByImmediateParentMethodImplementation;
@@ -203,55 +184,6 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 methodBuilder.AppendLine($"    return {this.fluentModelImpl.CtrInvocationFromWrapExistingInnerModel}");
                 methodBuilder.AppendLine($"}}");
                 return methodBuilder.ToString();
-            }
-        }
-
-        private string OtherMethodImplementation
-        {
-            get
-            {
-                StringBuilder methodsBuilder = new StringBuilder();
-                //
-                foreach (FluentMethod otherMethod in this.Interface.OtherMethods)
-                {
-                    if (otherMethod.InnerMethod.HttpMethod == AutoRest.Core.Model.HttpMethod.Delete)
-                    {
-                        methodsBuilder.AppendLine("@Override");
-                        methodsBuilder.AppendLine($"public Completable {otherMethod.Name}Async({otherMethod.InnerMethod.MethodRequiredParameterDeclaration}) {{");
-                        methodsBuilder.AppendLine($"    {this.Interface.InnerMethodGroupTypeName} client = this.inner();");
-                        methodsBuilder.AppendLine($"    return client.{otherMethod.Name}Async({InnerMethodInvocationParameter(otherMethod.InnerMethod)}).toCompletable();");
-                        methodsBuilder.AppendLine($"}}");
-                    }
-                    else
-                    {
-                        FluentModel returnModel = otherMethod.ReturnModel;
-                        string rxReturnType = null;
-                        if (returnModel is PrimtiveFluentModel)
-                        {
-                            methodsBuilder.AppendLine($"@Override");
-                            methodsBuilder.AppendLine($"public Completable { otherMethod.Name}Async({otherMethod.InnerMethod.MethodRequiredParameterDeclaration}) {{");
-                            methodsBuilder.AppendLine($"    {this.Interface.InnerMethodGroupTypeName} client = this.inner();");
-                            methodsBuilder.AppendLine($"    return client.{otherMethod.Name}Async({InnerMethodInvocationParameter(otherMethod.InnerMethod)}).toCompletable();");
-                            methodsBuilder.AppendLine($"}}");
-                        }
-                        else
-                        {
-                            rxReturnType = $"Observable<{returnModel.JavaInterfaceName}>";
-                            methodsBuilder.AppendLine("@Override");
-                            methodsBuilder.AppendLine($"public {rxReturnType} {otherMethod.Name}Async({otherMethod.InnerMethod.MethodRequiredParameterDeclaration}) {{");
-                            methodsBuilder.AppendLine($"    {this.Interface.InnerMethodGroupTypeName} client = this.inner();");
-                            methodsBuilder.AppendLine($"    return client.{otherMethod.Name}Async({InnerMethodInvocationParameter(otherMethod.InnerMethod)})");
-                            methodsBuilder.AppendLine($"    .map(new Func1<{returnModel.InnerModel.ClassName}, {returnModel.JavaInterfaceName}>() {{");
-                            methodsBuilder.AppendLine($"        @Override");
-                            methodsBuilder.AppendLine($"        public {returnModel.JavaInterfaceName} call({returnModel.InnerModel.ClassName} inner) {{");
-                            methodsBuilder.AppendLine($"            return new {returnModel.JavaInterfaceName}Impl(inner, manager());");
-                            methodsBuilder.AppendLine($"        }}");
-                            methodsBuilder.AppendLine($"    }});");
-                            methodsBuilder.AppendLine($"}}");
-                        }
-                    }
-                }
-                return methodsBuilder.ToString();
             }
         }
 
