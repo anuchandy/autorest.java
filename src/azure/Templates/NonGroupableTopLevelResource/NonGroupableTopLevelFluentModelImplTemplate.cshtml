@@ -10,6 +10,7 @@
 @inherits AutoRest.Core.Template<AutoRest.Java.Azure.Fluent.Model.NonGroupableTopLevelFluentModelImpl>
 /**
 @Header(" * ").TrimMultilineHeader()
+ * 123
  */
 @EmptyLine
 
@@ -29,6 +30,7 @@ class @(Model.JvaClassName)@(Model.ExtendsFrom)@(Model.Implements) {
 {
     @:@varDecl
 }
+    @Model.DeclareManagerVariable
 @EmptyLine
 @foreach (var jvaMethod in Model.JavaMethods)
 {

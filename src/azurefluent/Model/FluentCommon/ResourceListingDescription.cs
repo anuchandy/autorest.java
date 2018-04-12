@@ -1,9 +1,8 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using AutoRest.Core.Model;
 using AutoRest.Core.Utilities;
-using AutoRest.Java.azurefluent.Model;
+using AutoRest.Java.Model;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace AutoRest.Java.Azure.Fluent.Model
 {
@@ -18,7 +17,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
         private FluentMethod listBySubscriptionMethod;
         private FluentMethod listByImmediateParentMethod;
 
-        public ResourceListingDescription(FluentMethodGroup fluentMethodGroup) 
+        public ResourceListingDescription(FluentMethodGroup fluentMethodGroup)
         {
             this.fluentMethodGroup = fluentMethodGroup;
         }
@@ -27,11 +26,17 @@ namespace AutoRest.Java.Azure.Fluent.Model
         {
             get
             {
-                if (!isProcessed)
-                {
-                    Process();
-                }
+                this.Process();
                 return this.supportsListByResourceGroup;
+            }
+        }
+
+        public FluentMethod ListByResourceGroupMethod
+        {
+            get
+            {
+                this.Process();
+                return this.listByResourceGroupMethod;
             }
         }
 
@@ -39,11 +44,17 @@ namespace AutoRest.Java.Azure.Fluent.Model
         {
             get
             {
-                if (!isProcessed)
-                {
-                    Process();
-                }
+                this.Process();
                 return this.supportsListBySubscription;
+            }
+        }
+
+        public FluentMethod ListBySubscriptionMethod
+        {
+            get
+            {
+                this.Process();
+                return this.listBySubscriptionMethod;
             }
         }
 
@@ -51,46 +62,16 @@ namespace AutoRest.Java.Azure.Fluent.Model
         {
             get
             {
-                if (!isProcessed)
-                {
-                    Process();
-                }
+                this.Process();
                 return this.supportsListByImmediateParent;
-            }
-        }
-
-        public FluentMethod ListByResourceGroupMethod
-        {
-            get 
-            {
-                if (!isProcessed)
-                {
-                    Process();
-                }
-                return this.listByResourceGroupMethod;
-            }
-        }
-
-        public FluentMethod ListBySubscriptionMethod
-        {
-            get 
-            {
-                if (!isProcessed)
-                {
-                    Process();
-                }
-                return this.listBySubscriptionMethod;
             }
         }
 
         public FluentMethod ListByImmediateParentMethod
         {
-            get 
+            get
             {
-                if (!isProcessed)
-                {
-                    Process();
-                }
+                this.Process();
                 return this.listByImmediateParentMethod;
             }
         }
@@ -163,66 +144,122 @@ namespace AutoRest.Java.Azure.Fluent.Model
 
         private void Process()
         {
-            this.isProcessed = true;
-            foreach (MethodJvaf innerMethod in fluentMethodGroup.InnerMethods)
+            if (this.isProcessed)
             {
-                if (innerMethod.HttpMethod == HttpMethod.Get)
+                return;
+            }
+            else
+            {
+                this.isProcessed = true;
+                this.CheckListByResourceGroupSupport();
+                this.CheckListBySubscriptionSupport();
+                this.CheckListByImmediateParentSupport();
+            }
+        }
+
+        /// <summary>
+        /// Checks can support "SupportsListByResourceGroup" interface
+        /// </summary>
+        private void CheckListByResourceGroupSupport()
+        {
+            if (this.fluentMethodGroup.Level == 0)
+            {
+                foreach (MethodJvaf innerMethod in fluentMethodGroup.InnerMethods.Where(method => method.HttpMethod == HttpMethod.Get))
                 {
-                    String Url = innerMethod.FluentUrl();
-                    if (Url != null)
+                    var armUri = new ARMUri(innerMethod);
+                    Segment lastSegment = armUri.LastOrDefault();
+                    if (lastSegment != null && lastSegment is TerminalSegment)
                     {
-                        List<String> urlParts = Url.Split("/").Where(u => !String.IsNullOrEmpty(u)).ToList();
-                        if (urlParts.Count == 0 || urlParts.Count == 1)
+                        TerminalSegment terminalSegment = (TerminalSegment)lastSegment;
+                        var requiredParameters = RequiredParametersOfMethod(innerMethod);
+                        if (terminalSegment.Name.EqualsIgnoreCase(fluentMethodGroup.LocalNameInPascalCase) && requiredParameters.Count() == 1)
                         {
-                            continue;
-                        }
-                        else 
-                        {
-                            bool matched = urlParts.Last() // Get the methodGroup local name
-                                .EqualsIgnoreCase(fluentMethodGroup.LocalNameInPascalCase);
-                            if (matched)
+                            var subscriptionSegment = armUri.OfType<ParentSegment>().FirstOrDefault(segment => segment.Name.EqualsIgnoreCase("subscriptions"));
+                            var resourceGroupSegment = armUri.OfType<ParentSegment>().FirstOrDefault(segment => segment.Name.EqualsIgnoreCase("resourceGroups"));
+                            if (subscriptionSegment != null && resourceGroupSegment != null)
                             {
-                                if (this.fluentMethodGroup.Level == 0)
+                                var singleParameter = requiredParameters.First();
+                                if (resourceGroupSegment.Parameter.SerializedName.EqualsIgnoreCase(singleParameter.SerializedName))
                                 {
-                                    if (urlParts.First().EqualsIgnoreCase("subscriptions") && urlParts.Count() > 2)
-                                    {
-                                        urlParts = urlParts
-                                            .Skip(2)    // Skip "subscriptions" and {subscriptionName}
-                                            .ToList();
-                                        if (urlParts.Count() > 0 && urlParts.First().EqualsIgnoreCase("resourceGroups")) 
-                                        {
-                                            if (!this.supportsListByResourceGroup)
-                                            {
-                                                this.supportsListByResourceGroup = true;
-                                                this.listByResourceGroupMethod = new FluentMethod(true, innerMethod, this.fluentMethodGroup);
-                                            }
-                                        }
-                                        else
-                                        {
-                                            if (!this.supportsListBySubscription)
-                                            {
-                                                this.supportsListBySubscription = true;
-                                                this.listBySubscriptionMethod = new FluentMethod(true, innerMethod, this.fluentMethodGroup);
-                                            }
-                                        }
-                                    }
+                                    this.supportsListByResourceGroup = true;
+                                    this.listByResourceGroupMethod = new FluentMethod(true, innerMethod, this.fluentMethodGroup);
+                                    break;
                                 }
-                                else
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                this.supportsListByResourceGroup = false;
+                this.listByResourceGroupMethod = null;
+            }
+        }
+
+        /// <summary>
+        /// Checks can support "SupportsListBySubscription" interface
+        /// </summary>
+        private void CheckListBySubscriptionSupport()
+        {
+            if (this.fluentMethodGroup.Level == 0)
+            {
+                foreach (MethodJvaf innerMethod in fluentMethodGroup.InnerMethods.Where(method => method.HttpMethod == HttpMethod.Get))
+                {
+                    var armUri = new ARMUri(innerMethod);
+                    Segment lastSegment = armUri.LastOrDefault();
+                    if (lastSegment != null && lastSegment is TerminalSegment)
+                    {
+                        TerminalSegment terminalSegment = (TerminalSegment)lastSegment;
+                        var requiredParameters = RequiredParametersOfMethod(innerMethod);
+                        if (terminalSegment.Name.EqualsIgnoreCase(fluentMethodGroup.LocalNameInPascalCase) && requiredParameters.Count() == 0)
+                        {
+                            var subscriptionSegment = armUri.OfType<ParentSegment>().FirstOrDefault(segment => segment.Name.EqualsIgnoreCase("subscriptions"));
+                            if (subscriptionSegment != null)
+                            {
+                                this.supportsListBySubscription = true;
+                                this.listBySubscriptionMethod = new FluentMethod(true, innerMethod, this.fluentMethodGroup);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                this.supportsListBySubscription = false;
+                this.listBySubscriptionMethod = null;
+            }
+        }
+
+        /// <summary>
+        /// Check can support list by immediate parent.
+        /// </summary>
+        private void CheckListByImmediateParentSupport()
+        {
+            if (this.fluentMethodGroup.Level > 0)
+            {
+                foreach (MethodJvaf innerMethod in fluentMethodGroup.InnerMethods.Where(method => method.HttpMethod == HttpMethod.Get))
+                {
+                    FluentMethodGroup parentMethodGroup = this.fluentMethodGroup.ParentFluentMethodGroup;
+                    if (parentMethodGroup != null)
+                    {
+                        var armUri = new ARMUri(innerMethod);
+                        Segment lastSegment = armUri.LastOrDefault();
+                        if (lastSegment != null && lastSegment is TerminalSegment)
+                        {
+                            TerminalSegment terminalSegment = (TerminalSegment)lastSegment;
+                            if (terminalSegment.Name.EqualsIgnoreCase(fluentMethodGroup.LocalNameInPascalCase))
+                            {
+                                Segment secondLastSegment = armUri.SkipLast(1).LastOrDefault();
+                                if (secondLastSegment != null && secondLastSegment is ParentSegment)
                                 {
-                                    FluentMethodGroup parentMethodGroup = this.fluentMethodGroup.ParentFluentMethodGroup;
-                                    if (urlParts.Count() > 2 && parentMethodGroup != null)
+                                    ParentSegment parentSegment = (ParentSegment)secondLastSegment;
+                                    if (parentSegment.Name.EqualsIgnoreCase(parentMethodGroup.LocalNameInPascalCase))
                                     {
-                                        if (!this.supportsListByImmediateParent)
-                                        {
-                                            this.supportsListByImmediateParent = urlParts
-                                                .SkipLast(2)
-                                                .Last()
-                                                .EqualsIgnoreCase(parentMethodGroup.LocalNameInPascalCase);
-                                            if (this.supportsListByImmediateParent)
-                                            {
-                                                this.listByImmediateParentMethod = new FluentMethod(true, innerMethod, this.fluentMethodGroup);
-                                            }
-                                        }
+                                        this.supportsListByImmediateParent = true;
+                                        this.listByImmediateParentMethod = new FluentMethod(true, innerMethod, this.fluentMethodGroup);
+                                        break;
                                     }
                                 }
                             }
@@ -230,6 +267,16 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     }
                 }
             }
+            else
+            {
+                this.supportsListByImmediateParent = false;
+                this.listByImmediateParentMethod = null;
+            }
+        }
+
+        private static IEnumerable<ParameterJv> RequiredParametersOfMethod(MethodJvaf method)
+        {
+            return method.LocalParameters.Where(parameter => parameter.IsRequired && !parameter.IsConstant);
         }
     }
 }

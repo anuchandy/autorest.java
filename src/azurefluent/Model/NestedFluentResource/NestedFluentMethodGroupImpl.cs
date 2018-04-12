@@ -11,6 +11,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
     {
         private readonly NestedFluentModelImpl fluentModelImpl;
         private readonly FluentMethodGroup Interface;
+        private readonly string package = Settings.Instance.Namespace.ToLower();
 
         public NestedFluentMethodGroupImpl(NestedFluentModelImpl fluentModelImpl)
         {
@@ -25,7 +26,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 HashSet<string> imports = new HashSet<string>
                 {
                     "com.microsoft.azure.management.resources.fluentcore.model.implementation.WrapperImpl",
-                    $"{this.Interface.Package}.{this.Interface.JavaInterfaceName}",
+                    $"{this.package}.{this.Interface.JavaInterfaceName}",
                 };
                 imports.AddRange(this.Interface.ResourceCreateDescription.ImportsForImpl);
                 imports.AddRange(this.Interface.ResourceDeleteDescription.ImportsForImpl);
@@ -293,7 +294,6 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 return methodBuilder.ToString();
             }
         }
-
 
         private string DeleteByImmediateParentMethodImplementation
         {

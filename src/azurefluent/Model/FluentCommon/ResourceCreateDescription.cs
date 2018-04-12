@@ -32,10 +32,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
         {
             get
             {
-                if (!this.isProcessed)
-                {
-                    this.Process();
-                }
+                this.Process();
                 return this.createType != CreateType.None;
             }
         }
@@ -44,10 +41,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
         {
             get 
             {
-                if (!this.isProcessed)
-                {
-                    this.Process();
-                }
+                this.Process();
                 return this.createType;
             }
         }
@@ -56,10 +50,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
         {
             get
             {
-                if (!this.isProcessed)
-                {
-                    this.Process();
-                }
+                this.Process();
                 return this.createMethod;
             }
         }
@@ -87,12 +78,27 @@ namespace AutoRest.Java.Azure.Fluent.Model
 
         private void Process()
         {
-            this.isProcessed = true;
+            if (this.isProcessed)
+            {
+                return;
+            }
+            else
+            {
+                this.isProcessed = true;
+                this.CheckCreateSupport();
+            }
+        }
+
+        private void CheckCreateSupport()
+        {
             foreach (MethodJvaf innerMethod in fluentMethodGroup.InnerMethods)
             {
                 string innerMethodName = innerMethod.Name.ToLowerInvariant();
                 if (innerMethodName.Contains("update") && !innerMethodName.Contains("create"))
                 {
+                    // There are resources that does not support create, but support update through PUT
+                    // here using  method name pattern as heuristics to skip such methods
+                    //
                     continue;
                 }
                 if (innerMethod.HttpMethod == HttpMethod.Put)
@@ -105,7 +111,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                         {
                             continue;
                         }
-                        else 
+                        else
                         {
                             bool matched = urlParts.SkipLast(1) // Skip {resourceName}
                                 .Last()                         // Get the methodGroup local name
@@ -119,7 +125,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                                         urlParts = urlParts
                                             .Skip(2)    // Skip "subscriptions" and {subscriptionName}
                                             .ToList();
-                                        if (urlParts.Count > 0 && urlParts.First().EqualsIgnoreCase("resourceGroups")) 
+                                        if (urlParts.Count > 0 && urlParts.First().EqualsIgnoreCase("resourceGroups"))
                                         {
                                             this.createType = CreateType.WithResourceGroupAsParent;
                                         }

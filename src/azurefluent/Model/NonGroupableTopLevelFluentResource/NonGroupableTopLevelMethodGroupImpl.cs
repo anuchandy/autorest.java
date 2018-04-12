@@ -17,14 +17,6 @@ namespace AutoRest.Java.Azure.Fluent.Model
             this.Interface = fluentModelImpl.Interface.FluentMethodGroup;
         }
 
-        public string Package
-        {
-            get
-            {
-                return $"{this.Interface.Package}.implementation";
-            }
-        }
-
         private string JavaInterfaceName
         {
             get

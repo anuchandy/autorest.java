@@ -67,6 +67,8 @@ namespace AutoRest.Java.Azure.Fluent.Model
 
                 foreach (MethodJvaf innerMethod in innerMethodGroup.Methods)
                 {
+                    var uri = new ARMUri(innerMethod);
+
                     if (String.IsNullOrEmpty(innerMethod.FluentUrl()))
                     {
                         // Skip empty Url e.g. listNextPage

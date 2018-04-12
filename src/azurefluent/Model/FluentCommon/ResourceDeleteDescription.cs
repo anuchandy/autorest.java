@@ -1,9 +1,9 @@
+using AutoRest.Core.Model;
+using AutoRest.Core.Utilities;
+using AutoRest.Java.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using AutoRest.Core.Model;
-using AutoRest.Core.Utilities;
-using AutoRest.Java.azurefluent.Model;
 
 namespace AutoRest.Java.Azure.Fluent.Model
 {
@@ -13,9 +13,12 @@ namespace AutoRest.Java.Azure.Fluent.Model
         private bool isProcessed;
 
         private bool supportsDeleteByResourceGroup;
-        private bool supportsDeleteByImmediateParent;
         private FluentMethod deleteByResourceGroupMethod;
+        private bool supportsDeleteBySubscription;
+        private FluentMethod deleteBySubscriptionMethod;
+        private bool supportsDeleteByImmediateParent;
         private FluentMethod deleteByImmediateParentMethod;
+
         public ResourceDeleteDescription(FluentMethodGroup fluentMethodGroup)
         {
             this.fluentMethodGroup = fluentMethodGroup;
@@ -25,23 +28,8 @@ namespace AutoRest.Java.Azure.Fluent.Model
         {
             get
             {
-                if (!isProcessed)
-                {
-                    Process();
-                }
+                Process();
                 return this.supportsDeleteByResourceGroup;
-            }
-        }
-
-        public bool SupportsDeleteByImmediateParent
-        {
-            get
-            {
-                if (!isProcessed)
-                {
-                    Process();
-                }
-                return this.supportsDeleteByImmediateParent;
             }
         }
 
@@ -49,11 +37,36 @@ namespace AutoRest.Java.Azure.Fluent.Model
         {
             get
             {
-                if (!isProcessed)
-                {
-                    Process();
-                }
+                Process();
                 return this.deleteByResourceGroupMethod;
+            }
+        }
+
+        public bool SupportsDeleteBySubscription
+        {
+            get
+            {
+                Process();
+                return this.supportsDeleteBySubscription;
+            }
+        }
+
+        public FluentMethod DeleteByDubdcriptionMethod
+        {
+            get
+            {
+                Process();
+                return this.deleteBySubscriptionMethod;
+            }
+        }
+
+
+        public bool SupportsDeleteByImmediateParent
+        {
+            get
+            {
+                Process();
+                return this.supportsDeleteByImmediateParent;
             }
         }
 
@@ -61,10 +74,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
         {
             get
             {
-                if (!isProcessed)
-                {
-                    Process();
-                }
+                Process();
                 return this.deleteByImmediateParentMethod;
             }
         }
@@ -113,58 +123,116 @@ namespace AutoRest.Java.Azure.Fluent.Model
 
         private void Process()
         {
-            this.isProcessed = true;
-            foreach (MethodJvaf innerMethod in fluentMethodGroup.InnerMethods)
+            if (this.isProcessed)
             {
-                if (innerMethod.HttpMethod == HttpMethod.Delete)
+                return;
+            }
+            else
+            {
+                this.isProcessed = true;
+                this.CheckDeleteByResourceGroupSupport();
+                this.CheckDeleteBySubscriptionSupport();
+                this.CheckDeleteByImmediateParentSupport();
+            }
+        }
+
+        private void CheckDeleteByResourceGroupSupport()
+        {
+            if (this.fluentMethodGroup.Level == 0)
+            {
+                foreach (MethodJvaf innerMethod in fluentMethodGroup.InnerMethods.Where(method => method.HttpMethod == HttpMethod.Delete))
                 {
-                    String Url = innerMethod.FluentUrl();
-                    if (Url != null)
+                    var armUri = new ARMUri(innerMethod);
+                    Segment lastSegment = armUri.LastOrDefault();
+                    if (lastSegment != null && lastSegment is ParentSegment)
                     {
-                        List<String> urlParts = Url.Split("/").Where(u => !String.IsNullOrEmpty(u)).ToList();
-                        if (urlParts.Count == 0 || urlParts.Count == 1)
+                        ParentSegment resourceSegment = (ParentSegment)lastSegment;
+                        var requiredParameters = RequiredParametersOfMethod(innerMethod);
+                        if (resourceSegment.Name.EqualsIgnoreCase(fluentMethodGroup.LocalNameInPascalCase) && requiredParameters.Count() == 2)
                         {
-                            continue;
-                        }
-                        else
-                        {
-                            bool matched = urlParts.SkipLast(1).Last() // Get the methodGroup local name
-                                .EqualsIgnoreCase(fluentMethodGroup.LocalNameInPascalCase);
-                            if (matched)
+                            var resourceGroupSegment = armUri.OfType<ParentSegment>().FirstOrDefault(segment => segment.Name.EqualsIgnoreCase("resourceGroups"));
+                            if (resourceGroupSegment != null)
                             {
-                                if (this.fluentMethodGroup.Level == 0)
+                                bool hasResourceGroupParam = requiredParameters.Any(p => p.SerializedName.EqualsIgnoreCase(resourceGroupSegment.Parameter.SerializedName));
+                                bool hasResourceParm = requiredParameters.Any(p => p.SerializedName.EqualsIgnoreCase(resourceSegment.Parameter.SerializedName));
+                                if (hasResourceGroupParam && hasResourceParm)
                                 {
-                                    if (urlParts.First().EqualsIgnoreCase("subscriptions") && urlParts.Count() > 2)
-                                    {
-                                        urlParts = urlParts
-                                            .Skip(2)    // Skip "subscriptions" and {subscriptionName}
-                                            .ToList();
-                                        if (urlParts.Count() > 0 && urlParts.First().EqualsIgnoreCase("resourceGroups")) 
-                                        {
-                                            if (!this.supportsDeleteByResourceGroup)
-                                            {
-                                                this.supportsDeleteByResourceGroup = true;
-                                                this.deleteByResourceGroupMethod = new FluentMethod(true, innerMethod, this.fluentMethodGroup);
-                                            }
-                                        }
-                                    }
+                                    this.supportsDeleteByResourceGroup = true;
+                                    this.deleteByResourceGroupMethod = new FluentMethod(true, innerMethod, this.fluentMethodGroup);
                                 }
-                                else
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                this.supportsDeleteByResourceGroup = false;
+                this.deleteByResourceGroupMethod = null;
+            }
+        }
+
+        private void CheckDeleteBySubscriptionSupport()
+        {
+            if (this.fluentMethodGroup.Level == 0)
+            {
+                foreach (MethodJvaf innerMethod in fluentMethodGroup.InnerMethods.Where(method => method.HttpMethod == HttpMethod.Delete))
+                {
+                    var armUri = new ARMUri(innerMethod);
+                    Segment lastSegment = armUri.LastOrDefault();
+                    if (lastSegment != null && lastSegment is ParentSegment)
+                    {
+                        ParentSegment resourceSegment = (ParentSegment)lastSegment;
+                        var requiredParameters = RequiredParametersOfMethod(innerMethod);
+                        if (resourceSegment.Name.EqualsIgnoreCase(fluentMethodGroup.LocalNameInPascalCase) && requiredParameters.Count() == 1)
+                        {
+                            var subscriptionSegment = armUri.OfType<ParentSegment>().FirstOrDefault(segment => segment.Name.EqualsIgnoreCase("subscriptions"));
+                            if (subscriptionSegment != null)
+                            {
+                                bool hasResourceParm = requiredParameters.Any(p => p.SerializedName.EqualsIgnoreCase(resourceSegment.Parameter.SerializedName));
+                                if (hasResourceParm)
                                 {
-                                    FluentMethodGroup parentMethodGroup = this.fluentMethodGroup.ParentFluentMethodGroup;
-                                    if (urlParts.Count() > 2 && parentMethodGroup != null)
+                                    this.supportsDeleteBySubscription = true;
+                                    this.deleteBySubscriptionMethod = new FluentMethod(true, innerMethod, this.fluentMethodGroup);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                this.supportsDeleteBySubscription = false;
+                this.deleteBySubscriptionMethod = null;
+            }
+        }
+
+
+        private void CheckDeleteByImmediateParentSupport()
+        {
+            if (this.fluentMethodGroup.Level > 0)
+            {
+                foreach (MethodJvaf innerMethod in fluentMethodGroup.InnerMethods.Where(method => method.HttpMethod == HttpMethod.Delete))
+                {
+                    FluentMethodGroup parentMethodGroup = this.fluentMethodGroup.ParentFluentMethodGroup;
+                    if (parentMethodGroup != null)
+                    {
+                        var armUri = new ARMUri(innerMethod);
+                        Segment lastSegment = armUri.LastOrDefault();
+                        if (lastSegment != null && lastSegment is ParentSegment)
+                        {
+                            ParentSegment resourceSegment = (ParentSegment)lastSegment;
+                            if (resourceSegment.Name.EqualsIgnoreCase(fluentMethodGroup.LocalNameInPascalCase))
+                            {
+                                Segment secondLastSegment = armUri.SkipLast(1).LastOrDefault();
+                                if (secondLastSegment != null && secondLastSegment is ParentSegment)
+                                {
+                                    ParentSegment parentSegment = (ParentSegment)secondLastSegment;
+                                    if (parentSegment.Name.EqualsIgnoreCase(parentMethodGroup.LocalNameInPascalCase))
                                     {
-                                        if (!this.supportsDeleteByImmediateParent)
-                                        {
-                                            this.supportsDeleteByImmediateParent = urlParts
-                                                .SkipLast(3)
-                                                .Last()
-                                                .EqualsIgnoreCase(parentMethodGroup.LocalNameInPascalCase);
-                                            if (this.supportsDeleteByImmediateParent)
-                                            {
-                                                this.deleteByImmediateParentMethod = new FluentMethod(true, innerMethod, this.fluentMethodGroup);
-                                            }
-                                        }
+                                        this.supportsDeleteByImmediateParent = true;
+                                        this.deleteByImmediateParentMethod = new FluentMethod(true, innerMethod, this.fluentMethodGroup);
+                                        break;
                                     }
                                 }
                             }
@@ -172,6 +240,16 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     }
                 }
             }
+            else
+            {
+                this.supportsDeleteByImmediateParent = false;
+                this.deleteByImmediateParentMethod = null;
+            }
+        }
+
+        private static IEnumerable<ParameterJv> RequiredParametersOfMethod(MethodJvaf method)
+        {
+            return method.LocalParameters.Where(parameter => parameter.IsRequired && !parameter.IsConstant);
         }
     }
 }
