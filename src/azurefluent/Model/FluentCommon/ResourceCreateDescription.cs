@@ -1,10 +1,10 @@
 
+using AutoRest.Core.Model;
+using AutoRest.Core.Utilities;
+using AutoRest.Java.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using AutoRest.Core.Model;
-using AutoRest.Core.Utilities;
-using AutoRest.Java.azurefluent.Model;
 
 namespace AutoRest.Java.Azure.Fluent.Model
 {
@@ -23,9 +23,9 @@ namespace AutoRest.Java.Azure.Fluent.Model
         private FluentMethod createMethod;
         private CreateType createType = CreateType.None;
 
-        public ResourceCreateDescription(FluentMethodGroup fluentMethodGroup) 
+        public ResourceCreateDescription(FluentMethodGroup fluentMethodGroup)
         {
-             this.fluentMethodGroup = fluentMethodGroup;
+            this.fluentMethodGroup = fluentMethodGroup;
         }
 
         public bool SupportsCreating
@@ -39,7 +39,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
 
         public CreateType CreateType
         {
-            get 
+            get
             {
                 this.Process();
                 return this.createType;
@@ -97,59 +97,53 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 if (innerMethodName.Contains("update") && !innerMethodName.Contains("create"))
                 {
                     // There are resources that does not support create, but support update through PUT
-                    // here using  method name pattern as heuristics to skip such methods
+                    // here using method name pattern as heuristics to skip such methods
                     //
                     continue;
                 }
                 if (innerMethod.HttpMethod == HttpMethod.Put)
                 {
-                    String Url = innerMethod.FluentUrl();
-                    if (Url != null)
+                    var armUri = new ARMUri(innerMethod);
+                    Segment lastSegment = armUri.LastOrDefault();
+                    if (lastSegment != null && lastSegment is ParentSegment)
                     {
-                        List<String> urlParts = Url.Split("/").Where(u => !String.IsNullOrEmpty(u)).ToList();
-                        if (urlParts.Count == 0 || urlParts.Count == 1)
+                        ParentSegment resourceSegment = (ParentSegment)lastSegment;
+                        if (resourceSegment.Name.EqualsIgnoreCase(fluentMethodGroup.LocalNameInPascalCase))
                         {
-                            continue;
-                        }
-                        else
-                        {
-                            bool matched = urlParts.SkipLast(1) // Skip {resourceName}
-                                .Last()                         // Get the methodGroup local name
-                                .EqualsIgnoreCase(fluentMethodGroup.LocalNameInPascalCase);
-                            if (matched)
+                            if (this.fluentMethodGroup.Level == 0)
                             {
-                                if (this.fluentMethodGroup.Level == 0)
+                                var subscriptionSegment = armUri.OfType<ParentSegment>().FirstOrDefault(segment => segment.Name.EqualsIgnoreCase("subscriptions"));
+                                if (subscriptionSegment != null)
                                 {
-                                    if (urlParts.First().EqualsIgnoreCase("subscriptions") && urlParts.Count() > 2)
+                                    var resourceGroupSegment = armUri.OfType<ParentSegment>().FirstOrDefault(segment => segment.Name.EqualsIgnoreCase("resourceGroups"));
+                                    if (resourceGroupSegment != null)
                                     {
-                                        urlParts = urlParts
-                                            .Skip(2)    // Skip "subscriptions" and {subscriptionName}
-                                            .ToList();
-                                        if (urlParts.Count > 0 && urlParts.First().EqualsIgnoreCase("resourceGroups"))
-                                        {
-                                            this.createType = CreateType.WithResourceGroupAsParent;
-                                        }
-                                        else
-                                        {
-                                            this.createType = CreateType.WithSubscriptionAsParent;
-                                        }
+                                        this.createType = CreateType.WithResourceGroupAsParent;
+                                    }
+                                    else
+                                    {
+                                        this.createType = CreateType.WithSubscriptionAsParent;
                                     }
                                 }
-                                else
-                                {
-                                    this.createType = CreateType.AsNestedChild;
-                                }
-
-                                if (this.createType != CreateType.None)
-                                {
-                                    this.createMethod = new FluentMethod(true, innerMethod, this.fluentMethodGroup);
-                                    break;
-                                }
                             }
+                            else
+                            {
+                                this.createType = CreateType.AsNestedChild;
+                            }
+                        }
+                        if (this.createType != CreateType.None)
+                        {
+                            this.createMethod = new FluentMethod(true, innerMethod, this.fluentMethodGroup);
+                            break;
                         }
                     }
                 }
             }
+        }
+
+        private static IEnumerable<ParameterJv> RequiredParametersOfMethod(MethodJvaf method)
+        {
+            return method.LocalParameters.Where(parameter => parameter.IsRequired && !parameter.IsConstant);
         }
     }
 }

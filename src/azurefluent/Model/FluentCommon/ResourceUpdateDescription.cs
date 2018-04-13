@@ -1,10 +1,6 @@
-
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using AutoRest.Core.Model;
 using AutoRest.Core.Utilities;
-using AutoRest.Java.azurefluent.Model;
+using System.Linq;
 
 namespace AutoRest.Java.Azure.Fluent.Model
 {
@@ -26,15 +22,12 @@ namespace AutoRest.Java.Azure.Fluent.Model
         {
             get
             {
-                if (this.createDescription.SupportsCreating)
-                {
-                    return true;
-                }
-                else if (this.supportsUpdating == null)
+                if (this.supportsUpdating == null)
                 {
                     this.Process();
                 }
-                return this.supportsUpdating.Value;
+                var supportsUpdating = this.supportsUpdating.Value;
+                return supportsUpdating? supportsUpdating : this.createDescription.SupportsCreating;
             }
         }
 
@@ -42,29 +35,24 @@ namespace AutoRest.Java.Azure.Fluent.Model
         {
             get
             {
-                if (this.createDescription.SupportsCreating)
-                {
-                    if (this.supportsUpdating == null)
-                    {
-                        this.Process();
-                    }
-
-                    if (this.updateMethod == null)
-                    {
-                        FluentMethod createMethod = this.createDescription.CreateMethod;
-                        // .CreateMethod.Name [CreateOrUpdate]
-                        return createMethod;
-                    }
-                    else
-                    {
-                        return this.updateMethod;
-                    }
-                }
-                else if (this.supportsUpdating == null)
+                if (this.supportsUpdating == null)
                 {
                     this.Process();
                 }
-                return this.updateMethod;
+                //
+                if (this.updateMethod != null)
+                {
+                    return this.updateMethod;
+                }
+                else if (this.createDescription.SupportsCreating)
+                {
+                    // [CreateOrUpdate]
+                    return this.createDescription.CreateMethod;
+                }
+                else
+                {
+                    return null;
+                }
             }
         }
 
@@ -75,25 +63,16 @@ namespace AutoRest.Java.Azure.Fluent.Model
             {
                 if (innerMethod.HttpMethod == HttpMethod.Patch)
                 {
-                    String Url = innerMethod.FluentUrl();
-                    if (Url != null)
+                    var armUri = new ARMUri(innerMethod);
+                    Segment lastSegment = armUri.LastOrDefault();
+                    if (lastSegment != null && lastSegment is ParentSegment)
                     {
-                        List<String> urlParts = Url.Split("/").Where(u => !String.IsNullOrEmpty(u)).ToList();
-                        if (urlParts.Count == 0 || urlParts.Count == 1)
+                        ParentSegment resourceSegment = (ParentSegment)lastSegment;
+                        if (resourceSegment.Name.EqualsIgnoreCase(fluentMethodGroup.LocalNameInPascalCase))
                         {
-                            continue;
-                        }
-                        else
-                        {
-                            bool matched = urlParts.SkipLast(1)  // Skip {resourceName}
-                                .Last()                          // Get the methodGroup local name
-                                .EqualsIgnoreCase(fluentMethodGroup.LocalNameInPascalCase);
-                            if (matched)
-                            {
-                                this.supportsUpdating = true;
-                                this.updateMethod = new FluentMethod(true, innerMethod, this.fluentMethodGroup);
-                                break;
-                            }
+                            this.supportsUpdating = true;
+                            this.updateMethod = new FluentMethod(true, innerMethod, this.fluentMethodGroup);
+                            break;
                         }
                     }
                 }
