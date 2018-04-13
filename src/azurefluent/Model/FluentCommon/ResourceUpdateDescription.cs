@@ -4,12 +4,21 @@ using System.Linq;
 
 namespace AutoRest.Java.Azure.Fluent.Model
 {
+    public enum UpdateType
+    {
+        None,
+        WithResourceGroupAsParent,
+        AsNestedChild,
+        WithSubscriptionAsParent
+    }
+
     public class ResourceUpdateDescription
     {
         private readonly FluentMethodGroup fluentMethodGroup;
         private readonly ResourceCreateDescription createDescription;
         private bool? supportsUpdating;
         private FluentMethod updateMethod;
+        private UpdateType updateType = UpdateType.None;
 
         public ResourceUpdateDescription(ResourceCreateDescription createDescription, 
             FluentMethodGroup fluentMethodGroup) 
@@ -28,6 +37,33 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 }
                 var supportsUpdating = this.supportsUpdating.Value;
                 return supportsUpdating? supportsUpdating : this.createDescription.SupportsCreating;
+            }
+        }
+
+        public UpdateType UpdateType
+        {
+            get
+            {
+                this.Process();
+                if (this.updateType != UpdateType.None)
+                {
+                    return this.updateType;
+                }
+                else
+                {
+                    var createType = this.createDescription.CreateType;
+                    switch(createType)
+                    {
+                        case CreateType.WithResourceGroupAsParent:
+                            return UpdateType.WithResourceGroupAsParent;
+                        case CreateType.WithSubscriptionAsParent:
+                            return UpdateType.WithSubscriptionAsParent;
+                        case CreateType.AsNestedChild:
+                            return UpdateType.AsNestedChild;
+                        default:
+                            return UpdateType.None;
+                    }
+                }
             }
         }
 
@@ -69,6 +105,29 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     {
                         ParentSegment resourceSegment = (ParentSegment)lastSegment;
                         if (resourceSegment.Name.EqualsIgnoreCase(fluentMethodGroup.LocalNameInPascalCase))
+                        {
+                            if (this.fluentMethodGroup.Level == 0)
+                            {
+                                var subscriptionSegment = armUri.OfType<ParentSegment>().FirstOrDefault(segment => segment.Name.EqualsIgnoreCase("subscriptions"));
+                                if (subscriptionSegment != null)
+                                {
+                                    var resourceGroupSegment = armUri.OfType<ParentSegment>().FirstOrDefault(segment => segment.Name.EqualsIgnoreCase("resourceGroups"));
+                                    if (resourceGroupSegment != null)
+                                    {
+                                        this.updateType = UpdateType.WithResourceGroupAsParent;
+                                    }
+                                    else
+                                    {
+                                        this.updateType = UpdateType.WithSubscriptionAsParent;
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                this.updateType = UpdateType.AsNestedChild;
+                            }
+                        }
+                        if (this.updateType != UpdateType.None)
                         {
                             this.supportsUpdating = true;
                             this.updateMethod = new FluentMethod(true, innerMethod, this.fluentMethodGroup);

@@ -57,11 +57,13 @@ namespace AutoRest.Java.Azure.Fluent.Model
 
         public abstract bool SupportsGetting { get; }
 
+        protected abstract bool UpdateSupported { get; }
+
         public bool SupportsUpdating
         {
             get
             {
-                if (this.FluentMethodGroup.ResourceUpdateDescription.SupportsUpdating)
+                if (this.UpdateSupported)
                 {
                     return this.cVariables.IsCompatibleWith(this.uVariables);
                 }
@@ -417,7 +419,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
             StringBuilder methodBuilder = new StringBuilder();
             methodBuilder.AppendLine("@Override");
             methodBuilder.AppendLine($"public Observable<{createdResourceInterfaceName}> createResourceAsync() {{");
-            methodBuilder.AppendLine($"    {innerMethodGroupTypeName} client = this.manager.inner().{this.FluentMethodGroup.InnerMethodGroup.Name}();");
+            methodBuilder.AppendLine($"    {innerMethodGroupTypeName} client = this.manager().inner().{this.FluentMethodGroup.InnerMethodGroup.Name}();");
             methodBuilder.AppendLine("    return null; // NOP createResourceAsync implementation as create is not supported");
             methodBuilder.AppendLine("}");
             return methodBuilder.ToString();
@@ -482,7 +484,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
             StringBuilder methodBuilder = new StringBuilder();
             methodBuilder.AppendLine("@Override");
             methodBuilder.AppendLine($"public Observable<{updatedResourceInterfaceName}> updateResourceAsync() {{");
-            methodBuilder.AppendLine($"    {innerMethodGroupTypeName} client = this.manager.inner().{this.FluentMethodGroup.InnerMethodGroup.Name}();");
+            methodBuilder.AppendLine($"    {innerMethodGroupTypeName} client = this.manager().inner().{this.FluentMethodGroup.InnerMethodGroup.Name}();");
             methodBuilder.AppendLine("    return null; // NOP updateResourceAsync implementation as update is not supported");
             methodBuilder.AppendLine("}");
             return methodBuilder.ToString();

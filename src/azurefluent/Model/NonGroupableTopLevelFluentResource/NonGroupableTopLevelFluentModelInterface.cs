@@ -61,6 +61,15 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
+        protected override bool UpdateSupported
+        {
+            get
+            {
+                return this.FluentMethodGroup.ResourceUpdateDescription.SupportsUpdating
+                    && this.FluentMethodGroup.ResourceUpdateDescription.UpdateType == UpdateType.WithSubscriptionAsParent;
+            }
+        }
+
         public override bool SupportsGetting
         {
             get
