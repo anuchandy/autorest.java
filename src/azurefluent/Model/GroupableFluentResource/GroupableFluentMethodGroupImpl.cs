@@ -9,9 +9,10 @@ namespace AutoRest.Java.Azure.Fluent.Model
 {
     public class GroupableFluentMethodGroupImpl
     {
+        private readonly string package = Settings.Instance.Namespace.ToLower();
+
         private readonly GroupableFluentModelImpl fluentModelImpl;
         private readonly FluentMethodGroup Interface;
-        private readonly string package = Settings.Instance.Namespace.ToLower();
 
         public GroupableFluentMethodGroupImpl(GroupableFluentModelImpl fluentModelImpl)
         {
@@ -24,14 +25,6 @@ namespace AutoRest.Java.Azure.Fluent.Model
             get
             {
                 return $"{this.Interface.JavaInterfaceName}Impl";
-            }
-        }
-
-        public string Package
-        {
-            get
-            {
-                return $"{this.Interface.Package}.implementation";
             }
         }
 
@@ -77,12 +70,12 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     $"rx.Observable",
                     $"rx.Completable"
                 };
-                imports.AddRange(this.Interface.ResourceDeleteDescription.ImportsForImpl);
-                imports.AddRange(this.Interface.ResourceListingDescription.ImportsForImpl);
+                imports.AddRange(this.Interface.ResourceDeleteDescription.ImportsForMethodGroupImpl);
+                imports.AddRange(this.Interface.ResourceListingDescription.ImportsForMethodGroupImpl);
                 imports.AddRange(this.Interface.OtherMethods.ImportsForImpl);
                 foreach (var nestedFluentMethodGroup in this.Interface.ChildFluentMethodGroups)
                 {
-                    imports.Add($"{this.Interface.Package}.{nestedFluentMethodGroup.JavaInterfaceName}");
+                    imports.Add($"{this.package}.{nestedFluentMethodGroup.JavaInterfaceName}");
                 }
                 return imports;
             }
@@ -308,6 +301,15 @@ namespace AutoRest.Java.Azure.Fluent.Model
                         methodBuilder.AppendLine($"public Observable<{this.GroupableModelInterfaceName}> listByResourceGroupAsync(String resourceGroupName) {{");
                         methodBuilder.AppendLine($"    {this.InnerClientName} client = this.inner();");
                         methodBuilder.AppendLine($"    return client.{method.Name}Async(resourceGroupName)");
+                        if (method.InnerMethod.SimulateAsPagingOperation)
+                        {
+                            methodBuilder.AppendLine($"    .flatMap(new Func1<Page<{this.GroupableModelInnerName}>, Observable<{this.GroupableModelInnerName}>>() {{");
+                            methodBuilder.AppendLine($"        @Override");
+                            methodBuilder.AppendLine($"        public Observable<{this.GroupableModelInnerName}> call(Page<{this.GroupableModelInnerName}> innerPage) {{");
+                            methodBuilder.AppendLine($"            return Observable.from(innerPage.items());");
+                            methodBuilder.AppendLine($"        }}");
+                            methodBuilder.AppendLine($"    }})");
+                        }
                         methodBuilder.AppendLine($"    .map(new Func1<{this.GroupableModelInnerName}, {this.GroupableModelInterfaceName}>() {{");
                         methodBuilder.AppendLine($"        @Override");
                         methodBuilder.AppendLine($"        public {this.GroupableModelInterfaceName} call({this.GroupableModelInnerName} inner) {{");
@@ -400,6 +402,15 @@ namespace AutoRest.Java.Azure.Fluent.Model
                         methodBuilder.AppendLine($"public Observable<{this.GroupableModelInterfaceName}> listAsync() {{");
                         methodBuilder.AppendLine($"    {this.InnerClientName} client = this.inner();");
                         methodBuilder.AppendLine($"    return client.{method.Name}Async()");
+                        if (method.InnerMethod.SimulateAsPagingOperation)
+                        {
+                            methodBuilder.AppendLine($"    .flatMap(new Func1<Page<{this.GroupableModelInnerName}>, Observable<{this.GroupableModelInnerName}>>() {{");
+                            methodBuilder.AppendLine($"        @Override");
+                            methodBuilder.AppendLine($"        public Observable<{this.GroupableModelInnerName}> call(Page<{this.GroupableModelInnerName}> innerPage) {{");
+                            methodBuilder.AppendLine($"            return Observable.from(innerPage.items());");
+                            methodBuilder.AppendLine($"        }}");
+                            methodBuilder.AppendLine($"    }})");
+                        }
                         methodBuilder.AppendLine($"    .map(new Func1<{this.GroupableModelInnerName}, {this.GroupableModelInterfaceName}>() {{");
                         methodBuilder.AppendLine($"        @Override");
                         methodBuilder.AppendLine($"        public {this.GroupableModelInterfaceName} call({this.GroupableModelInnerName} inner) {{");

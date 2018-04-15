@@ -28,23 +28,23 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     "com.microsoft.azure.management.resources.fluentcore.model.implementation.WrapperImpl",
                     $"{this.package}.{this.Interface.JavaInterfaceName}",
                 };
-                imports.AddRange(this.Interface.ResourceCreateDescription.ImportsForImpl);
-                imports.AddRange(this.Interface.ResourceDeleteDescription.ImportsForImpl);
-                imports.AddRange(this.Interface.ResourceGetDescription.ImportsForImpl);
-                imports.AddRange(this.Interface.ResourceListingDescription.ImportsForImpl);
+                imports.AddRange(this.Interface.ResourceCreateDescription.ImportsForMethodGroupImpl);
+                imports.AddRange(this.Interface.ResourceDeleteDescription.ImportsForMethodGroupImpl);
+                imports.AddRange(this.Interface.ResourceGetDescription.ImportsForMethodGroupImpl);
+                imports.AddRange(this.Interface.ResourceListingDescription.ImportsForMethodGroupImpl);
                 imports.AddRange(this.Interface.OtherMethods.ImportsForImpl);
 
                 if (this.Interface.ResourceGetDescription.SupportsGetByImmediateParent 
                     || this.Interface.ResourceListingDescription.SupportsListByImmediateParent)
                 {
-                    imports.Add($"{this.Interface.Package}.{this.fluentModelImpl.Interface.JavaInterfaceName}");
+                    imports.Add($"{this.package}.{this.fluentModelImpl.Interface.JavaInterfaceName}");
                 }
                 //
                 string managerTypeName = this.fluentModelImpl.Interface.FluentMethodGroup.ManagerTypeName;
                 //
                 foreach (var nestedFluentMethodGroup in this.Interface.ChildFluentMethodGroups)
                 {
-                    imports.Add($"{this.Interface.Package}.{nestedFluentMethodGroup.JavaInterfaceName}");
+                    imports.Add($"{this.package}.{nestedFluentMethodGroup.JavaInterfaceName}");
                 }
 
                 return imports;

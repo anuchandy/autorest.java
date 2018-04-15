@@ -78,7 +78,20 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        public HashSet<string> ImportsForInterface
+        public HashSet<string> MethodGroupInterfaceExtendsFrom
+        {
+            get
+            {
+                HashSet<string> extendsFrom = new HashSet<string>();
+                if (this.SupportsGetByResourceGroup)
+                {
+                    extendsFrom.Add($"SupportsGettingByResourceGroup<{this.GetByResourceGroupMethod.ReturnModel.JavaInterfaceName}>");
+                }
+                return extendsFrom;
+            }
+        }
+
+        public HashSet<string> ImportsForMethodGroupInterface
         {
             get
             {
@@ -95,7 +108,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        public HashSet<String> ImportsForImpl
+        public HashSet<String> ImportsForMethodGroupImpl
         {
             get
             {

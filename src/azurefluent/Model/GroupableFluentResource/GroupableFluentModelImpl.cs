@@ -263,12 +263,6 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 }
                 else
                 {
-                    // var getMethodParameters = this.Interface.DisambiguatedMemberVariables.MemeberVariablesForGet
-                    //    .OrderBy(v => v.Index)
-                    //    .Select(v => v.VariableAccessor);
-                    //
-                    // var getMethodParametersCombined = String.Join(", ", getMethodParameters);
-
                     FluentMethod getMethod = this.Interface.FluentMethodGroup.ResourceGetDescription.GetByResourceGroupMethod;
                     var getMethodParametersCombined = "this.resourceGroupName(), this.name()";
                     return this.Interface.GetInnerAsyncMethodImplementation(getMethod,

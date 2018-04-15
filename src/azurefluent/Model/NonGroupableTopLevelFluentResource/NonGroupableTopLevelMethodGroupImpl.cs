@@ -1,4 +1,5 @@
-﻿using AutoRest.Core.Utilities;
+﻿using AutoRest.Core;
+using AutoRest.Core.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,6 +9,8 @@ namespace AutoRest.Java.Azure.Fluent.Model
 {
     public class NonGroupableTopLevelMethodGroupImpl
     {
+        private readonly string package = Settings.Instance.Namespace.ToLower();
+
         private readonly NonGroupableTopLevelFluentModelImpl fluentModelImpl;
         private readonly FluentMethodGroup Interface;
 
@@ -48,32 +51,30 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 HashSet<string> imports = new HashSet<string>
                 {
                     "com.microsoft.azure.management.resources.fluentcore.model.implementation.WrapperImpl",
-                    $"{this.Interface.Package}.{this.Interface.JavaInterfaceName}",
+                    $"{this.package}.{this.Interface.JavaInterfaceName}",
                 };
+                imports.AddRange(this.Interface.ResourceCreateDescription.ImportsForMethodGroupImpl);
+                imports.AddRange(this.Interface.ResourceDeleteDescription.ImportsForMethodGroupImpl);
+                imports.AddRange(this.Interface.ResourceGetDescription.ImportsForMethodGroupImpl);
+                imports.AddRange(this.Interface.ResourceListingDescription.ImportsForMethodGroupImpl);
                 imports.AddRange(this.Interface.OtherMethods.ImportsForImpl);
-                if (this.Interface.ResourceListingDescription.SupportsListBySubscription)
+                //
+                if (this.Interface.ResourceListingDescription.SupportsListByResourceGroup)
                 {
-                    imports.Add($"{this.Interface.Package}.{this.fluentModelImpl.Interface.JavaInterfaceName}");
-                    imports.Add("rx.Observable");
-                    imports.Add("rx.functions.Func1");
                     imports.Add("com.microsoft.azure.management.resources.fluentcore.utils.PagedListConverter");
+                    imports.Add($"{this.package}.{this.fluentModelImpl.Interface.JavaInterfaceName}");
                 }
+                //
                 if (this.Interface.ResourceListingDescription.SupportsListBySubscription)
                 {
-                    FluentMethod method = this.Interface.ResourceListingDescription.ListBySubscriptionMethod;
-                    if (method.InnerMethod.IsPagingOperation)
-                    {
-                        imports.Add("com.microsoft.azure.Page");
-                        imports.Add("rx.functions.Func1");
-                        imports.Add("com.microsoft.azure.PagedList");
-                    }
+                    imports.Add($"{this.package}.{this.fluentModelImpl.Interface.JavaInterfaceName}");
+                    imports.Add("com.microsoft.azure.management.resources.fluentcore.utils.PagedListConverter");
                 }
                 //
                 foreach (var nestedFluentMethodGroup in this.Interface.ChildFluentMethodGroups)
                 {
-                    imports.Add($"{this.Interface.Package}.{nestedFluentMethodGroup.JavaInterfaceName}");
+                    imports.Add($"{this.package}.{nestedFluentMethodGroup.JavaInterfaceName}");
                 }
-
                 return imports;
             }
         }
@@ -106,7 +107,8 @@ namespace AutoRest.Java.Azure.Fluent.Model
         {
             get
             {
-                if (this.Interface.ResourceListingDescription.SupportsListBySubscription)
+                if (this.Interface.ResourceListingDescription.SupportsListByResourceGroup || 
+                    this.Interface.ResourceListingDescription.SupportsListBySubscription)
                 {
                     yield return $"private PagedListConverter<{this.ModelInnerName}, {this.JavaInterfaceName}> converter;";
                 }
@@ -141,6 +143,8 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 }
                 yield return this.ListBySubscriptionMethodSyncImplementation;
                 yield return this.ListBySubscriptionMethodAsyncImplementation;
+                yield return this.ListByResourceGroupMethodSyncImplementation;
+                yield return this.ListByResourceGroupMethodAsyncImplementation;
             }
         }
 
@@ -187,7 +191,8 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 methodBuilder.AppendLine($"{this.JvaClassName}({managerTypeName} manager) {{");
                 methodBuilder.AppendLine($"    super(manager.inner().{this.Interface.InnerMethodGroupAccessorName}());"); // WrapperImpl(inner)
                 methodBuilder.AppendLine($"    this.manager = manager;");
-                if (this.Interface.ResourceListingDescription.SupportsListBySubscription)
+                if (this.Interface.ResourceListingDescription.SupportsListByResourceGroup || 
+                    this.Interface.ResourceListingDescription.SupportsListBySubscription)
                 {
                     methodBuilder.AppendLine($"    this.converter = new PagedListConverter<{ModelInnerName}, {JavaInterfaceName}>() {{");
                     methodBuilder.AppendLine($"        @Override");
@@ -211,7 +216,9 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     StringBuilder methodBuilder = new StringBuilder();
                     methodBuilder.AppendLine("@Override");
                     methodBuilder.AppendLine($"public {this.fluentModelImpl.JvaClassName} define(String name) {{");
-                    methodBuilder.AppendLine($"    return {this.fluentModelImpl.CtrInvocationFromWrapNewInnerModel}");
+                    methodBuilder.AppendLine($"    return null; // TODO");
+                    // TODO: implement this
+                    // methodBuilder.AppendLine($"    return {this.fluentModelImpl.CtrInvocationFromWrapNewInnerModel}");
 
                     methodBuilder.AppendLine($"}}");
                     return methodBuilder.ToString();
@@ -235,6 +242,108 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
+        private string ListByResourceGroupMethodSyncImplementation
+        {
+            get
+            {
+                StringBuilder methodBuilder = new StringBuilder();
+                //
+                if (this.Interface.ResourceListingDescription.SupportsListByResourceGroup)
+                {
+                    FluentMethod method = this.Interface.ResourceListingDescription.ListByResourceGroupMethod;
+                    //
+                    methodBuilder.AppendLine("@Override");
+                    methodBuilder.AppendLine($"public PagedList<{JavaInterfaceName}> listByResourceGroup(String resourceGroupName) {{");
+                    methodBuilder.AppendLine($"    {this.InnerClientName} client = this.inner();");
+                    methodBuilder.AppendLine($"    return converter.convert(client.{method.Name}(resourceGroupName));");
+                    methodBuilder.AppendLine($"}}");
+                }
+                //
+                return methodBuilder.ToString();
+            }
+        }
+
+        private string ListByResourceGroupMethodAsyncImplementation
+        {
+            get
+            {
+                StringBuilder methodBuilder = new StringBuilder();
+                if (this.Interface.ResourceListingDescription.SupportsListByResourceGroup)
+                {
+                    FluentMethod method = this.Interface.ResourceListingDescription.ListByResourceGroupMethod;
+                    if (!method.InnerMethod.IsPagingOperation)
+                    {
+                        FluentModel returnModel = method.ReturnModel;
+                        //
+                        methodBuilder.AppendLine($"@Override");
+                        methodBuilder.AppendLine($"public Observable<{JavaInterfaceName}> listByResourceGroupAsync(String resourceGroupName) {{");
+                        methodBuilder.AppendLine($"    {this.InnerClientName} client = this.inner();");
+                        methodBuilder.AppendLine($"    return client.{method.Name}Async(resourceGroupName)");
+                        if (method.InnerMethod.SimulateAsPagingOperation)
+                        {
+                            methodBuilder.AppendLine($"    .flatMap(new Func1<Page<{this.ModelInnerName}>, Observable<{this.ModelInnerName}>>() {{");
+                            methodBuilder.AppendLine($"        @Override");
+                            methodBuilder.AppendLine($"        public Observable<{this.ModelInnerName}> call(Page<{this.ModelInnerName}> innerPage) {{");
+                            methodBuilder.AppendLine($"            return Observable.from(innerPage.items());");
+                            methodBuilder.AppendLine($"        }}");
+                            methodBuilder.AppendLine($"    }})");
+                        }
+                        methodBuilder.AppendLine($"    .map(new Func1<{this.ModelInnerName}, {JavaInterfaceName}>() {{");
+                        methodBuilder.AppendLine($"        @Override");
+                        methodBuilder.AppendLine($"        public {JavaInterfaceName} call({this.ModelInnerName} inner) {{");
+                        methodBuilder.AppendLine($"            return wrapModel(inner);");
+                        methodBuilder.AppendLine($"        }}");
+                        methodBuilder.AppendLine($"    }});");
+                        methodBuilder.AppendLine($"}}");
+                    }
+                    else
+                    {
+                        string nextPageMethodName = $"listByResourceGroupNextInnerPageAsync";
+
+                        methodBuilder.AppendLine($"private Observable<Page<{this.ModelInnerName}>> {nextPageMethodName}(String nextLink) {{");
+                        methodBuilder.AppendLine($"    if (nextLink == null) {{");
+                        methodBuilder.AppendLine($"        Observable.empty();");
+                        methodBuilder.AppendLine($"    }}");
+                        methodBuilder.AppendLine($"    {this.InnerClientName} client = this.inner();");
+                        methodBuilder.AppendLine($"    return client.{method.Name}NextAsync(nextLink)");
+                        methodBuilder.AppendLine($"    .flatMap(new Func1<Page<{this.ModelInnerName}>, Observable<Page<{this.ModelInnerName}>>>() {{");
+                        methodBuilder.AppendLine($"        @Override");
+                        methodBuilder.AppendLine($"        public Observable<Page<{this.ModelInnerName}>> call(Page<{this.ModelInnerName}> page) {{");
+                        methodBuilder.AppendLine($"            return Observable.just(page).concatWith({nextPageMethodName}(page.nextPageLink()));");
+                        methodBuilder.AppendLine($"        }}");
+                        methodBuilder.AppendLine($"    }});");
+                        methodBuilder.AppendLine($"}}");
+
+                        methodBuilder.AppendLine($"@Override");
+                        methodBuilder.AppendLine($"public Observable<{JavaInterfaceName}> listByResourceGroupAsync(String resourceGroupName) {{");
+                        methodBuilder.AppendLine($"    {this.InnerClientName} client = this.inner();");
+                        methodBuilder.AppendLine($"    return client.{method.Name}Async(resourceGroupName)");
+                        methodBuilder.AppendLine($"    .flatMap(new Func1<Page<{this.ModelInnerName}>, Observable<Page<{this.ModelInnerName}>>>() {{");
+                        methodBuilder.AppendLine($"        @Override");
+                        methodBuilder.AppendLine($"        public Observable<Page<{this.ModelInnerName}>> call(Page<{this.ModelInnerName}> page) {{");
+                        methodBuilder.AppendLine($"            return {nextPageMethodName}(page.nextPageLink());");
+                        methodBuilder.AppendLine($"        }}");
+                        methodBuilder.AppendLine($"    }})");
+                        methodBuilder.AppendLine($"    .flatMapIterable(new Func1<Page<{this.ModelInnerName}>, Iterable<{this.ModelInnerName}>>() {{");
+                        methodBuilder.AppendLine($"        @Override");
+                        methodBuilder.AppendLine($"        public Iterable<{this.ModelInnerName}> call(Page<{this.ModelInnerName}> page) {{");
+                        methodBuilder.AppendLine($"            return page.items();");
+                        methodBuilder.AppendLine($"        }}");
+                        methodBuilder.AppendLine($"   }})");
+                        methodBuilder.AppendLine($"    .map(new Func1<{this.ModelInnerName}, {JavaInterfaceName}>() {{");
+                        methodBuilder.AppendLine($"        @Override");
+                        methodBuilder.AppendLine($"        public {JavaInterfaceName} call({this.ModelInnerName} inner) {{");
+                        methodBuilder.AppendLine($"            return wrapModel(inner);");
+                        methodBuilder.AppendLine($"        }}");
+                        methodBuilder.AppendLine($"   }});");
+                        methodBuilder.AppendLine($"}}");
+                    }
+                }
+                return methodBuilder.ToString();
+            }
+        }
+
+
         private string ListBySubscriptionMethodSyncImplementation
         {
             get
@@ -244,6 +353,8 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 if (this.Interface.ResourceListingDescription.SupportsListBySubscription)
                 {
                     FluentMethod method = this.Interface.ResourceListingDescription.ListBySubscriptionMethod;
+                    // TODO: Check return type is "PagedList" then "converter.convert"
+                    //       If return type is "List" create a Page, then PagedList from it then "converter.convert"
                     //
                     methodBuilder.AppendLine("@Override");
                     methodBuilder.AppendLine($"public PagedList<{JavaInterfaceName}> list() {{");
@@ -272,6 +383,15 @@ namespace AutoRest.Java.Azure.Fluent.Model
                         methodBuilder.AppendLine($"public Observable<{this.JavaInterfaceName}> listAsync() {{");
                         methodBuilder.AppendLine($"    {this.InnerClientName} client = this.inner();");
                         methodBuilder.AppendLine($"    return client.{method.Name}Async()");
+                        if (method.InnerMethod.SimulateAsPagingOperation)
+                        {
+                            methodBuilder.AppendLine($"    .flatMap(new Func1<Page<{this.ModelInnerName}>, Observable<{this.ModelInnerName}>>() {{");
+                            methodBuilder.AppendLine($"        @Override");
+                            methodBuilder.AppendLine($"        public Observable<{this.ModelInnerName}> call(Page<{this.ModelInnerName}> innerPage) {{");
+                            methodBuilder.AppendLine($"            return Observable.from(innerPage.items());");
+                            methodBuilder.AppendLine($"        }}");
+                            methodBuilder.AppendLine($"    }})");
+                        }
                         methodBuilder.AppendLine($"    .map(new Func1<{this.ModelInnerName}, {this.JavaInterfaceName}>() {{");
                         methodBuilder.AppendLine($"        @Override");
                         methodBuilder.AppendLine($"        public {this.JavaInterfaceName} call({this.ModelInnerName} inner) {{");

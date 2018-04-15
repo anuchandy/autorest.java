@@ -216,15 +216,14 @@ namespace AutoRest.Java.Azure.Fluent.Model
 
                 if (this.SupportsUpdating)
                 {
-                    imports.Add("com.microsoft.azure.management.resources.fluentcore.model.Updatable");
-                    imports.Add("com.microsoft.azure.management.resources.fluentcore.model.Appliable");
+                    imports.AddRange(this.FluentMethodGroup.ResourceUpdateDescription.ImportsForModelInterface);
                 }
 
                 if (this.SupportsCreating)
                 {
-                    imports.Add("com.microsoft.azure.management.resources.fluentcore.model.Creatable");
-                    imports.Add("com.microsoft.azure.management.resources.fluentcore.arm.models.GroupableResource");
-                    imports.Add("com.microsoft.azure.management.resources.fluentcore.arm.models.Resource"); // Resource.DefinitionWithTags<WithCreate>
+                    imports.AddRange(this.FluentMethodGroup.ResourceCreateDescription.ImportsForModelInterface);
+                    imports.Add("com.microsoft.azure.management.resources.fluentcore.arm.models.GroupableResource"); // GroupableResource.DefinitionWithRegion<WithGroup>
+                    imports.Add("com.microsoft.azure.management.resources.fluentcore.arm.models.Resource");          // Resource.DefinitionWithTags<WithCreate>
                 }
 
                 imports.Add("com.microsoft.azure.management.resources.fluentcore.arm.models.HasManager");

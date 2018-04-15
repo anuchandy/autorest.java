@@ -79,7 +79,21 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        public HashSet<string> ImportsForInterface
+        public HashSet<string> MethodGroupInterfaceExtendsFrom
+        {
+            get
+            {
+                HashSet<string> extendsFrom = new HashSet<string>();
+                if (this.SupportsDeleteByResourceGroup)
+                {
+                    extendsFrom.Add("SupportsDeletingByResourceGroup");
+                    extendsFrom.Add("SupportsBatchDeletion");
+                }
+                return extendsFrom;
+            }
+        }
+
+        public HashSet<string> ImportsForMethodGroupInterface
         {
             get
             {
@@ -97,7 +111,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        public HashSet<String> ImportsForImpl
+        public HashSet<String> ImportsForMethodGroupImpl
         {
             get
             {
@@ -105,7 +119,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 if (this.SupportsDeleteByResourceGroup)
                 {
                     imports.Add("rx.Completable");
-                    // For SupportBatchDelete interface impl
+                    // For 'SupportBatchDelete' interface impl
                     //
                     imports.Add($"java.util.ArrayList");
                     imports.Add($"java.util.Arrays");

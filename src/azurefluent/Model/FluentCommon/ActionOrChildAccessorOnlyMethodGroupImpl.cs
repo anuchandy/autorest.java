@@ -1,4 +1,5 @@
-﻿using AutoRest.Core.Utilities;
+﻿using AutoRest.Core;
+using AutoRest.Core.Utilities;
 using System.Collections.Generic;
 using System.Text;
 
@@ -6,6 +7,8 @@ namespace AutoRest.Java.Azure.Fluent.Model
 {
     public class ActionOrChildAccessorOnlyMethodGroupImpl
     {
+        private readonly string package = Settings.Instance.Namespace.ToLower();
+
         public FluentMethodGroup Interface { get; private set; }
 
         public ActionOrChildAccessorOnlyMethodGroupImpl(FluentMethodGroup fluentMethodGroup)
@@ -20,14 +23,14 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 HashSet<string> imports = new HashSet<string>
                 {
                     "com.microsoft.azure.management.resources.fluentcore.model.implementation.WrapperImpl",
-                    $"{this.Interface.Package}.{this.Interface.JavaInterfaceName}",
+                    $"{this.package}.{this.Interface.JavaInterfaceName}",
                 };
                 //
                 imports.AddRange(this.Interface.OtherMethods.ImportsForImpl);
                 //
                 foreach (var nestedFluentMethodGroup in this.Interface.ChildFluentMethodGroups)
                 {
-                    imports.Add($"{this.Interface.Package}.{nestedFluentMethodGroup.JavaInterfaceName}");
+                    imports.Add($"{this.package}.{nestedFluentMethodGroup.JavaInterfaceName}");
                 }
                 //
                 return imports;

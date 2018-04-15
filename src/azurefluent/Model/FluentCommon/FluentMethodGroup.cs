@@ -12,6 +12,8 @@ namespace AutoRest.Java.Azure.Fluent.Model
 {
     public class FluentMethodGroup
     {
+        private readonly string package = Settings.Instance.Namespace.ToLower();
+
         private String localName;
         private ResourceCreateDescription resourceCreateDescription;
         private ResourceUpdateDescription resourceUpdateDescription;
@@ -124,22 +126,6 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        public string Package
-        {
-            get
-            {
-                return $"{Settings.Instance.Namespace.ToLower()}";
-            }
-        }
-
-        public string ImplementationPackage
-        {
-            get
-            {
-                return $"{Settings.Instance.Namespace.ToLower()}.implementation";
-            }
-        }
-
         public string InnerMethodGroupTypeName
         {
             get
@@ -161,28 +147,10 @@ namespace AutoRest.Java.Azure.Fluent.Model
             get
             {
                 List<string> extends = new List<string>();
-                if (this.ResourceCreateDescription.SupportsCreating)
-                {
-                    extends.Add($"SupportsCreating<{this.ResourceCreateDescription.CreateMethod.ReturnModel.JavaInterfaceName}.DefinitionStages.Blank>");
-                }
-                if (this.ResourceDeleteDescription.SupportsDeleteByResourceGroup)
-                {
-                    extends.Add("SupportsDeletingByResourceGroup");
-                    extends.Add("SupportsBatchDeletion");
-                }
-                if (this.ResourceGetDescription.SupportsGetByResourceGroup)
-                {
-                    extends.Add($"SupportsGettingByResourceGroup<{this.ResourceGetDescription.GetByResourceGroupMethod.ReturnModel.JavaInterfaceName}>");
-                }
-                if (this.ResourceListingDescription.SupportsListByResourceGroup)
-                {
-                    extends.Add($"SupportsListingByResourceGroup<{this.ResourceListingDescription.ListByResourceGroupMethod.ReturnModel.JavaInterfaceName}>");
-                }
-                if (this.ResourceListingDescription.SupportsListBySubscription)
-                {
-                    extends.Add($"SupportsListing<{this.ResourceListingDescription.ListBySubscriptionMethod.ReturnModel.JavaInterfaceName}>");
-                }
-
+                extends.AddRange(this.ResourceCreateDescription.MethodGroupInterfaceExtendsFrom);
+                extends.AddRange(this.ResourceDeleteDescription.MethodGroupInterfaceExtendsFrom);
+                extends.AddRange(this.ResourceGetDescription.MethodGroupInterfaceExtendsFrom);
+                extends.AddRange(this.ResourceListingDescription.MethodGroupInterfaceExtendsFrom);
                 extends.Add($"HasInner<{this.InnerMethodGroup.MethodGroupImplType}>");
 
                 if (extends.Count() > 0)
@@ -201,12 +169,12 @@ namespace AutoRest.Java.Azure.Fluent.Model
             get
             {
                 HashSet<string> imports = new HashSet<string>();
-                imports.AddRange(this.ResourceCreateDescription.ImportsForInterface);
-                imports.AddRange(this.ResourceDeleteDescription.ImportsForInterface);
-                imports.AddRange(this.ResourceGetDescription.ImportsForInterface);
-                imports.AddRange(this.ResourceListingDescription.ImportsForInterface);
+                imports.AddRange(this.ResourceCreateDescription.ImportsForMethodGroupInterface);
+                imports.AddRange(this.ResourceDeleteDescription.ImportsForMethodGroupInterface);
+                imports.AddRange(this.ResourceGetDescription.ImportsForMethodGroupInterface);
+                imports.AddRange(this.ResourceListingDescription.ImportsForMethodGroupInterface);
                 imports.AddRange(this.OtherMethods.ImportsForInterface);
-                imports.Add($"{this.ImplementationPackage}.{this.InnerMethodGroupTypeName}");
+                imports.Add($"{this.package}.implementation.{this.InnerMethodGroupTypeName}");
                 imports.Add("com.microsoft.azure.management.resources.fluentcore.model.HasInner");
                 return imports;
             }
@@ -486,19 +454,91 @@ namespace AutoRest.Java.Azure.Fluent.Model
         }
 
         /// <summary>
-        /// Returns true if the method group is at level 0 and support atleast one resource-group-scoped
-        /// operations "(LIST|GET|DELETE|CREATE)ByResourceGroup".
+        /// Checks the method group and it's standard model belongs to groupable category. This will be 
+        /// used to decide whether methodgroup can be extends from "GroupableResourcesImpl" and standard
+        /// model can implements GroupableResource and extends GroupableResourceImpl.
         /// </summary>
+        /// 
         public bool IsGroupableTopLevel
         {
             get
             {
                 if (this.Level == 0)
                 {
-                    return this.ResourceListingDescription.SupportsListByResourceGroup
-                        || this.ResourceGetDescription.SupportsGetByResourceGroup
-                        || this.ResourceDeleteDescription.SupportsDeleteByResourceGroup
-                        || (this.ResourceCreateDescription.CreateType == CreateType.WithResourceGroupAsParent);
+                    if (this.ResourceCreateDescription.SupportsCreating)
+                    {
+                        // It's guarnteed to be have a standardModel if create is supported
+                        //
+                        if (this.ResourceCreateDescription.CreateType == CreateType.WithResourceGroupAsParent)
+                        {
+                            if (this.IsStandardModelAResource)
+                            {
+                                // FModel -> implements GroupableResource extends GroupableResourceImpl
+                                // FGroup -> extends GroupableResourcesImpl
+                                //
+                                return true;
+                            }
+                            else
+                            {
+                                // FModel -> implements SupportsCreating
+                                // FGroup -> extends CreatableUpdate
+                                //
+                                // Treat as "NonGroupableTopLevel"
+                                return false;
+                            }
+                        }
+                        else
+                        {
+                            // can be created but not under a resource group, don't consider it as Groupable
+                            // even though standard model is a resource.
+                            // FModel -> implements SupportsCreating
+                            // FGroup -> extends CreatableUpdate
+                            //
+                            // Treat as "NonGroupableTopLevel"
+                            //
+                            return false;
+                        }
+                    }
+                    else if (this.ResourceUpdateDescription.SupportsUpdating)
+                    {
+                        // It's guarnteed to be have a standardModel if update is supported
+                        //
+                        if (this.ResourceUpdateDescription.UpdateType == UpdateType.WithResourceGroupAsParent)
+                        {
+                            if (this.IsStandardModelAResource)
+                            {
+                                // FModel -> implements GroupableResource extends GroupableResourceImpl
+                                // FGroup -> extends GroupableResourcesImpl
+                                //
+                                return true;
+                            }
+                            else
+                            {
+                                // FModel -> implements Appliable
+                                // FGroup -> extends CreatableUpdate
+                                //
+                                // Treat as "NonGroupableTopLevel"
+                                //
+                                return false;
+                            }
+                        }
+                        else
+                        {
+                            // FModel -> implements Appliable
+                            // FGroup -> extends CreatableUpdate
+                            //
+                            // Treat as "NonGroupableTopLevel"
+                            //
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        // Do not support creation or updation then we treat this as Groupable 
+                        // only if there is a standard model and it is a Resource.
+                        //
+                        return this.IsStandardModelAResource;
+                    }
                 }
                 return false;
             }
@@ -508,7 +548,21 @@ namespace AutoRest.Java.Azure.Fluent.Model
         {
             get
             {
-                return (this.Level == 0 && !this.IsGroupableTopLevel);
+                if (this.Level == 0)
+                {
+                    if (!this.IsGroupableTopLevel)
+                    {
+                        return this.StandardFluentModel != null;
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
+                else
+                {
+                    return false;
+                }
             }
         }
 
@@ -603,6 +657,29 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 throw new ArgumentNullException("strToCheck");
             }
             return strToCheck.EndsWith("s");
+        }
+
+        private bool IsStandardModelAResource
+        {
+            get
+            {
+                if (this.StandardFluentModel == null)
+                {
+                    return false;
+                }
+                else
+                {
+                    CompositeTypeJvaf innerModel = this.StandardFluentModel.InnerModel;
+                    //
+                    bool hasId = innerModel.ComposedProperties.Any(p => p.Name.ToLowerInvariant().Equals("id"));
+                    bool hasName = innerModel.ComposedProperties.Any(p => p.Name.ToLowerInvariant().Equals("name"));
+                    bool hasType = innerModel.ComposedProperties.Any(p => p.Name.ToLowerInvariant().Equals("type"));
+                    bool hasLocation = innerModel.ComposedProperties.Any(p => p.Name.ToLowerInvariant().Equals("location"));
+                    bool hasTags = innerModel.ComposedProperties.Any(p => p.Name.ToLowerInvariant().Equals("tags"));
+                    //
+                    return hasId && hasName && hasType && hasLocation && hasTags;
+                }
+            }
         }
     }
 }
