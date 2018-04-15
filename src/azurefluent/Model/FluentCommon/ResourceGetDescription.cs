@@ -15,9 +15,11 @@ namespace AutoRest.Java.Azure.Fluent.Model
         private bool supportsGetBySubscription;
         private bool supportsGetByResourceGroup;
         private bool supportsGetByImmediateParent;
+        private bool supportsGetByParameterizedParent;
         private FluentMethod getBySubscriptionMethod;
         private FluentMethod getByResourceGroupMethod;
         private FluentMethod getByImmediateParentMethod;
+        private FluentMethod getByParameterizedParentMethod;
 
         public ResourceGetDescription(FluentMethodGroup fluentMethodGroup)
         {
@@ -78,6 +80,24 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
+        public bool SupportsGetByParameterizedParent
+        {
+            get
+            {
+                Process();
+                return this.supportsGetByParameterizedParent;
+            }
+        }
+
+        public FluentMethod GetByParameterizedParentMethod
+        {
+            get
+            {
+                Process();
+                return this.getByParameterizedParentMethod;
+            }
+        }
+
         public HashSet<string> MethodGroupInterfaceExtendsFrom
         {
             get
@@ -132,6 +152,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 this.isProcessed = true;
                 this.CheckGetByResourceGroupSupport();
                 this.CheckGetBySubscriptionSupport();
+                this.CheckGetByParameterizedParentSupport();
                 this.CheckGetByImmediateParentSupport();
             }
         }
@@ -204,6 +225,40 @@ namespace AutoRest.Java.Azure.Fluent.Model
             {
                 this.supportsGetBySubscription = false;
                 this.getBySubscriptionMethod = null;
+            }
+        }
+
+        private void CheckGetByParameterizedParentSupport()
+        {
+            if (this.fluentMethodGroup.Level == 0)
+            {
+                foreach (MethodJvaf innerMethod in fluentMethodGroup.InnerMethods.Where(method => method.HttpMethod == HttpMethod.Get))
+                {
+                    var armUri = new ARMUri(innerMethod);
+                    Segment lastSegment = armUri.LastOrDefault();
+                    if (lastSegment != null && lastSegment is ParentSegment)
+                    {
+                        ParentSegment resourceSegment = (ParentSegment)lastSegment;
+                        var requiredParameters = RequiredParametersOfMethod(innerMethod);
+                        if (resourceSegment.Name.EqualsIgnoreCase(fluentMethodGroup.LocalNameInPascalCase))
+                        {
+                            var subscriptionSegment = armUri.OfType<ParentSegment>().FirstOrDefault(segment => segment.Name.EqualsIgnoreCase("subscriptions"));
+                            var resourceGroupSegment = armUri.OfType<ParentSegment>().FirstOrDefault(segment => segment.Name.EqualsIgnoreCase("resourceGroups"));
+
+                            if (subscriptionSegment == null && resourceGroupSegment == null)
+                            {
+                                this.supportsGetByParameterizedParent = true;
+                                this.getByParameterizedParentMethod = new FluentMethod(true, innerMethod, this.fluentMethodGroup);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                this.supportsGetByParameterizedParent = false;
+                this.getByParameterizedParentMethod = null;
             }
         }
 

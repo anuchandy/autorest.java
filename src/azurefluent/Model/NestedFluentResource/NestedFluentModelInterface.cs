@@ -22,7 +22,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
             base(fluentMethodGroup, 
                 new NestedFluentModelMemberVariablesForCreate(fluentMethodGroup), 
                 new NestedFluentModelMemberVariablesForUpdate(fluentMethodGroup), 
-                new FluentModelMemberVariablesForGet(fluentMethodGroup), 
+                new NestedFluentModelMemberVariablesForGet(fluentMethodGroup), 
                 rawFluentModel.InnerModel.Name)
         {
             this.rawFluentModel = rawFluentModel;
@@ -71,14 +71,6 @@ namespace AutoRest.Java.Azure.Fluent.Model
             get
             {
                 return this.FluentMethodGroup.ResourceGetDescription.SupportsGetByImmediateParent;
-            }
-        }
-
-        private bool SupportsListing
-        {
-            get
-            {
-                return this.FluentMethodGroup.ResourceListingDescription.SupportsListByImmediateParent;
             }
         }
 
@@ -179,14 +171,6 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        public CompositeTypeJvaf InnerModel
-        {
-            get
-            {
-                return this.rawFluentModel.InnerModel;
-            }
-        }
-
         public string BlankExtendsFrom
         {
             get
@@ -254,6 +238,14 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 {
                     return String.Empty;
                 }
+            }
+        }
+
+        public CompositeTypeJvaf InnerModel
+        {
+            get
+            {
+                return this.rawFluentModel.InnerModel;
             }
         }
 

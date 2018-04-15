@@ -20,7 +20,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
             base(fluentMethodGroup, 
                 new GroupableFluentModelMemberVariablesForCreate(fluentMethodGroup), 
                 new GroupableFluentModelMemberVariablesForUpdate(fluentMethodGroup), 
-                new FluentModelMemberVariablesForGet(fluentMethodGroup), 
+                new GroupableFluentModelMemberVariablesForGet(fluentMethodGroup), 
                 rawFluentModel.InnerModel.Name)
         {
             this.rawFluentModel = rawFluentModel;

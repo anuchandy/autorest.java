@@ -87,39 +87,43 @@ namespace AutoRest.Java.Azure.Fluent.Model
         {
             var dmvs = this.DisambiguatedMemberVariables ?? throw new ArgumentNullException("dMemberVariables");
 
-            var pVariables = parentRefMemberVariables
-                .Where(pref => !pref.ParentRefName.Equals(this.FluentMethodGroup.LocalNameInPascalCase, StringComparison.OrdinalIgnoreCase));
-
             List<FluentDefinitionOrUpdateStage> initalStages = new List<FluentDefinitionOrUpdateStage>();
             FluentDefinitionOrUpdateStage currentStage = null;
-            foreach (var memberVariable in pVariables)
+            foreach (FluentModelParentRefMemberVariable memberVariable in parentRefMemberVariables)
             {
-                string methodName = $"with{memberVariable.FromParameter.Name.ToPascalCase()}";
-                string parameterName = memberVariable.VariableName;
-                string methodParameterDecl = $"{memberVariable.VariableTypeName} {parameterName}";
-                FluentDefinitionOrUpdateStageMethod method = new FluentDefinitionOrUpdateStageMethod(methodName, methodParameterDecl, memberVariable.VariableTypeName)
+                if (memberVariable.ParentRefName.EqualsIgnoreCase(this.FluentMethodGroup.LocalNameInPascalCase))
                 {
-                    CommentFor = parameterName,
-                    Body = $"{(dmvs.MemeberVariablesForCreate[memberVariable.VariableName]).VariableAccessor} = {parameterName};"
-                };
-
-                string interfaceName = $"With{memberVariable.FromParameter.Name.ToPascalCase()}";
-                FluentDefinitionOrUpdateStage nextStage = new FluentDefinitionOrUpdateStage("", interfaceName);
-                //
-                initalStages.Add(nextStage);
-                //
-                nextStage.Methods.Add(method);
-                //
-                if (currentStage != null)
-                {
-                    currentStage.Methods.ForEach(m =>
-                    {
-                        m.NextStage = nextStage;
-                    });
+                    // Exclude self from parent ref member variables
+                    continue;
                 }
-                currentStage = nextStage;
-            }
+                else
+                {
+                    string methodName = $"with{memberVariable.FromParameter.Name.ToPascalCase()}";
+                    string parameterName = memberVariable.VariableName;
+                    string methodParameterDecl = $"{memberVariable.VariableTypeName} {parameterName}";
+                    FluentDefinitionOrUpdateStageMethod method = new FluentDefinitionOrUpdateStageMethod(methodName, methodParameterDecl, memberVariable.VariableTypeName)
+                    {
+                        CommentFor = parameterName,
+                        Body = $"{(dmvs.MemeberVariablesForCreate[memberVariable.VariableName]).VariableAccessor} = {parameterName};"
+                    };
 
+                    string interfaceName = $"With{memberVariable.FromParameter.Name.ToPascalCase()}";
+                    FluentDefinitionOrUpdateStage nextStage = new FluentDefinitionOrUpdateStage("", interfaceName);
+                    //
+                    initalStages.Add(nextStage);
+                    //
+                    nextStage.Methods.Add(method);
+                    //
+                    if (currentStage != null)
+                    {
+                        currentStage.Methods.ForEach(m =>
+                        {
+                            m.NextStage = nextStage;
+                        });
+                    }
+                    currentStage = nextStage;
+                }
+            }
             return initalStages;
         }
     }

@@ -145,6 +145,8 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 yield return this.ListBySubscriptionMethodAsyncImplementation;
                 yield return this.ListByResourceGroupMethodSyncImplementation;
                 yield return this.ListByResourceGroupMethodAsyncImplementation;
+                // TODO implement deletebyRG + batchDelete
+                //
             }
         }
 

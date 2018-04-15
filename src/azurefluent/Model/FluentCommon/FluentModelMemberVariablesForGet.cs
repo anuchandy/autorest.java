@@ -7,8 +7,7 @@
             this.FluentMethodGroup = null;
         }
 
-        public FluentModelMemberVariablesForGet(FluentMethodGroup fluentMethodGroup) :
-            base(fluentMethodGroup.ResourceGetDescription.SupportsGetByImmediateParent ? fluentMethodGroup.ResourceGetDescription.GetByImmediateParentMethod : null)
+        protected FluentModelMemberVariablesForGet(FluentMethodGroup fluentMethodGroup, FluentMethod createMethod) : base(createMethod)
         {
             this.FluentMethodGroup = fluentMethodGroup;
         }

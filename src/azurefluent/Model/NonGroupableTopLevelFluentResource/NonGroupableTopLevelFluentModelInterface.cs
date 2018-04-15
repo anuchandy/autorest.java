@@ -18,7 +18,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
             base(fluentMethodGroup, 
                 new NonGroupableTopLevelFluentModelMemberVariablesForCreate(fluentMethodGroup), 
                 new NonGroupableTopLevelFluentModelMemberVariablesForUpdate(fluentMethodGroup), 
-                new FluentModelMemberVariablesForGet(fluentMethodGroup), 
+                new NonGroupableTopLevelFluentModelMemberVariablesForGet(fluentMethodGroup), 
                 rawFluentModel.InnerModel.Name)
         {
             this.rawFluentModel = rawFluentModel;
@@ -56,8 +56,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
         {
             get
             {
-                return this.FluentMethodGroup.ResourceCreateDescription.SupportsCreating
-                    && this.FluentMethodGroup.ResourceCreateDescription.CreateType == CreateType.WithSubscriptionAsParent;
+                return this.FluentMethodGroup.ResourceCreateDescription.SupportsCreating;
             }
         }
 
@@ -65,8 +64,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
         {
             get
             {
-                return this.FluentMethodGroup.ResourceUpdateDescription.SupportsUpdating
-                    && this.FluentMethodGroup.ResourceUpdateDescription.UpdateType == UpdateType.WithSubscriptionAsParent;
+                return this.FluentMethodGroup.ResourceUpdateDescription.SupportsUpdating;
             }
         }
 
@@ -74,15 +72,32 @@ namespace AutoRest.Java.Azure.Fluent.Model
         {
             get
             {
-                return this.FluentMethodGroup.ResourceGetDescription.SupportsGetBySubscription;
+                return this.FluentMethodGroup.ResourceGetDescription.SupportsGetByResourceGroup ||
+                    this.FluentMethodGroup.ResourceGetDescription.SupportsGetBySubscription ||
+                    this.FluentMethodGroup.ResourceGetDescription.SupportsGetByParameterizedParent;
             }
         }
 
-        private bool SupportsListing
+        public FluentMethod GetMethod
         {
             get
             {
-                return this.FluentMethodGroup.ResourceListingDescription.SupportsListBySubscription;
+                if (!this.SupportsGetting)
+                {
+                    return null;
+                }
+                else if (this.FluentMethodGroup.ResourceGetDescription.SupportsGetByResourceGroup)
+                {
+                    return this.FluentMethodGroup.ResourceGetDescription.GetByResourceGroupMethod;
+                }
+                else if (this.FluentMethodGroup.ResourceGetDescription.SupportsGetBySubscription)
+                {
+                    return this.FluentMethodGroup.ResourceGetDescription.GetBySubscriptionMethod;
+                }
+                else
+                {
+                    return this.FluentMethodGroup.ResourceGetDescription.GetByParameterizedParentMethod;
+                }
             }
         }
 
@@ -102,12 +117,11 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 }
                 if (this.SupportsUpdating)
                 {
-                    imports.Add("com.microsoft.azure.management.resources.fluentcore.model.Updatable");
-                    imports.Add("com.microsoft.azure.management.resources.fluentcore.model.Appliable");
+                    imports.AddRange(this.FluentMethodGroup.ResourceUpdateDescription.ImportsForModelInterface);
                 }
                 if (this.SupportsCreating)
                 {
-                    imports.Add("com.microsoft.azure.management.resources.fluentcore.model.Creatable");
+                    imports.AddRange(this.FluentMethodGroup.ResourceCreateDescription.ImportsForModelInterface);
                 }
 
                 imports.Add("com.microsoft.azure.management.resources.fluentcore.arm.models.HasManager");

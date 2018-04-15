@@ -445,7 +445,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 }
                 else
                 {
-                    FluentMethod getMethod = this.Interface.FluentMethodGroup.ResourceGetDescription.GetBySubscriptionMethod;
+                    FluentMethod getMethod = this.Interface.GetMethod;
 
                     var getMethodParameters = this.Interface.DisambiguatedMemberVariables.MemeberVariablesForGet
                         .OrderBy(v => v.Index)
