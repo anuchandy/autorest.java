@@ -82,8 +82,15 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 {
                     "com.microsoft.azure.management.resources.fluentcore.model.HasInner",
                     $"{InnerModel.Package}.{InnerModel.Name}", // import "T" in HasInner<T>
-                    "com.microsoft.azure.management.resources.fluentcore.model.Indexable"
                 };
+                if (this.IsCreatableOrUpdatable || this.SupportsRefreshing)
+                {
+                    // extending from CreatableUpdatableImpl, IndexableRefreshableImpl requires model
+                    // interface to implement Indexable hence import indexable
+                    //
+                    imports.Add("com.microsoft.azure.management.resources.fluentcore.model.Indexable");
+                }
+
                 if (this.SupportsRefreshing)
                 {
                     imports.Add("com.microsoft.azure.management.resources.fluentcore.model.Refreshable");
@@ -113,8 +120,15 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 List<string> extends = new List<string>
                 {
                     $"HasInner<{this.InnerModel.Name}>",
-                    "Indexable"
                 };
+
+                if (this.IsCreatableOrUpdatable || this.SupportsRefreshing)
+                {
+                    // extending from CreatableUpdatableImpl, IndexableRefreshableImpl requires model
+                    // interface to implement Indexable
+                    //
+                    extends.Add("Indexable");
+                }
 
                 if (this.SupportsRefreshing)
                 {

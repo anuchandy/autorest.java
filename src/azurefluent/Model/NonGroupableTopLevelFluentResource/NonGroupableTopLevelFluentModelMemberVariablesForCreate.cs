@@ -108,7 +108,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     };
 
                     string interfaceName = $"With{memberVariable.FromParameter.Name.ToPascalCase()}";
-                    FluentDefinitionOrUpdateStage nextStage = new FluentDefinitionOrUpdateStage("", interfaceName);
+                    FluentDefinitionOrUpdateStage nextStage = new FluentDefinitionOrUpdateStage(this.resourceName, interfaceName);
                     //
                     initalStages.Add(nextStage);
                     //

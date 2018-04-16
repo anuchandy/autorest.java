@@ -18,6 +18,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
         private List<string> propertiesOfPayloadToSkip;
 
         private readonly string package = Settings.Instance.Namespace.ToLower();
+        protected readonly string resourceName;
 
         public FluentModelMemberVariablesForCreate() : base(null)
         {
@@ -34,6 +35,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
             this.reqDefStages = null;
             this.optDefStages = null;
             this.propertiesOfPayloadToSkip = propertiesOfPayloadToSkip;
+            this.resourceName = fluentMethodGroup.StandardFluentModel.JavaInterfaceName.ToLower();
         }
 
         public FluentModelMemberVariablesForCreate(FluentMethodGroup fluentMethodGroup) :
@@ -175,7 +177,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 };
 
                 string interfaceName = $"With{memberVariable.FromParameter.Name.ToPascalCase()}";
-                FluentDefinitionOrUpdateStage nextStage = new FluentDefinitionOrUpdateStage("", interfaceName);
+                FluentDefinitionOrUpdateStage nextStage = new FluentDefinitionOrUpdateStage(this.resourceName, interfaceName);
                 this.reqDefStages.Add(nextStage);
                 nextStage.Methods.Add(method);
                 //
@@ -215,7 +217,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     };
 
                     string interfaceName = $"With{pro.Name.ToPascalCase()}";
-                    FluentDefinitionOrUpdateStage nextStage = new FluentDefinitionOrUpdateStage("", interfaceName);
+                    FluentDefinitionOrUpdateStage nextStage = new FluentDefinitionOrUpdateStage(this.resourceName, interfaceName);
                     this.reqDefStages.Add(nextStage);
 
                     nextStage.Methods.Add(method);
@@ -230,7 +232,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 }
             }
 
-            FluentDefinitionOrUpdateStage creatableStage = new FluentDefinitionOrUpdateStage("", "WithCreate");
+            FluentDefinitionOrUpdateStage creatableStage = new FluentDefinitionOrUpdateStage(this.resourceName, "WithCreate");
             if (currentStage != null)
             {
                 currentStage.Methods.ForEach(m =>
@@ -274,7 +276,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     .Where(p => !propertiesOfPayloadToSkip.Contains(p.Name.ToString(), StringComparer.OrdinalIgnoreCase))
                     .OrderBy(p => p.Name.ToLowerInvariant());
 
-                FluentDefinitionOrUpdateStage creatableStage = new FluentDefinitionOrUpdateStage("", "WithCreate");
+                FluentDefinitionOrUpdateStage creatableStage = new FluentDefinitionOrUpdateStage(this.resourceName, "WithCreate");
                 foreach (Property pro in payloadOptinalProperties)
                 {
                     string methodName = $"with{pro.Name.ToPascalCase()}";
@@ -287,7 +289,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     };
 
                     string interfaceName = $"With{pro.Name.ToPascalCase()}";
-                    FluentDefinitionOrUpdateStage stage = new FluentDefinitionOrUpdateStage("", interfaceName);
+                    FluentDefinitionOrUpdateStage stage = new FluentDefinitionOrUpdateStage(this.resourceName, interfaceName);
                     this.optDefStages.Add(stage);
 
                     stage.Methods.Add(method);

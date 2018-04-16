@@ -199,7 +199,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     methodBuilder.AppendLine($"    this.converter = new PagedListConverter<{ModelInnerName}, {JavaInterfaceName}>() {{");
                     methodBuilder.AppendLine($"        @Override");
                     methodBuilder.AppendLine($"        public Observable<{JavaInterfaceName}> typeConvertAsync({ModelInnerName} inner) {{");
-                    methodBuilder.AppendLine($"            return Observable.just(({JavaInterfaceName})wrapModel(inner));");
+                    methodBuilder.AppendLine($"            return Observable.just(({JavaInterfaceName}) wrapModel(inner));");
                     methodBuilder.AppendLine($"        }}");
                     methodBuilder.AppendLine($"    }};");
                 }
@@ -218,7 +218,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     StringBuilder methodBuilder = new StringBuilder();
                     methodBuilder.AppendLine("@Override");
                     methodBuilder.AppendLine($"public {this.fluentModelImpl.JvaClassName} define(String name) {{");
-                    methodBuilder.AppendLine($"    return null; // TODO");
+                    methodBuilder.AppendLine($"    return {this.fluentModelImpl.CtrInvocationFromWrapNewInnerModel}");
                     // TODO: implement this
                     // methodBuilder.AppendLine($"    return {this.fluentModelImpl.CtrInvocationFromWrapNewInnerModel}");
 

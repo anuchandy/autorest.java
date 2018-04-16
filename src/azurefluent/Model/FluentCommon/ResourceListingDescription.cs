@@ -130,7 +130,12 @@ namespace AutoRest.Java.Azure.Fluent.Model
                         imports.Add("com.microsoft.azure.Page");
                         imports.Add("rx.functions.Func1");
                     }
-
+                    if (!method.InnerMethod.IsPagingOperation && !method.InnerMethod.SimulateAsPagingOperation && method.InnerMethod.ReturnTypeResponseName.StartsWith("List"))
+                    {
+                        imports.Add("rx.Observable");
+                        imports.Add("java.util.List");
+                        imports.Add("rx.functions.Func1");
+                    }
                 }
                 if (this.SupportsListBySubscription)
                 {
@@ -143,6 +148,12 @@ namespace AutoRest.Java.Azure.Fluent.Model
                         imports.Add("com.microsoft.azure.Page");
                         imports.Add("rx.functions.Func1");
                     }
+                    if (!method.InnerMethod.IsPagingOperation && !method.InnerMethod.SimulateAsPagingOperation && method.InnerMethod.ReturnTypeResponseName.StartsWith("List"))
+                    {
+                        imports.Add("rx.Observable");
+                        imports.Add("java.util.List");
+                        imports.Add("rx.functions.Func1");
+                    }
                 }
                 if (this.SupportsListByImmediateParent)
                 {
@@ -152,6 +163,12 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     if (method.InnerMethod.IsPagingOperation || method.InnerMethod.SimulateAsPagingOperation)
                     {
                         imports.Add("com.microsoft.azure.Page");
+                        imports.Add("rx.functions.Func1");
+                    }
+                    if (!method.InnerMethod.IsPagingOperation && !method.InnerMethod.SimulateAsPagingOperation && method.InnerMethod.ReturnTypeResponseName.StartsWith("List"))
+                    {
+                        imports.Add("rx.Observable");
+                        imports.Add("java.util.List");
                         imports.Add("rx.functions.Func1");
                     }
                 }

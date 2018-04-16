@@ -13,6 +13,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
         private List<FluentDefinitionOrUpdateStage> updateStages;
         private FluentModelDisambiguatedMemberVariables disambiguatedMemberVariables;
         private List<string> propertiesOfPayloadToSkip;
+        protected readonly string resourceName;
 
         private readonly string package = Settings.Instance.Namespace.ToLower();
 
@@ -29,6 +30,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
             this.FluentMethodGroup = fluentMethodGroup;
             this.updateStages = null;
             this.propertiesOfPayloadToSkip = propertiesOfPayloadToSkip;
+            this.resourceName = fluentMethodGroup.StandardFluentModel.JavaInterfaceName.ToLower();
         }
 
         public FluentModelMemberVariablesForUpdate(FluentMethodGroup fluentMethodGroup) : this(fluentMethodGroup, new List<string>())
@@ -134,7 +136,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
 
             var dmvs = this.disambiguatedMemberVariables ?? throw new ArgumentNullException("dMemberVariables");
 
-            FluentDefinitionOrUpdateStage updateGrouping = new FluentDefinitionOrUpdateStage("", "Update");
+            FluentDefinitionOrUpdateStage updateGrouping = new FluentDefinitionOrUpdateStage(this.resourceName, "Update");
 
             // During resource update changing parent ref properties and other path properties are not allowed
             //
@@ -151,7 +153,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 };
 
                 string interfaceName = $"With{memberVariable.FromParameter.Name.ToPascalCase()}";
-                FluentDefinitionOrUpdateStage stage = new FluentDefinitionOrUpdateStage("", interfaceName);
+                FluentDefinitionOrUpdateStage stage = new FluentDefinitionOrUpdateStage(this.resourceName, interfaceName);
                 this.updateStages.Add(stage);
 
                 stage.Methods.Add(method);
@@ -187,7 +189,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     };
 
                     string interfaceName = $"With{pro.Name.ToPascalCase()}";
-                    FluentDefinitionOrUpdateStage stage = new FluentDefinitionOrUpdateStage("", interfaceName);
+                    FluentDefinitionOrUpdateStage stage = new FluentDefinitionOrUpdateStage(this.resourceName, interfaceName);
                     this.updateStages.Add(stage);
 
                     stage.Methods.Add(method);

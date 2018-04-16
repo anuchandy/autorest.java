@@ -207,6 +207,26 @@ namespace AutoRest.Java.Azure.Fluent.Model
                         methodBuilder.AppendLine($"public Observable<{this.fluentModelImpl.Interface.JavaInterfaceName}> {methodName}({parameterDecl}) {{");
                         methodBuilder.AppendLine($"    {this.Interface.InnerMethodGroupTypeName} client = this.inner();");
                         methodBuilder.AppendLine($"    return client.{method.Name}Async({InnerMethodInvocationParameter(method.InnerMethod)})");
+                        if (method.InnerMethod.SimulateAsPagingOperation)
+                        {
+                            // TODO: handle when return types are diff.
+                            //
+                            methodBuilder.AppendLine($"    .flatMap(new Func1<Page<{returnModel.InnerModel.ClassName}>, Observable<{returnModel.InnerModel.ClassName}>>() {{");
+                            methodBuilder.AppendLine($"        @Override");
+                            methodBuilder.AppendLine($"        public Observable<{returnModel.InnerModel.ClassName}> call(Page<{returnModel.InnerModel.ClassName}> innerPage) {{");
+                            methodBuilder.AppendLine($"            return Observable.from(innerPage.items());");
+                            methodBuilder.AppendLine($"        }}");
+                            methodBuilder.AppendLine($"    }})");
+                        }
+                        else if (method.InnerMethod.ReturnTypeResponseName.StartsWith("List"))
+                        {
+                            methodBuilder.AppendLine($"    .flatMap(new Func1<List<{returnModel.InnerModel.ClassName}>, Observable<{returnModel.InnerModel.ClassName}>>() {{");
+                            methodBuilder.AppendLine($"        @Override");
+                            methodBuilder.AppendLine($"        public Observable<{returnModel.InnerModel.ClassName}> call(List<{returnModel.InnerModel.ClassName}> innerList) {{");
+                            methodBuilder.AppendLine($"            return Observable.from(innerList);");
+                            methodBuilder.AppendLine($"        }}");
+                            methodBuilder.AppendLine($"    }})");
+                        }
                         methodBuilder.AppendLine($"    .map(new Func1<{this.fluentModelImpl.Interface.InnerModel.ClassName}, {this.fluentModelImpl.Interface.JavaInterfaceName}>() {{");
                         methodBuilder.AppendLine($"        @Override");
                         methodBuilder.AppendLine($"        public {this.fluentModelImpl.Interface.JavaInterfaceName} call({this.fluentModelImpl.Interface.InnerModel.ClassName} inner) {{");

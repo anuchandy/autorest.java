@@ -50,20 +50,20 @@ public interface @(Model.JavaInterfaceName)@(Model.ExtendsFrom) {
     /**
     @if (!string.IsNullOrEmpty(innerMethod.Summary))
     {
-@:* @innerMethod.Summary.EscapeXmlComment().Period()
+     @:* @innerMethod.Summary.EscapeXmlComment().Period()
     }
     @if (!string.IsNullOrEmpty(innerMethod.Description))
     {
-@:* @innerMethod.Description.EscapeXmlComment().Period()
+ @:* @innerMethod.Description.EscapeXmlComment().Period()
     }
-    *
+     *
     @foreach (var param in innerMethod.LocalParameters.Where(p => !p.IsConstant && p.IsRequired))
     {
-    @:* @@param @param.Name @(param.Documentation.Else("the " + param.ModelType.Name + " value").EscapeXmlComment().Trim())
+     @:* @@param @param.Name @(param.Documentation.Else("the " + param.ModelType.Name + " value").EscapeXmlComment().Trim())
     }
-    * @@throws IllegalArgumentException thrown if parameters fail the validation
-    * @@return the observable for the request
-    */
+     * @@throws IllegalArgumentException thrown if parameters fail the validation
+     * @@return the observable for the request
+     */
     </text>
     @:Observable<@(returnModel.JavaInterfaceName)> listBy@(Model.ParentFluentMethodGroup.LocalSingularNameInPascalCase)Async(@innerMethod.MethodRequiredParameterDeclaration);
 }
@@ -77,20 +77,20 @@ public interface @(Model.JavaInterfaceName)@(Model.ExtendsFrom) {
     /**
     @if (!string.IsNullOrEmpty(innerMethod.Summary))
     {
-@:* @innerMethod.Summary.EscapeXmlComment().Period()
+     @:* @innerMethod.Summary.EscapeXmlComment().Period()
     }
     @if (!string.IsNullOrEmpty(innerMethod.Description))
     {
-@:* @innerMethod.Description.EscapeXmlComment().Period()
+ @:* @innerMethod.Description.EscapeXmlComment().Period()
     }
     *
     @foreach (var param in innerMethod.LocalParameters.Where(p => !p.IsConstant && p.IsRequired))
     {
-    @:* @@param @param.Name @(param.Documentation.Else("the " + param.ModelType.Name + " value").EscapeXmlComment().Trim())
+     @:* @@param @param.Name @(param.Documentation.Else("the " + param.ModelType.Name + " value").EscapeXmlComment().Trim())
     }
-    * @@throws IllegalArgumentException thrown if parameters fail the validation
-    * @@return the observable for the request
-    */
+     * @@throws IllegalArgumentException thrown if parameters fail the validation
+     * @@return the observable for the request
+     */
     </text>
     @:Observable<@(returnModel.JavaInterfaceName)> getBy@(Model.ParentFluentMethodGroup.LocalSingularNameInPascalCase)Async(@innerMethod.MethodRequiredParameterDeclaration);
 }
@@ -103,20 +103,20 @@ public interface @(Model.JavaInterfaceName)@(Model.ExtendsFrom) {
     /**
     @if (!string.IsNullOrEmpty(innerMethod.Summary))
     {
-@:* @innerMethod.Summary.EscapeXmlComment().Period()
+     @:* @innerMethod.Summary.EscapeXmlComment().Period()
     }
     @if (!string.IsNullOrEmpty(innerMethod.Description))
     {
-@:* @innerMethod.Description.EscapeXmlComment().Period()
+ @:* @innerMethod.Description.EscapeXmlComment().Period()
     }
-    *
+     *
     @foreach (var param in innerMethod.LocalParameters.Where(p => !p.IsConstant && p.IsRequired))
     {
-    @:* @@param @param.Name @(param.Documentation.Else("the " + param.ModelType.Name + " value").EscapeXmlComment().Trim())
+     @:* @@param @param.Name @(param.Documentation.Else("the " + param.ModelType.Name + " value").EscapeXmlComment().Trim())
     }
-    * @@throws IllegalArgumentException thrown if parameters fail the validation
-    * @@return the observable for the request
-    */
+     * @@throws IllegalArgumentException thrown if parameters fail the validation
+     * @@return the observable for the request
+     */
     </text>
     @:Completable deleteBy@(Model.ParentFluentMethodGroup.LocalSingularNameInPascalCase)Async(@innerMethod.MethodRequiredParameterDeclaration);
 }
@@ -126,20 +126,20 @@ public interface @(Model.JavaInterfaceName)@(Model.ExtendsFrom) {
     /**
     @if (!string.IsNullOrEmpty(method.InnerMethod.Summary))
     {
-@:* @method.InnerMethod.Summary.EscapeXmlComment().Period()
+     @:* @method.InnerMethod.Summary.EscapeXmlComment().Period()
     }
     @if (!string.IsNullOrEmpty(method.InnerMethod.Description))
     {
-@:* @method.InnerMethod.Description.EscapeXmlComment().Period()
+ @:* @method.InnerMethod.Description.EscapeXmlComment().Period()
     }
-    *
+     *
     @foreach (var param in method.InnerMethod.LocalParameters.Where(p => !p.IsConstant && p.IsRequired))
     {
-    @:* @@param @param.Name @(param.Documentation.Else("the " + param.ModelType.Name + " value").EscapeXmlComment().Trim())
+     @:* @@param @param.Name @(param.Documentation.Else("the " + param.ModelType.Name + " value").EscapeXmlComment().Trim())
     }
-    * @@throws IllegalArgumentException thrown if parameters fail the validation
-    * @@return the observable for the request
-    */
+     * @@throws IllegalArgumentException thrown if parameters fail the validation
+     * @@return the observable for the request
+     */
     </text>
     @if (method.InnerMethod.HttpMethod == AutoRest.Core.Model.HttpMethod.Delete)
     {
