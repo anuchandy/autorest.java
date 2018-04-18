@@ -1,5 +1,6 @@
 using AutoRest.Core.Model;
 using AutoRest.Core.Utilities;
+using AutoRest.Java.Model;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -151,22 +152,32 @@ namespace AutoRest.Java.Azure.Fluent.Model
             {
                 if (innerMethod.HttpMethod == HttpMethod.Patch)
                 {
-                    var armUri = new ARMUri(innerMethod);
-                    Segment lastSegment = armUri.LastOrDefault();
-                    if (lastSegment != null && lastSegment is ParentSegment)
+                    if (innerMethod.ReturnTypeJva.BodyClientType is PrimaryTypeJv)
                     {
-                        ParentSegment resourceSegment = (ParentSegment)lastSegment;
-                        if (resourceSegment.Name.EqualsIgnoreCase(fluentMethodGroup.LocalNameInPascalCase))
+                        // In order to be able to implement SupportUpdating<T>, we should be able to map resource of update to T
+                        // if the return type is primitive type (e.g. void) then mapping cannot be done. Skip update methods 
+                        // returning such primitve they will be appear as other methods
+                        continue;
+                    }
+                    else
+                    {
+                        var armUri = new ARMUri(innerMethod);
+                        Segment lastSegment = armUri.LastOrDefault();
+                        if (lastSegment != null && lastSegment is ParentSegment)
                         {
-                            if (this.fluentMethodGroup.Level == 0)
+                            ParentSegment resourceSegment = (ParentSegment)lastSegment;
+                            if (resourceSegment.Name.EqualsIgnoreCase(fluentMethodGroup.LocalNameInPascalCase))
                             {
-                                var subscriptionSegment = armUri.OfType<ParentSegment>().FirstOrDefault(segment => segment.Name.EqualsIgnoreCase("subscriptions"));
-                                if (subscriptionSegment != null)
+                                if (this.fluentMethodGroup.Level == 0)
                                 {
-                                    var resourceGroupSegment = armUri.OfType<ParentSegment>().FirstOrDefault(segment => segment.Name.EqualsIgnoreCase("resourceGroups"));
-                                    if (resourceGroupSegment != null)
+                                    var subscriptionSegment = armUri.OfType<ParentSegment>().FirstOrDefault(segment => segment.Name.EqualsIgnoreCase("subscriptions"));
+                                    if (subscriptionSegment != null)
                                     {
-                                        return new FluentMethod(true, innerMethod, this.fluentMethodGroup);
+                                        var resourceGroupSegment = armUri.OfType<ParentSegment>().FirstOrDefault(segment => segment.Name.EqualsIgnoreCase("resourceGroups"));
+                                        if (resourceGroupSegment != null)
+                                        {
+                                            return new FluentMethod(true, innerMethod, this.fluentMethodGroup);
+                                        }
                                     }
                                 }
                             }
@@ -183,22 +194,32 @@ namespace AutoRest.Java.Azure.Fluent.Model
             {
                 if (innerMethod.HttpMethod == HttpMethod.Patch)
                 {
-                    var armUri = new ARMUri(innerMethod);
-                    Segment lastSegment = armUri.LastOrDefault();
-                    if (lastSegment != null && lastSegment is ParentSegment)
+                    if (innerMethod.ReturnTypeJva.BodyClientType is PrimaryTypeJv)
                     {
-                        ParentSegment resourceSegment = (ParentSegment)lastSegment;
-                        if (resourceSegment.Name.EqualsIgnoreCase(fluentMethodGroup.LocalNameInPascalCase))
+                        // In order to be able to implement SupportUpdating<T>, we should be able to map resource of update to T
+                        // if the return type is primitive type (e.g. void) then mapping cannot be done. Skip update methods 
+                        // returning such primitve they will be appear as other methods
+                        continue;
+                    }
+                    else
+                    {
+                        var armUri = new ARMUri(innerMethod);
+                        Segment lastSegment = armUri.LastOrDefault();
+                        if (lastSegment != null && lastSegment is ParentSegment)
                         {
-                            if (this.fluentMethodGroup.Level == 0)
+                            ParentSegment resourceSegment = (ParentSegment)lastSegment;
+                            if (resourceSegment.Name.EqualsIgnoreCase(fluentMethodGroup.LocalNameInPascalCase))
                             {
-                                var subscriptionSegment = armUri.OfType<ParentSegment>().FirstOrDefault(segment => segment.Name.EqualsIgnoreCase("subscriptions"));
-                                if (subscriptionSegment != null)
+                                if (this.fluentMethodGroup.Level == 0)
                                 {
-                                    var resourceGroupSegment = armUri.OfType<ParentSegment>().FirstOrDefault(segment => segment.Name.EqualsIgnoreCase("resourceGroups"));
-                                    if (resourceGroupSegment == null)
+                                    var subscriptionSegment = armUri.OfType<ParentSegment>().FirstOrDefault(segment => segment.Name.EqualsIgnoreCase("subscriptions"));
+                                    if (subscriptionSegment != null)
                                     {
-                                        return new FluentMethod(true, innerMethod, this.fluentMethodGroup);
+                                        var resourceGroupSegment = armUri.OfType<ParentSegment>().FirstOrDefault(segment => segment.Name.EqualsIgnoreCase("resourceGroups"));
+                                        if (resourceGroupSegment == null)
+                                        {
+                                            return new FluentMethod(true, innerMethod, this.fluentMethodGroup);
+                                        }
                                     }
                                 }
                             }
@@ -215,16 +236,26 @@ namespace AutoRest.Java.Azure.Fluent.Model
             {
                 if (innerMethod.HttpMethod == HttpMethod.Patch)
                 {
-                    var armUri = new ARMUri(innerMethod);
-                    Segment lastSegment = armUri.LastOrDefault();
-                    if (lastSegment != null && lastSegment is ParentSegment)
+                    if (innerMethod.ReturnTypeJva.BodyClientType is PrimaryTypeJv)
                     {
-                        ParentSegment resourceSegment = (ParentSegment)lastSegment;
-                        if (resourceSegment.Name.EqualsIgnoreCase(fluentMethodGroup.LocalNameInPascalCase))
+                        // In order to be able to implement SupportUpdating<T>, we should be able to map resource of update to T
+                        // if the return type is primitive type (e.g. void) then mapping cannot be done. Skip update methods 
+                        // returning such primitve they will be appear as other methods
+                        continue;
+                    }
+                    else
+                    {
+                        var armUri = new ARMUri(innerMethod);
+                        Segment lastSegment = armUri.LastOrDefault();
+                        if (lastSegment != null && lastSegment is ParentSegment)
                         {
-                            if (this.fluentMethodGroup.Level > 0)
+                            ParentSegment resourceSegment = (ParentSegment)lastSegment;
+                            if (resourceSegment.Name.EqualsIgnoreCase(fluentMethodGroup.LocalNameInPascalCase))
                             {
-                                return new FluentMethod(true, innerMethod, this.fluentMethodGroup);
+                                if (this.fluentMethodGroup.Level > 0)
+                                {
+                                    return new FluentMethod(true, innerMethod, this.fluentMethodGroup);
+                                }
                             }
                         }
                     }
@@ -239,21 +270,31 @@ namespace AutoRest.Java.Azure.Fluent.Model
             {
                 if (innerMethod.HttpMethod == HttpMethod.Patch)
                 {
-                    var armUri = new ARMUri(innerMethod);
-                    Segment lastSegment = armUri.LastOrDefault();
-                    if (lastSegment != null && lastSegment is ParentSegment)
+                    if (innerMethod.ReturnTypeJva.BodyClientType is PrimaryTypeJv)
                     {
-                        ParentSegment resourceSegment = (ParentSegment)lastSegment;
-                        if (resourceSegment.Name.EqualsIgnoreCase(fluentMethodGroup.LocalNameInPascalCase))
+                        // In order to be able to implement SupportUpdating<T>, we should be able to map resource of update to T
+                        // if the return type is primitive type (e.g. void) then mapping cannot be done. Skip update methods 
+                        // returning such primitve they will be appear as other methods
+                        continue;
+                    }
+                    else
+                    {
+                        var armUri = new ARMUri(innerMethod);
+                        Segment lastSegment = armUri.LastOrDefault();
+                        if (lastSegment != null && lastSegment is ParentSegment)
                         {
-                            if (this.fluentMethodGroup.Level == 0)
+                            ParentSegment resourceSegment = (ParentSegment)lastSegment;
+                            if (resourceSegment.Name.EqualsIgnoreCase(fluentMethodGroup.LocalNameInPascalCase))
                             {
-                                var subscriptionSegment = armUri.OfType<ParentSegment>().FirstOrDefault(segment => segment.Name.EqualsIgnoreCase("subscriptions"));
-                                var resourceGroupSegment = armUri.OfType<ParentSegment>().FirstOrDefault(segment => segment.Name.EqualsIgnoreCase("resourceGroups"));
-
-                                if (subscriptionSegment == null && resourceGroupSegment == null)
+                                if (this.fluentMethodGroup.Level == 0)
                                 {
-                                    return new FluentMethod(true, innerMethod, this.fluentMethodGroup);
+                                    var subscriptionSegment = armUri.OfType<ParentSegment>().FirstOrDefault(segment => segment.Name.EqualsIgnoreCase("subscriptions"));
+                                    var resourceGroupSegment = armUri.OfType<ParentSegment>().FirstOrDefault(segment => segment.Name.EqualsIgnoreCase("resourceGroups"));
+
+                                    if (subscriptionSegment == null && resourceGroupSegment == null)
+                                    {
+                                        return new FluentMethod(true, innerMethod, this.fluentMethodGroup);
+                                    }
                                 }
                             }
                         }

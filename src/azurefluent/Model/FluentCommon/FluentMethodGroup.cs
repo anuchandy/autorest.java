@@ -7,6 +7,7 @@ using Pluralize.NET;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace AutoRest.Java.Azure.Fluent.Model
 {
@@ -358,6 +359,25 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
+        public IEnumerable<string> NonStandardInnerToStandardInnerWrappingMethodImplementations
+        {
+            get
+            {
+                var standardInnerTypeName =  StandardFluentModel.InnerModel.ClassName;
+                StringBuilder methodBuilder = new StringBuilder();
+                foreach (var innerTypeName in InnersRequireWrapping.Keys)
+                {
+                    methodBuilder.Clear();
+                    methodBuilder.AppendLine($"private {StandardFluentModel.JavaInterfaceName} wrapModel({innerTypeName} inner) {{");
+                    methodBuilder.AppendLine($"    {standardInnerTypeName} standardInnerModel = new {standardInnerTypeName}();");
+                    methodBuilder.AppendLine($"    return wrapModel(standardInnerModel);");
+                    methodBuilder.AppendLine($"}}");
+                    yield return methodBuilder.ToString();
+                }
+                yield break;
+            }
+        }
+
         internal void DeriveStandrdFluentModelForMethodGroup()
         {
             if (this.derivedFluentModels)
@@ -450,6 +470,9 @@ namespace AutoRest.Java.Azure.Fluent.Model
                     var im = ResourceUpdateDescription.UpdateMethod.InnerReturnType;
                     this.innersRequireWrapping.AddIfNotExists(im.ClassName, im);
                 }
+                // Remove wrapping for standard model as each fluent method group takes care of it locally
+                //
+                this.innersRequireWrapping.Remove(this.standardFluentModel.InnerModel.ClassName);
             }
         }
 

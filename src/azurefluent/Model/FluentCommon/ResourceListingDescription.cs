@@ -3,6 +3,7 @@ using AutoRest.Core.Utilities;
 using AutoRest.Java.Model;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace AutoRest.Java.Azure.Fluent.Model
 {
@@ -318,6 +319,200 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 this.supportsListByImmediateParent = false;
                 this.listByImmediateParentMethod = null;
             }
+        }
+
+        public string ListBySubscriptionSyncMethodImplementation(string convertToPagedListMethodName, string innerClientName, string modelInterfaceName)
+        {
+            StringBuilder methodBuilder = new StringBuilder();
+            if (this.SupportsListBySubscription)
+            {
+                FluentMethod method = this.ListBySubscriptionMethod;
+                // TODO: Check return type is "PagedList" then "converter.convert"
+                //       If return type is "List" create a Page, then PagedList from it then "converter.convert"
+                //
+                methodBuilder.AppendLine("@Override");
+                methodBuilder.AppendLine($"public PagedList<{modelInterfaceName}> list() {{");
+                methodBuilder.AppendLine($"    {innerClientName} client = this.inner();");
+                methodBuilder.AppendLine($"    return {convertToPagedListMethodName}(client.{method.Name}());");
+                methodBuilder.AppendLine($"}}");
+            }
+            return methodBuilder.ToString();
+        }
+
+        public string ListBySubscriptionAsyncMethodImplementation(string innerClientName, string modelInterfaceName)
+        {
+            StringBuilder methodBuilder = new StringBuilder();
+            if (this.SupportsListBySubscription)
+            {
+                FluentMethod method = this.ListBySubscriptionMethod;
+                // string modelInnerName = method.ReturnModel.InnerModel.ClassName;
+                string innerReturnTypeName = method.InnerReturnType.ClassName;
+                //
+                if (!method.InnerMethod.IsPagingOperation)
+                {
+                    FluentModel returnModel = method.ReturnModel;
+                    //
+                    methodBuilder.AppendLine($"@Override");
+                    methodBuilder.AppendLine($"public Observable<{modelInterfaceName}> listAsync() {{");
+                    methodBuilder.AppendLine($"    {innerClientName} client = this.inner();");
+                    methodBuilder.AppendLine($"    return client.{method.Name}Async()");
+                    if (method.InnerMethod.SimulateAsPagingOperation)
+                    {
+                        methodBuilder.AppendLine($"    .flatMap(new Func1<Page<{innerReturnTypeName}>, Observable<{innerReturnTypeName}>>() {{");
+                        methodBuilder.AppendLine($"        @Override");
+                        methodBuilder.AppendLine($"        public Observable<{innerReturnTypeName}> call(Page<{innerReturnTypeName}> innerPage) {{");
+                        methodBuilder.AppendLine($"            return Observable.from(innerPage.items());");
+                        methodBuilder.AppendLine($"        }}");
+                        methodBuilder.AppendLine($"    }})");
+                    }
+                    methodBuilder.AppendLine($"    .map(new Func1<{innerReturnTypeName}, {modelInterfaceName}>() {{");
+                    methodBuilder.AppendLine($"        @Override");
+                    methodBuilder.AppendLine($"        public {modelInterfaceName} call({innerReturnTypeName} inner) {{");
+                    methodBuilder.AppendLine($"            return wrapModel(inner);");
+                    methodBuilder.AppendLine($"        }}");
+                    methodBuilder.AppendLine($"    }});");
+                    methodBuilder.AppendLine($"}}");
+                }
+                else
+                {
+                    string nextPageMethodName = $"listNextInnerPageAsync";
+
+                    methodBuilder.AppendLine($"private Observable<Page<{innerReturnTypeName}>> {nextPageMethodName}(String nextLink) {{");
+                    methodBuilder.AppendLine($"    if (nextLink == null) {{");
+                    methodBuilder.AppendLine($"        Observable.empty();");
+                    methodBuilder.AppendLine($"    }}");
+                    methodBuilder.AppendLine($"    {innerClientName} client = this.inner();");
+                    methodBuilder.AppendLine($"    return client.{method.Name}NextAsync(nextLink)");
+                    methodBuilder.AppendLine($"    .flatMap(new Func1<Page<{innerReturnTypeName}>, Observable<Page<{innerReturnTypeName}>>>() {{");
+                    methodBuilder.AppendLine($"        @Override");
+                    methodBuilder.AppendLine($"        public Observable<Page<{innerReturnTypeName}>> call(Page<{innerReturnTypeName}> page) {{");
+                    methodBuilder.AppendLine($"            return Observable.just(page).concatWith({nextPageMethodName}(page.nextPageLink()));");
+                    methodBuilder.AppendLine($"        }}");
+                    methodBuilder.AppendLine($"    }});");
+                    methodBuilder.AppendLine($"}}");
+
+                    methodBuilder.AppendLine($"@Override");
+                    methodBuilder.AppendLine($"public Observable<{modelInterfaceName}> listAsync() {{");
+                    methodBuilder.AppendLine($"    {innerClientName} client = this.inner();");
+                    methodBuilder.AppendLine($"    return client.{method.Name}Async()");
+                    methodBuilder.AppendLine($"    .flatMap(new Func1<Page<{innerReturnTypeName}>, Observable<Page<{innerReturnTypeName}>>>() {{");
+                    methodBuilder.AppendLine($"        @Override");
+                    methodBuilder.AppendLine($"        public Observable<Page<{innerReturnTypeName}>> call(Page<{innerReturnTypeName}> page) {{");
+                    methodBuilder.AppendLine($"            return {nextPageMethodName}(page.nextPageLink());");
+                    methodBuilder.AppendLine($"        }}");
+                    methodBuilder.AppendLine($"    }})");
+                    methodBuilder.AppendLine($"    .flatMapIterable(new Func1<Page<{innerReturnTypeName}>, Iterable<{innerReturnTypeName}>>() {{");
+                    methodBuilder.AppendLine($"        @Override");
+                    methodBuilder.AppendLine($"        public Iterable<{innerReturnTypeName}> call(Page<{innerReturnTypeName}> page) {{");
+                    methodBuilder.AppendLine($"            return page.items();");
+                    methodBuilder.AppendLine($"        }}");
+                    methodBuilder.AppendLine($"   }})");
+                    methodBuilder.AppendLine($"    .map(new Func1<{innerReturnTypeName}, {modelInterfaceName}>() {{");
+                    methodBuilder.AppendLine($"        @Override");
+                    methodBuilder.AppendLine($"        public {modelInterfaceName} call({innerReturnTypeName} inner) {{");
+                    methodBuilder.AppendLine($"            return wrapModel(inner);");
+                    methodBuilder.AppendLine($"        }}");
+                    methodBuilder.AppendLine($"   }});");
+                    methodBuilder.AppendLine($"}}");
+                }
+            }
+            return methodBuilder.ToString();
+        }
+
+
+        public string ListByResourceGroupSyncMethodImplementation(string covertToPagedListMethodName, string innerClientName, string modelInterfaceName)
+        {
+            StringBuilder methodBuilder = new StringBuilder();
+            if (this.SupportsListByResourceGroup)
+            {
+                FluentMethod method = this.ListByResourceGroupMethod;
+                //
+                methodBuilder.AppendLine("@Override");
+                methodBuilder.AppendLine($"public PagedList<{modelInterfaceName}> listByResourceGroup(String resourceGroupName) {{");
+                methodBuilder.AppendLine($"    {innerClientName} client = this.inner();");
+                methodBuilder.AppendLine($"    return {covertToPagedListMethodName}(client.{method.Name}(resourceGroupName));");
+                methodBuilder.AppendLine($"}}");
+            }
+            return methodBuilder.ToString();
+        }
+
+        public string ListByResourceGroupAsyncMethodImplementation(string innerClientName, string modelInterfaceName)
+        {
+            StringBuilder methodBuilder = new StringBuilder();
+            if (this.SupportsListByResourceGroup)
+            {
+                FluentMethod method = this.ListByResourceGroupMethod;
+                // string modelInnerName = method.ReturnModel.InnerModel.ClassName;
+                string innerReturnTypeName = method.InnerReturnType.ClassName;
+                //
+                if (!method.InnerMethod.IsPagingOperation)
+                {
+                    //
+                    methodBuilder.AppendLine($"@Override");
+                    methodBuilder.AppendLine($"public Observable<{modelInterfaceName}> listByResourceGroupAsync(String resourceGroupName) {{");
+                    methodBuilder.AppendLine($"    {innerClientName} client = this.inner();");
+                    methodBuilder.AppendLine($"    return client.{method.Name}Async(resourceGroupName)");
+                    if (method.InnerMethod.SimulateAsPagingOperation)
+                    {
+                        methodBuilder.AppendLine($"    .flatMap(new Func1<Page<{innerReturnTypeName}>, Observable<{innerReturnTypeName}>>() {{");
+                        methodBuilder.AppendLine($"        @Override");
+                        methodBuilder.AppendLine($"        public Observable<{innerReturnTypeName}> call(Page<{innerReturnTypeName}> innerPage) {{");
+                        methodBuilder.AppendLine($"            return Observable.from(innerPage.items());");
+                        methodBuilder.AppendLine($"        }}");
+                        methodBuilder.AppendLine($"    }})");
+                    }
+                    methodBuilder.AppendLine($"    .map(new Func1<{innerReturnTypeName}, {modelInterfaceName}>() {{");
+                    methodBuilder.AppendLine($"        @Override");
+                    methodBuilder.AppendLine($"        public {modelInterfaceName} call({innerReturnTypeName} inner) {{");
+                    methodBuilder.AppendLine($"            return wrapModel(inner);");
+                    methodBuilder.AppendLine($"        }}");
+                    methodBuilder.AppendLine($"    }});");
+                    methodBuilder.AppendLine($"}}");
+                }
+                else
+                {
+                    string nextPageMethodName = $"listByResourceGroupNextInnerPageAsync";
+
+                    methodBuilder.AppendLine($"private Observable<Page<{innerReturnTypeName}>> {nextPageMethodName}(String nextLink) {{");
+                    methodBuilder.AppendLine($"    if (nextLink == null) {{");
+                    methodBuilder.AppendLine($"        Observable.empty();");
+                    methodBuilder.AppendLine($"    }}");
+                    methodBuilder.AppendLine($"    {innerClientName} client = this.inner();");
+                    methodBuilder.AppendLine($"    return client.{method.Name}NextAsync(nextLink)");
+                    methodBuilder.AppendLine($"    .flatMap(new Func1<Page<{innerReturnTypeName}>, Observable<Page<{innerReturnTypeName}>>>() {{");
+                    methodBuilder.AppendLine($"        @Override");
+                    methodBuilder.AppendLine($"        public Observable<Page<{innerReturnTypeName}>> call(Page<{innerReturnTypeName}> page) {{");
+                    methodBuilder.AppendLine($"            return Observable.just(page).concatWith({nextPageMethodName}(page.nextPageLink()));");
+                    methodBuilder.AppendLine($"        }}");
+                    methodBuilder.AppendLine($"    }});");
+                    methodBuilder.AppendLine($"}}");
+
+                    methodBuilder.AppendLine($"@Override");
+                    methodBuilder.AppendLine($"public Observable<{modelInterfaceName}> listByResourceGroupAsync(String resourceGroupName) {{");
+                    methodBuilder.AppendLine($"    {innerClientName} client = this.inner();");
+                    methodBuilder.AppendLine($"    return client.{method.Name}Async(resourceGroupName)");
+                    methodBuilder.AppendLine($"    .flatMap(new Func1<Page<{innerReturnTypeName}>, Observable<Page<{innerReturnTypeName}>>>() {{");
+                    methodBuilder.AppendLine($"        @Override");
+                    methodBuilder.AppendLine($"        public Observable<Page<{innerReturnTypeName}>> call(Page<{innerReturnTypeName}> page) {{");
+                    methodBuilder.AppendLine($"            return {nextPageMethodName}(page.nextPageLink());");
+                    methodBuilder.AppendLine($"        }}");
+                    methodBuilder.AppendLine($"    }})");
+                    methodBuilder.AppendLine($"    .flatMapIterable(new Func1<Page<{innerReturnTypeName}>, Iterable<{innerReturnTypeName}>>() {{");
+                    methodBuilder.AppendLine($"        @Override");
+                    methodBuilder.AppendLine($"        public Iterable<{innerReturnTypeName}> call(Page<{innerReturnTypeName}> page) {{");
+                    methodBuilder.AppendLine($"            return page.items();");
+                    methodBuilder.AppendLine($"        }}");
+                    methodBuilder.AppendLine($"   }})");
+                    methodBuilder.AppendLine($"    .map(new Func1<{innerReturnTypeName}, {modelInterfaceName}>() {{");
+                    methodBuilder.AppendLine($"        @Override");
+                    methodBuilder.AppendLine($"        public {modelInterfaceName} call({innerReturnTypeName} inner) {{");
+                    methodBuilder.AppendLine($"            return wrapModel(inner);");
+                    methodBuilder.AppendLine($"        }}");
+                    methodBuilder.AppendLine($"   }});");
+                    methodBuilder.AppendLine($"}}");
+                }
+            }
+            return methodBuilder.ToString();
         }
 
         private static IEnumerable<ParameterJv> RequiredParametersOfMethod(MethodJvaf method)

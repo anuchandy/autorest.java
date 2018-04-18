@@ -39,14 +39,14 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 }
                 yield return this.InnerGetMethodImplementation;
                 yield return this.InnerDeleteMethodImplementation;
-                yield return this.BatchDeleteByIdColAsyncMethodImplementation;
-                yield return this.BatchDeleteByIdVarArgsAsyncMethodImplementation;
-                yield return this.BatchDeleteByIdColSyncMethodImplementation;
-                yield return this.BatchDeleteByIdVarArgsSyncMethodImplementation;
-                yield return this.ListByResourceGroupMethodSyncImplementation;
-                yield return this.ListByResourceGroupMethodAsyncImplementation;
-                yield return this.ListBySubscriptionMethodSyncImplementation;
-                yield return this.ListBySubscriptionMethodAsyncImplementation;
+                foreach(string batchDeleteMethod in this.BatchDeleteAsyncSyncMethodImplementations)
+                {
+                    yield return batchDeleteMethod;
+                }
+                yield return this.ListByResourceGroupSyncMethodImplementation;
+                yield return this.ListByResourceGroupAsyncMethodImplementation;
+                yield return this.ListBySubscriptionSyncMethodImplementation;
+                yield return this.ListBySubscriptionAsyncMethodImplementation;
                 yield return this.DefineMethodImplementation;
                 foreach (string impl in this.Interface.OtherMethods.MethodsImplementation)
                 {
@@ -54,6 +54,10 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 }
                 yield return this.WrapExistingModelImplementation;
                 yield return this.WrapNewModelImplementation;
+                foreach (string wrapMethod in this.Interface.NonStandardInnerToStandardInnerWrappingMethodImplementations)
+                {
+                    yield return wrapMethod;
+                }
             }
         }
 
@@ -72,6 +76,8 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 };
                 imports.AddRange(this.Interface.ResourceDeleteDescription.ImportsForMethodGroupImpl);
                 imports.AddRange(this.Interface.ResourceListingDescription.ImportsForMethodGroupImpl);
+                imports.AddRange(this.Interface.ResourceGetDescription.ImportsForMethodGroupImpl);
+                //
                 imports.AddRange(this.Interface.OtherMethods.ImportsForImpl);
                 foreach (var nestedFluentMethodGroup in this.Interface.ChildFluentMethodGroups)
                 {
@@ -111,7 +117,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        public IEnumerable<string> ChildMethodGroupAccessors
+        private IEnumerable<string> ChildMethodGroupAccessors
         {
             get
             {
@@ -134,23 +140,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
         {
             get
             {
-                StringBuilder methodBuilder = new StringBuilder();
-                //
-                methodBuilder.AppendLine("@Override");
-                methodBuilder.AppendLine($"protected Observable<{this.GroupableModelInnerName}> getInnerAsync(String resourceGroupName, String name) {{");
-                methodBuilder.AppendLine($"    {this.InnerClientName} client = this.inner();");
-                if (this.Interface.ResourceGetDescription.SupportsGetByResourceGroup)
-                {
-                    FluentMethod method = this.Interface.ResourceGetDescription.GetByResourceGroupMethod;
-                    methodBuilder.AppendLine($"    return client.{method.Name}Async(resourceGroupName, name);");
-                }
-                else
-                {
-                    methodBuilder.AppendLine($"    return null; // NOP Retrive by RG not supported");
-                }
-                methodBuilder.AppendLine($"}}");
-                //
-                return methodBuilder.ToString();
+                return this.Interface.ResourceGetDescription.InnerGetMethodImplementation(true, this.InnerClientName, this.GroupableModelInnerName);
             }
         }
 
@@ -178,295 +168,51 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        private string BatchDeleteByIdColAsyncMethodImplementation
+        IEnumerable<string> BatchDeleteAsyncSyncMethodImplementations
         {
             get
             {
-                StringBuilder methodBuilder = new StringBuilder();
-                //
-                if (this.Interface.ResourceDeleteDescription.SupportsDeleteByResourceGroup)
-                {
-                    methodBuilder.AppendLine("@Override");
-                    methodBuilder.AppendLine($"public Observable<String> deleteByIdsAsync(Collection<String> ids) {{");
-                    methodBuilder.AppendLine($"    if (ids == null || ids.isEmpty()) {{");
-                    methodBuilder.AppendLine($"        return Observable.empty();");
-                    methodBuilder.AppendLine($"    }}");
-                    methodBuilder.AppendLine($"    {this.InnerClientName} client = this.inner();");
-                    FluentMethod method = this.Interface.ResourceDeleteDescription.DeleteByResourceGroupMethod;
-                    methodBuilder.AppendLine($"    Collection<Observable<String>> observables = new ArrayList<>();");
-                    methodBuilder.AppendLine($"    for (String id : ids) {{");
-                    methodBuilder.AppendLine($"        final String resourceGroupName = ResourceUtils.groupFromResourceId(id);");
-                    methodBuilder.AppendLine($"        final String name = ResourceUtils.nameFromResourceId(id);");
-                    methodBuilder.AppendLine($"        Observable<String> o = RXMapper.map(this.inner().{method.Name}Async(resourceGroupName, name), id);");
-                    methodBuilder.AppendLine($"        observables.add(o);");
-                    methodBuilder.AppendLine($"    }}");
-                    methodBuilder.AppendLine($"    return Observable.mergeDelayError(observables);");
-                    methodBuilder.AppendLine($"}}");
-                }
-                //
-                return methodBuilder.ToString();
+                return this.Interface.ResourceDeleteDescription.BatchDeleteAyncAndSyncMethodImplementations(this.InnerClientName);
             }
         }
 
-        private string BatchDeleteByIdVarArgsAsyncMethodImplementation
+        private string ListByResourceGroupSyncMethodImplementation
         {
             get
             {
-                StringBuilder methodBuilder = new StringBuilder();
-                //
-                if (this.Interface.ResourceDeleteDescription.SupportsDeleteByResourceGroup)
-                {
-                    methodBuilder.AppendLine("@Override");
-                    methodBuilder.AppendLine($"public Observable<String> deleteByIdsAsync(String...ids) {{");
-                    methodBuilder.AppendLine($"    return this.deleteByIdsAsync(new ArrayList<String>(Arrays.asList(ids)));");
-                    methodBuilder.AppendLine($"}}");
-                }
-                //
-                return methodBuilder.ToString();
+                return this.Interface.ResourceListingDescription
+                    .ListByResourceGroupSyncMethodImplementation("this.wrapList", this.InnerClientName, GroupableModelInterfaceName);
             }
         }
 
-        private string BatchDeleteByIdColSyncMethodImplementation
+        private string ListByResourceGroupAsyncMethodImplementation
         {
             get
             {
-                StringBuilder methodBuilder = new StringBuilder();
-                //
-                if (this.Interface.ResourceDeleteDescription.SupportsDeleteByResourceGroup)
-                {
-                    methodBuilder.AppendLine("@Override");
-                    methodBuilder.AppendLine($"public void deleteByIds(Collection<String> ids) {{");
-                    methodBuilder.AppendLine($"    if (ids != null && !ids.isEmpty()) {{");
-                    methodBuilder.AppendLine($"        this.deleteByIdsAsync(ids).toBlocking().last();");
-                    methodBuilder.AppendLine($"    }}");
-                    methodBuilder.AppendLine($"}}");
-                }
-                //
-                return methodBuilder.ToString();
+                return this.Interface.ResourceListingDescription
+                    .ListByResourceGroupAsyncMethodImplementation(this.InnerClientName, this.GroupableModelInterfaceName);
             }
         }
 
-        private string BatchDeleteByIdVarArgsSyncMethodImplementation
+        private string ListBySubscriptionSyncMethodImplementation
         {
             get
             {
-                StringBuilder methodBuilder = new StringBuilder();
-                //
-                if (this.Interface.ResourceDeleteDescription.SupportsDeleteByResourceGroup)
-                {
-                    methodBuilder.AppendLine("@Override");
-                    methodBuilder.AppendLine($"public void deleteByIds(String...ids) {{");
-                    methodBuilder.AppendLine($"    this.deleteByIds(new ArrayList<String>(Arrays.asList(ids)));");
-                    methodBuilder.AppendLine($"}}");
-                }
-                //
-                return methodBuilder.ToString();
+                return this.Interface.ResourceListingDescription
+                    .ListBySubscriptionSyncMethodImplementation("this.wrapList", this.InnerClientName, this.GroupableModelInterfaceName);
             }
         }
 
-        private string ListByResourceGroupMethodSyncImplementation
+        private string ListBySubscriptionAsyncMethodImplementation
         {
             get
             {
-                StringBuilder methodBuilder = new StringBuilder();
-                //
-                if (this.Interface.ResourceListingDescription.SupportsListByResourceGroup)
-                {
-                    FluentMethod method = this.Interface.ResourceListingDescription.ListByResourceGroupMethod;
-                    //
-                    methodBuilder.AppendLine("@Override");
-                    methodBuilder.AppendLine($"public PagedList<{GroupableModelInterfaceName}> listByResourceGroup(String resourceGroupName) {{");
-                    methodBuilder.AppendLine($"    {this.InnerClientName} client = this.inner();");
-                    methodBuilder.AppendLine($"    return this.wrapList(client.{method.Name}(resourceGroupName));");
-                    methodBuilder.AppendLine($"}}");
-                }
-                //
-                return methodBuilder.ToString();
+                return this.Interface.ResourceListingDescription
+                    .ListBySubscriptionAsyncMethodImplementation(this.InnerClientName, this.GroupableModelInterfaceName);
             }
         }
 
-        private string ListByResourceGroupMethodAsyncImplementation
-        {
-            get
-            {
-                StringBuilder methodBuilder = new StringBuilder();
-                if (this.Interface.ResourceListingDescription.SupportsListByResourceGroup)
-                {
-                    FluentMethod method = this.Interface.ResourceListingDescription.ListByResourceGroupMethod;
-                    if (!method.InnerMethod.IsPagingOperation)
-                    {
-                        FluentModel returnModel = method.ReturnModel;
-                        //
-                        methodBuilder.AppendLine($"@Override");
-                        methodBuilder.AppendLine($"public Observable<{this.GroupableModelInterfaceName}> listByResourceGroupAsync(String resourceGroupName) {{");
-                        methodBuilder.AppendLine($"    {this.InnerClientName} client = this.inner();");
-                        methodBuilder.AppendLine($"    return client.{method.Name}Async(resourceGroupName)");
-                        if (method.InnerMethod.SimulateAsPagingOperation)
-                        {
-                            methodBuilder.AppendLine($"    .flatMap(new Func1<Page<{this.GroupableModelInnerName}>, Observable<{this.GroupableModelInnerName}>>() {{");
-                            methodBuilder.AppendLine($"        @Override");
-                            methodBuilder.AppendLine($"        public Observable<{this.GroupableModelInnerName}> call(Page<{this.GroupableModelInnerName}> innerPage) {{");
-                            methodBuilder.AppendLine($"            return Observable.from(innerPage.items());");
-                            methodBuilder.AppendLine($"        }}");
-                            methodBuilder.AppendLine($"    }})");
-                        }
-                        methodBuilder.AppendLine($"    .map(new Func1<{this.GroupableModelInnerName}, {this.GroupableModelInterfaceName}>() {{");
-                        methodBuilder.AppendLine($"        @Override");
-                        methodBuilder.AppendLine($"        public {this.GroupableModelInterfaceName} call({this.GroupableModelInnerName} inner) {{");
-                        methodBuilder.AppendLine($"            return wrapModel(inner);");
-                        methodBuilder.AppendLine($"        }}");
-                        methodBuilder.AppendLine($"    }});");
-                        methodBuilder.AppendLine($"}}");
-                    }
-                    else
-                    {
-                        string nextPageMethodName = $"listByResourceGroupNextInnerPageAsync";
-
-                        methodBuilder.AppendLine($"private Observable<Page<{this.GroupableModelInnerName}>> {nextPageMethodName}(String nextLink) {{");
-                        methodBuilder.AppendLine($"    if (nextLink == null) {{");
-                        methodBuilder.AppendLine($"        Observable.empty();");
-                        methodBuilder.AppendLine($"    }}");
-                        methodBuilder.AppendLine($"    {this.InnerClientName} client = this.inner();");
-                        methodBuilder.AppendLine($"    return client.{method.Name}NextAsync(nextLink)");
-                        methodBuilder.AppendLine($"    .flatMap(new Func1<Page<{this.GroupableModelInnerName}>, Observable<Page<{this.GroupableModelInnerName}>>>() {{");
-                        methodBuilder.AppendLine($"        @Override");
-                        methodBuilder.AppendLine($"        public Observable<Page<{this.GroupableModelInnerName}>> call(Page<{this.GroupableModelInnerName}> page) {{");
-                        methodBuilder.AppendLine($"            return Observable.just(page).concatWith({nextPageMethodName}(page.nextPageLink()));");
-                        methodBuilder.AppendLine($"        }}");
-                        methodBuilder.AppendLine($"    }});");
-                        methodBuilder.AppendLine($"}}");
-
-                        methodBuilder.AppendLine($"@Override");
-                        methodBuilder.AppendLine($"public Observable<{this.GroupableModelInterfaceName}> listByResourceGroupAsync(String resourceGroupName) {{");
-                        methodBuilder.AppendLine($"    {this.InnerClientName} client = this.inner();");
-                        methodBuilder.AppendLine($"    return client.{method.Name}Async(resourceGroupName)");
-                        methodBuilder.AppendLine($"    .flatMap(new Func1<Page<{this.GroupableModelInnerName}>, Observable<Page<{this.GroupableModelInnerName}>>>() {{");
-                        methodBuilder.AppendLine($"        @Override");
-                        methodBuilder.AppendLine($"        public Observable<Page<{this.GroupableModelInnerName}>> call(Page<{this.GroupableModelInnerName}> page) {{");
-                        methodBuilder.AppendLine($"            return {nextPageMethodName}(page.nextPageLink());");
-                        methodBuilder.AppendLine($"        }}");
-                        methodBuilder.AppendLine($"    }})");
-                        methodBuilder.AppendLine($"    .flatMapIterable(new Func1<Page<{this.GroupableModelInnerName}>, Iterable<{this.GroupableModelInnerName}>>() {{");
-                        methodBuilder.AppendLine($"        @Override");
-                        methodBuilder.AppendLine($"        public Iterable<{this.GroupableModelInnerName}> call(Page<{this.GroupableModelInnerName}> page) {{");
-                        methodBuilder.AppendLine($"            return page.items();");
-                        methodBuilder.AppendLine($"        }}");
-                        methodBuilder.AppendLine($"   }})");
-                        methodBuilder.AppendLine($"    .map(new Func1<{this.GroupableModelInnerName}, {this.GroupableModelInterfaceName}>() {{");
-                        methodBuilder.AppendLine($"        @Override");
-                        methodBuilder.AppendLine($"        public {this.GroupableModelInterfaceName} call({this.GroupableModelInnerName} inner) {{");
-                        methodBuilder.AppendLine($"            return wrapModel(inner);");
-                        methodBuilder.AppendLine($"        }}");
-                        methodBuilder.AppendLine($"   }});");
-                        methodBuilder.AppendLine($"}}");
-                    }
-                }
-                return methodBuilder.ToString();
-            }
-        }
-
-        private string ListBySubscriptionMethodSyncImplementation
-        {
-            get
-            {
-                StringBuilder methodBuilder = new StringBuilder();
-                //
-                if (this.Interface.ResourceListingDescription.SupportsListBySubscription)
-                {
-                    FluentMethod method = this.Interface.ResourceListingDescription.ListBySubscriptionMethod;
-                    //
-                    methodBuilder.AppendLine("@Override");
-                    methodBuilder.AppendLine($"public PagedList<{GroupableModelInterfaceName}> list() {{");
-                    methodBuilder.AppendLine($"    {this.InnerClientName} client = this.inner();");
-                    methodBuilder.AppendLine($"    return this.wrapList(client.{method.Name}());");
-                    methodBuilder.AppendLine($"}}");
-                }
-                //
-                return methodBuilder.ToString();
-            }
-        }
-
-        private string ListBySubscriptionMethodAsyncImplementation
-        {
-            get
-            {
-                StringBuilder methodBuilder = new StringBuilder();
-                if (this.Interface.ResourceListingDescription.SupportsListBySubscription)
-                {
-                    FluentMethod method = this.Interface.ResourceListingDescription.ListBySubscriptionMethod;
-                    if (!method.InnerMethod.IsPagingOperation)
-                    {
-                        FluentModel returnModel = method.ReturnModel;
-                        //
-                        methodBuilder.AppendLine($"@Override");
-                        methodBuilder.AppendLine($"public Observable<{this.GroupableModelInterfaceName}> listAsync() {{");
-                        methodBuilder.AppendLine($"    {this.InnerClientName} client = this.inner();");
-                        methodBuilder.AppendLine($"    return client.{method.Name}Async()");
-                        if (method.InnerMethod.SimulateAsPagingOperation)
-                        {
-                            methodBuilder.AppendLine($"    .flatMap(new Func1<Page<{this.GroupableModelInnerName}>, Observable<{this.GroupableModelInnerName}>>() {{");
-                            methodBuilder.AppendLine($"        @Override");
-                            methodBuilder.AppendLine($"        public Observable<{this.GroupableModelInnerName}> call(Page<{this.GroupableModelInnerName}> innerPage) {{");
-                            methodBuilder.AppendLine($"            return Observable.from(innerPage.items());");
-                            methodBuilder.AppendLine($"        }}");
-                            methodBuilder.AppendLine($"    }})");
-                        }
-                        methodBuilder.AppendLine($"    .map(new Func1<{this.GroupableModelInnerName}, {this.GroupableModelInterfaceName}>() {{");
-                        methodBuilder.AppendLine($"        @Override");
-                        methodBuilder.AppendLine($"        public {this.GroupableModelInterfaceName} call({this.GroupableModelInnerName} inner) {{");
-                        methodBuilder.AppendLine($"            return wrapModel(inner);");
-                        methodBuilder.AppendLine($"        }}");
-                        methodBuilder.AppendLine($"    }});");
-                        methodBuilder.AppendLine($"}}");
-                    }
-                    else
-                    {
-                        string nextPageMethodName = $"listNextInnerPageAsync";
-
-                        methodBuilder.AppendLine($"private Observable<Page<{this.GroupableModelInnerName}>> {nextPageMethodName}(String nextLink) {{");
-                        methodBuilder.AppendLine($"    if (nextLink == null) {{");
-                        methodBuilder.AppendLine($"        Observable.empty();");
-                        methodBuilder.AppendLine($"    }}");
-                        methodBuilder.AppendLine($"    {this.InnerClientName} client = this.inner();");
-                        methodBuilder.AppendLine($"    return client.{method.Name}NextAsync(nextLink)");
-                        methodBuilder.AppendLine($"    .flatMap(new Func1<Page<{this.GroupableModelInnerName}>, Observable<Page<{this.GroupableModelInnerName}>>>() {{");
-                        methodBuilder.AppendLine($"        @Override");
-                        methodBuilder.AppendLine($"        public Observable<Page<{this.GroupableModelInnerName}>> call(Page<{this.GroupableModelInnerName}> page) {{");
-                        methodBuilder.AppendLine($"            return Observable.just(page).concatWith({nextPageMethodName}(page.nextPageLink()));");
-                        methodBuilder.AppendLine($"        }}");
-                        methodBuilder.AppendLine($"    }});");
-                        methodBuilder.AppendLine($"}}");
-
-                        methodBuilder.AppendLine($"@Override");
-                        methodBuilder.AppendLine($"public Observable<{this.GroupableModelInterfaceName}> listAsync() {{");
-                        methodBuilder.AppendLine($"    {this.InnerClientName} client = this.inner();");
-                        methodBuilder.AppendLine($"    return client.{method.Name}Async()");
-                        methodBuilder.AppendLine($"    .flatMap(new Func1<Page<{this.GroupableModelInnerName}>, Observable<Page<{this.GroupableModelInnerName}>>>() {{");
-                        methodBuilder.AppendLine($"        @Override");
-                        methodBuilder.AppendLine($"        public Observable<Page<{this.GroupableModelInnerName}>> call(Page<{this.GroupableModelInnerName}> page) {{");
-                        methodBuilder.AppendLine($"            return {nextPageMethodName}(page.nextPageLink());");
-                        methodBuilder.AppendLine($"        }}");
-                        methodBuilder.AppendLine($"    }})");
-                        methodBuilder.AppendLine($"    .flatMapIterable(new Func1<Page<{this.GroupableModelInnerName}>, Iterable<{this.GroupableModelInnerName}>>() {{");
-                        methodBuilder.AppendLine($"        @Override");
-                        methodBuilder.AppendLine($"        public Iterable<{this.GroupableModelInnerName}> call(Page<{this.GroupableModelInnerName}> page) {{");
-                        methodBuilder.AppendLine($"            return page.items();");
-                        methodBuilder.AppendLine($"        }}");
-                        methodBuilder.AppendLine($"   }})");
-                        methodBuilder.AppendLine($"    .map(new Func1<{this.GroupableModelInnerName}, {this.GroupableModelInterfaceName}>() {{");
-                        methodBuilder.AppendLine($"        @Override");
-                        methodBuilder.AppendLine($"        public {this.GroupableModelInterfaceName} call({this.GroupableModelInnerName} inner) {{");
-                        methodBuilder.AppendLine($"            return wrapModel(inner);");
-                        methodBuilder.AppendLine($"        }}");
-                        methodBuilder.AppendLine($"   }});");
-                        methodBuilder.AppendLine($"}}");
-                    }
-                }
-                return methodBuilder.ToString();
-            }
-        }
-
-        public string DefineMethodImplementation
+        private string DefineMethodImplementation
         {
             get
             {
@@ -485,7 +231,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        public string WrapExistingModelImplementation
+        private string WrapExistingModelImplementation
         {
             get
             {
@@ -500,7 +246,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        public string WrapNewModelImplementation
+        private string WrapNewModelImplementation
         {
             get
             {

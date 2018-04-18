@@ -4,6 +4,7 @@ using AutoRest.Java.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace AutoRest.Java.Azure.Fluent.Model
 {
@@ -23,7 +24,6 @@ namespace AutoRest.Java.Azure.Fluent.Model
         {
             this.fluentMethodGroup = fluentMethodGroup;
         }
-
         public bool SupportsDeleteByResourceGroup
         {
             get
@@ -260,6 +260,68 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 this.deleteByImmediateParentMethod = null;
             }
         }
+
+        public IEnumerable<string> BatchDeleteAyncAndSyncMethodImplementations(string innerClientName)
+        {
+            if (this.SupportsDeleteByResourceGroup)
+            {
+                // It is understood that if delete by resource group is supported in service then batch delete is also supported in SDK
+                //
+                FluentMethod method = this.DeleteByResourceGroupMethod;
+                //
+                StringBuilder methodBuilder = new StringBuilder();
+                //
+                // BatchDeleteByIdCol async 
+                methodBuilder.Clear();
+                methodBuilder.AppendLine("@Override");
+                methodBuilder.AppendLine($"public Observable<String> deleteByIdsAsync(Collection<String> ids) {{");
+                methodBuilder.AppendLine($"    if (ids == null || ids.isEmpty()) {{");
+                methodBuilder.AppendLine($"        return Observable.empty();");
+                methodBuilder.AppendLine($"    }}");
+                methodBuilder.AppendLine($"    Collection<Observable<String>> observables = new ArrayList<>();");
+                methodBuilder.AppendLine($"    for (String id : ids) {{");
+                methodBuilder.AppendLine($"        final String resourceGroupName = ResourceUtils.groupFromResourceId(id);");
+                methodBuilder.AppendLine($"        final String name = ResourceUtils.nameFromResourceId(id);");
+                methodBuilder.AppendLine($"        Observable<String> o = RXMapper.map(this.inner().{method.Name}Async(resourceGroupName, name), id);");
+                methodBuilder.AppendLine($"        observables.add(o);");
+                methodBuilder.AppendLine($"    }}");
+                methodBuilder.AppendLine($"    return Observable.mergeDelayError(observables);");
+                methodBuilder.AppendLine($"}}");
+                yield return methodBuilder.ToString();
+                //
+                // BatchDeleteByIdVarArgs async
+                methodBuilder.Clear();
+                methodBuilder.AppendLine("@Override");
+                methodBuilder.AppendLine($"public Observable<String> deleteByIdsAsync(String...ids) {{");
+                methodBuilder.AppendLine($"    return this.deleteByIdsAsync(new ArrayList<String>(Arrays.asList(ids)));");
+                methodBuilder.AppendLine($"}}");
+                yield return methodBuilder.ToString();
+                //
+                // BatchDeleteByIdCol sync
+                methodBuilder.Clear();
+                methodBuilder.AppendLine("@Override");
+                methodBuilder.AppendLine($"public void deleteByIds(Collection<String> ids) {{");
+                methodBuilder.AppendLine($"    if (ids != null && !ids.isEmpty()) {{");
+                methodBuilder.AppendLine($"        this.deleteByIdsAsync(ids).toBlocking().last();");
+                methodBuilder.AppendLine($"    }}");
+                methodBuilder.AppendLine($"}}");
+                yield return methodBuilder.ToString();
+                //
+                // BatchDeleteByIdVarArgs sync
+                //
+                methodBuilder.Clear();
+                methodBuilder.AppendLine("@Override");
+                methodBuilder.AppendLine($"public void deleteByIds(String...ids) {{");
+                methodBuilder.AppendLine($"    this.deleteByIds(new ArrayList<String>(Arrays.asList(ids)));");
+                methodBuilder.AppendLine($"}}");
+                yield return methodBuilder.ToString();
+            }
+            else
+            {
+                yield break;
+            }
+        }
+
 
         private static IEnumerable<ParameterJv> RequiredParametersOfMethod(MethodJvaf method)
         {

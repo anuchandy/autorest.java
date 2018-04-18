@@ -106,7 +106,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        public IEnumerable<string> ChildMethodGroupAccessors
+        private IEnumerable<string> ChildMethodGroupAccessors
         {
             get
             {
@@ -155,7 +155,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        public string DefineMethodImplementation
+        private string DefineMethodImplementation
         {
             get
             {
@@ -176,7 +176,7 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        public string WrapModelImplementation
+        private string WrapModelImplementation
         {
             get
             {

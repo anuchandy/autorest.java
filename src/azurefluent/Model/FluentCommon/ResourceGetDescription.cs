@@ -4,6 +4,7 @@ using AutoRest.Java.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace AutoRest.Java.Azure.Fluent.Model
 {
@@ -119,8 +120,9 @@ namespace AutoRest.Java.Azure.Fluent.Model
                 if (this.SupportsGetByResourceGroup)
                 {
                     imports.Add("com.microsoft.azure.management.resources.fluentcore.arm.collection.SupportsGettingByResourceGroup");
+                    imports.Add("rx.Observable");
                 }
-                if (this.SupportsGetByImmediateParent || this.SupportsGetBySubscription)
+                else if (this.SupportsGetByImmediateParent)
                 {
                     imports.Add("rx.Observable");
                 }
@@ -128,14 +130,37 @@ namespace AutoRest.Java.Azure.Fluent.Model
             }
         }
 
-        public HashSet<String> ImportsForMethodGroupImpl
+        public HashSet<string> ImportsForMethodGroupImpl
         {
             get
             {
                 HashSet<string> imports = new HashSet<string>();
-                if (this.SupportsGetByImmediateParent || this.SupportsGetBySubscription)
+                if (this.supportsGetByResourceGroup)
                 {
                     imports.Add("rx.Observable");
+                }
+                else if (this.SupportsGetByImmediateParent)
+                {
+                    imports.Add("rx.Observable");
+                }
+                return imports;
+            }
+        }
+
+        public HashSet<string> ImportsForMethodGroupWithLocalGetByResourceGroupImpl
+        {
+            get
+            {
+                HashSet<string> imports = new HashSet<string>();
+                if (this.supportsGetByResourceGroup)
+                {
+                    // Imports needed when collection supports listByResourceGroup but it is not inheriting from GrouapbleResourcesImpl
+                    // hence not getting free implementation for listByResourceGroup methods.
+                    //
+                    imports.Add("rx.Observable");
+                    imports.Add("com.microsoft.rest.ServiceFuture");
+                    imports.Add("com.microsoft.rest.ServiceCallback");
+                    imports.Add("rx.functions.Func1");
                 }
                 return imports;
             }
@@ -305,6 +330,75 @@ namespace AutoRest.Java.Azure.Fluent.Model
         private static IEnumerable<ParameterJv> RequiredParametersOfMethod(MethodJvaf method)
         {
             return method.LocalParameters.Where(parameter => parameter.IsRequired && !parameter.IsConstant);
+        }
+
+        public string InnerGetMethodImplementation(bool applyOverride, string innerClientName, string modelInnerName)
+        {
+            StringBuilder methodBuilder = new StringBuilder();
+            //
+            if (applyOverride)
+            {
+                methodBuilder.AppendLine("@Override");
+            }
+            methodBuilder.AppendLine($"protected Observable<{modelInnerName}> getInnerAsync(String resourceGroupName, String name) {{");
+            methodBuilder.AppendLine($"    {innerClientName} client = this.inner();");
+            if (this.SupportsGetByResourceGroup)
+            {
+                FluentMethod method = this.GetByResourceGroupMethod;
+                methodBuilder.AppendLine($"    return client.{method.Name}Async(resourceGroupName, name);");
+            }
+            else
+            {
+                methodBuilder.AppendLine($"    return null; // NOP Retrive by RG not supported");
+            }
+            methodBuilder.AppendLine($"}}");
+            //
+            return methodBuilder.ToString();
+        }
+
+
+        public IEnumerable<string> GetByResourceGroupSyncAsyncImplementation(string modelinterfaceName, string modelInnerName)
+        {
+            if (this.SupportsGetByResourceGroup)
+            {
+                StringBuilder methodBuilder = new StringBuilder();
+
+                // T getByResourceGroup(String resourceGroupName, String name)
+                //
+                methodBuilder.Clear();
+                methodBuilder.Append($"@Override");
+                methodBuilder.Append($"public {modelinterfaceName} getByResourceGroup(String resourceGroupName, String name) {{");
+                methodBuilder.Append($"    return getByResourceGroupAsync(resourceGroupName, name).toBlocking().last();");
+                methodBuilder.Append($"}}");
+                yield return methodBuilder.ToString();
+
+                // Obs<T> getByResourceGroupAsync(String resourceGroupName, String name)
+                //
+                methodBuilder.Clear();
+                methodBuilder.Append($"@Override");
+                methodBuilder.Append($"public ServiceFuture<{modelinterfaceName}> getByResourceGroupAsync(String resourceGroupName, String name, ServiceCallback<{modelinterfaceName}> callback) {{");
+                methodBuilder.Append($"    return ServiceFuture.fromBody(getByResourceGroupAsync(resourceGroupName, name), callback);");
+                methodBuilder.Append($"}}");
+                yield return methodBuilder.ToString();
+
+                // ServiceFuture<EventSubscription> getByResourceGroupAsync(String resourceGroupName, String name, ServiceCallback<EventSubscription> callback)
+                //
+                methodBuilder.Clear();
+                methodBuilder.Append($"@Override");
+                methodBuilder.Append($"public Observable<{modelinterfaceName}> getByResourceGroupAsync(String resourceGroupName, String name) {{");
+                methodBuilder.Append($"    return this.getInnerAsync(resourceGroupName, name).map(new Func1<{modelInnerName}, {modelinterfaceName}> () {{");
+                methodBuilder.Append($"        @Override");
+                methodBuilder.Append($"        public {modelinterfaceName} call({modelInnerName} innerT) {{");
+                methodBuilder.Append($"            return wrapModel(innerT);");
+                methodBuilder.Append($"        }}");
+                methodBuilder.Append($"    }});");
+                methodBuilder.Append($"}}");
+                yield return methodBuilder.ToString();
+            }
+            else
+            {
+                yield break;
+            }
         }
     }
 }
