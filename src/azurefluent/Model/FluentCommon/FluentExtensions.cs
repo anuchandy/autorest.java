@@ -1,4 +1,7 @@
-﻿using AutoRest.Java.Azure.Fluent.Model;
+﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License. See License.txt in the project root for license information.
+
+using AutoRest.Java.Azure.Fluent.Model;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -10,8 +13,8 @@ namespace AutoRest.Java.azurefluent.Model
     {
         public static string FluentUrl(this MethodJvaf methodJvaf)
         {
-            string fileName = @"C:\code\net\autorest.java\fluenturls\fluenturls.txt";
-            if (!File.Exists(fileName) || String.IsNullOrEmpty(methodJvaf.Url))
+            string mappingFileName = Path.Combine(Directory.GetCurrentDirectory(), @"fluenturls\fluenturls.txt");
+            if (!File.Exists(mappingFileName) || String.IsNullOrEmpty(methodJvaf.Url))
             {
                 return methodJvaf.Url;
             }
@@ -19,7 +22,7 @@ namespace AutoRest.Java.azurefluent.Model
             {
                 string fluentUrl = null;
                 string entry;
-                using (StreamReader file = new StreamReader(fileName))
+                using (StreamReader file = new StreamReader(mappingFileName))
                 {
                     while ((entry = file.ReadLine()) != null)
                     {
@@ -28,7 +31,7 @@ namespace AutoRest.Java.azurefluent.Model
                             string[] parts = entry.Split(':');
                             if (parts.Length != 3)
                             {
-                                throw new ArgumentException($"entry '{entry}' in {fileName} is invalid");
+                                throw new ArgumentException($"entry '{entry}' in {mappingFileName} is invalid");
                             }
                             string methodGroupFullType = ((MethodGroupJvaf) methodJvaf.MethodGroup).MethodGroupFullType;
                             if (methodGroupFullType.Equals(parts[0], StringComparison.OrdinalIgnoreCase))
